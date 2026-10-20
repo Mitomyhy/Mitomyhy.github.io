@@ -10,7 +10,7 @@ Add additional real apps to `MITOM_CONFIG.apps`. Each entry supports `id`, `name
 
 ## Assets
 
-The supplied PNG logo is preserved in `assets/mitom-logo.png`. Its transparency preserves the original red symbol; the header frames the symbol next to the MITOM wordmark without modifying the PNG. The supplied `.ico` is used as the favicon and Photoshop Panel avatar. Typography uses the supplied Akzidenz Grotesk Bold and OCR A Extended TTF files, with system font fallbacks for missing glyphs.
+The supplied PNG logo is preserved in `assets/mitom-logo.png`. Its transparency preserves the original red symbol; the header frames the symbol next to the MITOM wordmark without modifying the PNG. The supplied `.ico` is used as the favicon and Photoshop Panel avatar. Typography uses the supplied Akzidenz Grotesk Bold and OCR-B TTF files, with system font fallbacks for missing glyphs.
 
 ## Deployment
 
