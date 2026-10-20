@@ -10,7 +10,7 @@ Add additional real apps to `MITOM_CONFIG.apps`. Each entry supports `id`, `name
 
 ## Assets
 
-The supplied PNG logo is preserved in `assets/mitom-logo.png`. Its transparency preserves the original red symbol; the header frames the symbol next to the MITOM wordmark without modifying the PNG. The supplied `.ico` is used as the favicon and Photoshop Panel avatar. Typography uses the supplied Akzidenz Grotesk Bold and Accidental Presidency (ACCID.TTF) files, with system font fallbacks for missing glyphs.
+The supplied PNG logo is preserved in `assets/mitom-logo.png`. Its transparency preserves the original red symbol; the header frames the symbol next to the MITOM wordmark without modifying the PNG. The supplied `.ico` is used as the favicon and Photoshop Panel avatar. Typography uses the supplied Akzidenz Grotesk Bold and SVN-Square (SVN-SQUARE.TTF) files, with system font fallbacks for missing glyphs.
 
 ## Deployment
 
@@ -20,12 +20,12 @@ No third-party scripts, analytics, package installation, or build step are neede
 
 ## Readability and language
 
-Accidental Presidency labels are at least 14 px at their supplied regular weight;
+SVN-Square labels are at least 14 px at their supplied regular weight;
 desktop controls use 15 px, supporting body copy uses 14–15 px or larger, and
-header icons use a 24 px outline. Label character spacing is 1.2 px on desktop
-and 1 px on mobile, with synthetic bold disabled. The supplied font is bundled in
-`assets/fonts/accidental-presidency.ttf`; Arial covers any missing Vietnamese
-glyphs. English is the default language.
+header icons use a 24 px outline. Label character spacing is .175em on all screens (Photoshop tracking 175),
+with synthetic bold disabled. The supplied font is bundled in
+`assets/fonts/svn-square.ttf`; its glyph map covers the precomposed Vietnamese
+alphabet, and system fonts remain available for other missing glyphs. English is the default language.
 The header Settings button lets visitors choose English or Tiếng Việt, and saves
 that explicit preference in local storage as `mitom-language`. Theme and language
 preferences are independent.
