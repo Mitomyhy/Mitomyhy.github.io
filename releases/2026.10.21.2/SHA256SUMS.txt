@@ -1,0 +1,4 @@
+9a65db48ab0b3d6c0e7765485a108fc9cb2efd970d1f6ef733b09966f0a60bbe  https://github.com/Mitomyhy/Mitomyhy.github.io/releases/download/v2026.10.21.4/MITOM-Launcher-Setup-2026.10.21.4.exe
+52948dcd8818d0faf409252c4ac1ec5264bfde34b7a15ae020c0c53eafb28bf1  core.zip
+280741fd09bc3f403ccff9967784c2a391b52d2c0742ae3efdb21d9f90cc1a01  core/depth-models/moge-2-vitl-normal.pt
+715fade13be8f229f8a70cc02066f656f2423a59effd0579197bbf57860e1378  core/depth-models/depth-anything-v2-vits.pth
