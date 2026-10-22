@@ -13,13 +13,15 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261022-cpu-r4">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261022-flow-r5">
+  <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
+  <link rel="stylesheet" href="tools/sky-moon-controls.css?v=20261022-flow-r5">
   <script defer src="site-config.js?v=20261021-panel-full-launcher4"></script>
   <script defer src="i18n.js?v=20261021-helvetica-normal"></script>
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261022-cpu-r4"></script>
+  <script type="module" src="tools/workbench.js?v=20261022-flow-r5"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
@@ -58,13 +60,14 @@
           <div class="control-heading"><span>01 / MỞ TEMPLATE</span><span>IN · DEPTH · CUT</span></div>
           <label class="tools-field">Template gốc<select id="depth-product"><option value="acrylic">Acrylic — theo viền artwork</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label>
           <button id="depth-open-template" class="tools-secondary" type="button">Mở template <span>↗</span></button>
-          <p class="tools-note">Giữ canvas / shape gốc của panel. Web đặt ảnh theo <em>contain</em> giữa canvas; không chạy Photoshop hoặc mô phỏng PSD warp.</p>
+          <p class="tools-note">Giữ canvas / shape gốc của panel; không cần Photoshop. Artwork hiện ngay ở vùng làm việc. Bạn có thể chỉ tạo map, không cần dựng 3D.</p>
           <div class="control-heading"><span>02 / ĐẶT ARTWORK VÀO IN</span><span>PNG · JPG · WEBP</span></div>
           <label class="tools-upload"><span>＋ Chọn artwork</span><small>Ảnh được xử lý trên máy, không upload lên máy chủ.</small><input id="depth-art" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <p id="depth-file-name" class="tools-note">Ưu tiên PNG nền trong suốt.</p>
           <div class="depth-cpu-notice"><strong>MoGe + DA2 · CPU trên máy này</strong><p>Model khoảng 1,43 GB ở lần đầu; lưu cache nếu trình duyệt còn chỗ. Thư viện xử lý tải thêm riêng. Máy yếu có thể chạy vài phút và dùng nhiều RAM.</p><p>Standard FP32: MoGe 1225 tokens + DA2 1036 px; ghép bằng thuật toán gốc, đầu ra tối đa 2048 px. <strong>Không phải mức UHD 14400 tokens của panel.</strong></p></div>
           <label class="tools-check depth-consent"><input id="depth-consent" type="checkbox"> Tôi đồng ý tải AI và dùng CPU / RAM của máy này. Không cần Photoshop.</label>
-          <button id="depth-generate" class="tools-primary" type="button">Generate MoGe + DA2 <span>↗</span></button>
+          <button id="depth-generate" class="tools-primary" type="button">Tạo PNG map · MoGe + DA2 <span>↗</span></button>
+          <button id="depth-reapply" class="tools-secondary" type="button" disabled>Áp dụng từ map đã có · không chạy AI lại</button>
           <button id="depth-cancel" class="tools-secondary depth-cancel" type="button" hidden disabled>Hủy Generate — giữ artwork <span>×</span></button>
           <progress id="depth-progress" max="100" hidden aria-label="Tiến trình CPU"></progress><p id="depth-progress-label" class="tools-note" role="status" aria-live="polite"></p>
           <details class="tools-details"><summary>Thiết lập thuật toán gốc</summary>
@@ -76,57 +79,120 @@
             <label class="tools-range">Support depth <output id="depth-support-depth-value">12%</output><input id="depth-support-depth" type="range" min="1" max="40" value="12"></label>
             <p class="tools-note">Đổi các thông số này cần Generate lại; không tự dùng depth cũ.</p>
           </details>
-          <div class="control-heading"><span>03 / XEM 3D</span><span>LIVE PREVIEW</span></div>
+          <div class="control-heading"><span>03 / PNG MAP</span><span>KHÔNG CẦN DỰNG 3D</span></div>
+          <label class="tools-field">Loại map PNG<select id="depth-map-kind"><option value="map">Map ghép · vùng hợp lệ (kèm Fix / chữ)</option><option value="moge">MoGe · hình học</option><option value="da2">DA2 · chi tiết</option><option value="depth">Depth sau ghép template / support</option></select></label>
+          <label class="tools-check"><input id="depth-map-transparent" type="checkbox" checked> Nền map trong suốt (PNG 16 bit + alpha)</label>
+          <button id="depth-download" class="tools-secondary" type="button" disabled>Tải PNG map 16 bit <span>↓</span></button>
+          <p class="tools-note">Map là raster gốc, không phải ảnh chụp lưới 3D. Vùng MoGe không xác nhận để rỗng / đen; không kéo giãn thành các mảng nhọn.</p>
+          <div class="control-heading"><span>04 / FIX & CHỮ</span><span>CHỈNH MAP CỤC BỘ</span></div>
+          <div class="tools-button-row"><button id="depth-fix-light" type="button" aria-pressed="false">Fix sáng</button><button id="depth-fix-dark" type="button" aria-pressed="false">Fix tối</button><button id="depth-fix-stop" type="button">Dừng tô</button></div>
+          <label class="tools-range">Cỡ brush <output id="depth-brush-size-value">5%</output><input id="depth-brush-size" type="range" min="1" max="20" value="5"></label>
+          <label class="tools-range">Lực brush <output id="depth-brush-strength-value">10%</output><input id="depth-brush-strength" type="range" min="1" max="50" value="10"></label>
+          <div class="tools-button-row"><button id="depth-undo" type="button" disabled>Undo Fix</button><button id="depth-reset-edits" type="button" disabled>Bỏ Fix / chữ</button></div>
+          <details class="tools-details"><summary>Custom text · chữ riêng trên web</summary>
+            <label class="tools-field">Nội dung chữ<textarea id="depth-text" rows="3" maxlength="500" placeholder="Dán nội dung chữ mới…"></textarea></label>
+            <div class="tools-field-pair"><label class="tools-field">Font<select id="depth-text-font"><option>Arial</option><option>Georgia</option><option>Verdana</option><option value="cursive">Cursive</option><option value="serif">Serif</option></select></label><label class="tools-field">Màu chữ<input id="depth-text-color" type="color" value="#28221c"></label></div>
+            <label class="tools-field">Effect text<select id="depth-text-mode"><option value="raised">Nổi</option><option value="recessed">Lõm</option><option value="plain">Không effect</option></select></label>
+            <label class="tools-range">Cỡ chữ <output id="depth-text-size-value">8%</output><input id="depth-text-size" type="range" min="1" max="40" value="8"></label>
+            <div class="tools-field-pair"><label class="tools-field">Vị trí X (%)<input id="depth-text-x" type="number" min="0" max="100" value="50"></label><label class="tools-field">Vị trí Y (%)<input id="depth-text-y" type="number" min="0" max="100" value="50"></label></div>
+            <button id="depth-text-apply" class="tools-secondary" type="button">Áp dụng chữ / effect · không chạy lại AI</button>
+            <p class="tools-note">Chữ mới là lớp riêng trong phiên web. Chữ đã dính vào PNG không thể tự biến lại thành Type layer như PSD.</p>
+          </details>
+          <div class="control-heading"><span>05 / XEM 3D · TÙY CHỌN</span><span>DÙNG LẠI MAP</span></div>
+          <button id="depth-build-3d" class="tools-secondary" type="button" disabled>Ghép template & xem 3D <span>↗</span></button>
+          <p class="tools-note">Dùng lại kết quả MoGe / DA2 trong tab này, không chạy AI lần nữa. Đổi template hoặc artwork sẽ cần tạo map mới.</p>
           <label class="tools-range">Nổi viền <output id="rim-value">20%</output><input id="depth-rim" type="range" min="0" max="100" value="20"></label>
           <label class="tools-range">Nổi bề mặt <output id="relief-value">50%</output><input id="depth-relief" type="range" min="0" max="100" value="50"></label>
           <label class="tools-range">Độ bóng <output id="gloss-value">65%</output><input id="depth-gloss" type="range" min="0" max="100" value="65"></label>
           <div class="tools-button-row"><button type="button" data-preset="front">Chính diện</button><button type="button" data-preset="side">Nghiêng</button><button type="button" data-preset="back">Mặt sau</button></div>
-          <button id="depth-download" class="tools-secondary" type="button" disabled>Tải depth PNG 16 bit <span>↓</span></button>
+          <button id="depth-nine" class="tools-secondary" type="button" disabled>Tải 9 góc mockup PNG · ZIP <span>↓</span></button>
           <p class="tools-note">Kết quả là relief hình ảnh, không phải bản quét đo lường hay độ sâu gia công tính bằng mm. Nút Photoshop chỉ để gửi mockup nếu máy có Photoshop.</p>
         </section>
         <section data-controls="scrabble" hidden>
-          <div class="control-heading"><span>01 / DANH SÁCH TÊN</span><span>TỐI ĐA 24 TÊN</span></div>
-          <label class="tools-field">Mỗi tên một dòng<textarea id="scrabble-names" rows="5" spellcheck="false">HUONG
+          <div class="control-heading"><span>01 / TEMPLATE A–1 → A–Z</span><span>CHẠY TRÊN WEB</span></div>
+          <label class="tools-field">Bộ ô chữ<select id="scrabble-source"><option value="template">Tạo từ template chữ A + điểm 1</option><option value="images">Dùng bộ ô A–Z của tôi</option></select></label>
+          <div id="scrabble-template-controls">
+            <div class="scrabble-template-preview"><canvas id="scrabble-seed" width="800" height="800" aria-label="Template chữ A và điểm 1"></canvas><p>Chỉnh ô A–1 một lần → tạo đủ A–Z, dùng ngay để xếp tên. Template 800 × 800 px.</p></div>
+            <div class="tools-field-pair"><label class="tools-field">Màu ô<input id="scrabble-tile" type="color" value="#e3c48b"></label><label class="tools-field">Màu chữ<input id="scrabble-ink" type="color" value="#29251f"></label></div>
+            <label class="tools-field">Font chữ<select id="scrabble-font"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Tahoma">Tahoma</option><option value="Times New Roman">Times New Roman</option><option value="Verdana">Verdana</option></select></label>
+            <details class="tools-details"><summary>Ảnh nền ô, font riêng & vị trí chữ</summary>
+              <label class="tools-field">Ảnh nền ô (chưa có chữ)<input id="scrabble-backing" type="file" accept="image/png,image/jpeg,image/webp"></label><button id="scrabble-clear-backing" class="tools-secondary" type="button">Bỏ ảnh nền ô</button>
+              <label class="tools-field">Font trên máy · TTF / OTF / WOFF<input id="scrabble-font-file" type="file" accept=".ttf,.otf,.woff,.woff2"></label>
+              <div class="tools-field-pair scrabble-compact"><label class="tools-field">Cỡ chữ (%)<input id="scrabble-letter-size" type="number" min="5" max="85" value="62"></label><label class="tools-field">Cỡ điểm (%)<input id="scrabble-score-size" type="number" min="5" max="85" value="18"></label></div>
+              <div class="tools-field-pair scrabble-compact"><label class="tools-field">Chữ X (%)<input id="scrabble-letter-x" type="number" min="5" max="95" value="48"></label><label class="tools-field">Chữ Y (%)<input id="scrabble-letter-y" type="number" min="5" max="95" value="48"></label></div>
+              <div class="tools-field-pair scrabble-compact"><label class="tools-field">Điểm X (%)<input id="scrabble-score-x" type="number" min="5" max="95" value="88"></label><label class="tools-field">Điểm Y (%)<input id="scrabble-score-y" type="number" min="5" max="95" value="85"></label></div>
+            </details>
+            <label class="tools-check"><input id="scrabble-score" type="checkbox" checked> Hiện điểm chữ · đúng bộ điểm panel</label>
+          </div>
+          <div id="scrabble-image-controls" hidden><label class="tools-field">Chọn các ô nguồn A.png … Z.png<input id="scrabble-tiles" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="tools-note">Ảnh ô đã có chữ/điểm; giữ nguyên hình. Chỉ cần các chữ dùng trong tên. Không tự bù chữ thiếu bằng kiểu khác.</p></div>
+          <p id="scrabble-source-state" class="scrabble-source-state" role="status">Template A–1 sẵn sàng · đổi kiểu là thấy ngay.</p>
+          <button id="scrabble-alphabet" type="button" class="tools-secondary">Tạo / xem bộ A–Z <span>↗</span></button>
+          <div id="scrabble-alphabet-preview" class="scrabble-alphabet" hidden aria-label="26 ô chữ A đến Z"></div>
+          <button id="scrabble-alphabet-download" type="button" class="tools-secondary">Tải bộ A–Z · 26 PNG trong ZIP <span>↓</span></button>
+          <div class="control-heading"><span>02 / DANH SÁCH TÊN</span><span>TỐI ĐA 24 TÊN</span></div>
+          <label class="tools-field">Dán tên · mỗi dòng / dấu phẩy / chấm phẩy<textarea id="scrabble-names" rows="5" spellcheck="false">HUONG
 MITOM
 TOM
 MIA
 OLIVER</textarea></label>
-          <button id="scrabble-generate" type="button" class="tools-primary">Tạo bố cục <span>↗</span></button>
+          <label class="tools-check"><input id="scrabble-auto" type="checkbox" checked> Tự xếp lại sau khi nhập / dán tên</label>
+          <button id="scrabble-generate" type="button" class="tools-primary">Tạo lại các bố cục <span>↗</span></button>
+          <label class="tools-field">Dạng bố cục<select id="scrabble-category"><option value="all">Tất cả · vuông / đứng / nằm</option><option value="square">Vuông</option><option value="portrait">Chữ nhật đứng</option><option value="landscape">Chữ nhật nằm</option></select></label>
           <label class="tools-field">Phương án<select id="scrabble-variant" disabled><option>Chưa có bố cục</option></select></label>
           <p id="scrabble-info" class="tools-note">Dùng cùng thuật toán xếp chữ với panel. Không tự bỏ tên.</p>
-          <div class="control-heading"><span>02 / KIỂU Ô CHỮ</span><span>LIVE PREVIEW</span></div>
-          <div class="tools-field-pair"><label class="tools-field">Màu ô<input id="scrabble-tile" type="color" value="#e3c48b"></label><label class="tools-field">Màu chữ<input id="scrabble-ink" type="color" value="#29251f"></label></div>
+          <div class="control-heading"><span>03 / VÙNG XẾP & KHOẢNG CÁCH</span><span>GIỐNG PANEL</span></div>
+          <div class="tools-field-pair"><label class="tools-field">Canvas rộng<input id="scrabble-width" type="number" min="100" max="30000" value="800"></label><label class="tools-field">Canvas cao<input id="scrabble-height" type="number" min="100" max="30000" value="800"></label></div>
           <label class="tools-range">Khoảng cách <output id="gap-value">4%</output><input id="scrabble-gap" type="range" min="0" max="15" value="4"></label>
-          <label class="tools-check"><input id="scrabble-score" type="checkbox" checked> Hiện điểm chữ</label>
+          <label class="tools-range">Lề an toàn <output id="scrabble-inset-value">4%</output><input id="scrabble-inset" type="range" min="0" max="20" value="4"></label>
           <label class="tools-field">Vùng bố cục<select id="scrabble-shape"><option value="rect">Chữ nhật / vuông</option><option value="ellipse">Ellipse / tròn</option></select></label>
-          <p class="tools-note">Web tạo PNG trong suốt. Bộ tạo Smart Object A–Z và bố cục layer vẫn giữ nguyên trong panel Photoshop.</p>
+          <p class="tools-note">Web xuất PNG trong suốt và bộ A–Z riêng; có thể thêm PNG vào Photoshop bằng nút dưới. Dữ liệu ở trên máy. PSD / Smart Object / đọc layer nguồn vẫn dùng trong panel, không giả lập thành PNG.</p>
         </section>
         <section data-controls="sky" hidden>
           <div class="control-heading"><span>01 / THỜI GIAN & ĐỊA ĐIỂM</span><span>YOUR MOMENT</span></div>
-          <label class="tools-field">Tìm thành phố<input id="sky-place" type="search" placeholder="Ví dụ: Đà Nẵng, Vietnam" autocomplete="off"></label>
+          <label class="tools-field">Thành phố / quốc gia<input id="sky-place" type="search" value="Leeds, UK" placeholder="Ví dụ: Leeds, UK / Đà Nẵng, Vietnam" autocomplete="off"></label>
           <button id="sky-find" type="button" class="tools-secondary">Tìm địa điểm</button><div id="sky-places" class="tools-places" aria-live="polite"></div>
-          <div class="tools-field-pair"><label class="tools-field">Vĩ độ<input id="sky-lat" type="number" step="0.0001" min="-90" max="90" value="16.0544" required></label><label class="tools-field">Kinh độ<input id="sky-lon" type="number" step="0.0001" min="-180" max="180" value="108.2022" required></label></div>
-          <div class="tools-field-pair"><label class="tools-field">Ngày<input id="sky-date" type="date" value="2026-10-22" required></label><label class="tools-field">Giờ địa phương<input id="sky-time" type="time" value="20:00" required></label></div>
-          <label class="tools-field">UTC offset tại địa điểm / ngày đó<input id="sky-offset" type="number" min="-12" max="14" step="0.25" value="7" required></label>
-          <p class="tools-note">Ví dụ Việt Nam: +7. Với nơi có giờ mùa hè, nhập offset đúng ngày. Không tự dùng múi giờ máy tính.</p>
+          <div class="tools-field-pair"><label class="tools-field">Dán ngày<input id="sky-date" type="text" value="10/22/2026" placeholder="MM/DD/YYYY hoặc YYYY-MM-DD" required></label><label class="tools-field">Giờ địa phương<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
+          <label class="tools-field">Thứ tự ngày số<select id="sky-date-order"><option value="MDY">MM/DD/YYYY — giống panel</option><option value="DMY">DD/MM/YYYY</option></select></label>
+          <p id="sky-resolved" class="tools-note" aria-live="polite">Chỉ nhập thành phố, ngày và giờ. Múi giờ / giờ mùa hè được tra tự động.</p>
+          <details class="tools-advanced"><summary>Nâng cao: tọa độ / múi giờ</summary>
+            <label class="tools-check"><input id="sky-manual" type="checkbox"> Dùng tọa độ tự nhập</label>
+            <div class="tools-field-pair"><label class="tools-field">Vĩ độ<input id="sky-lat" type="number" step="0.0001" min="-90" max="90" value="53.79648"></label><label class="tools-field">Kinh độ<input id="sky-lon" type="number" step="0.0001" min="-180" max="180" value="-1.54785"></label></div>
+            <label class="tools-field">Múi giờ IANA<input id="sky-zone" value="Europe/London" placeholder="Europe/London"></label>
+            <label class="tools-check"><input id="sky-manual-offset" type="checkbox"> Ghi đè UTC offset (giờ)</label><label class="tools-field">UTC offset<input id="sky-offset" type="number" min="-14" max="14" step="0.25" value="0"></label>
+          </details>
           <div class="control-heading"><span>02 / HIỂN THỊ</span><span>STAR CATALOGUE</span></div>
-          <div class="tools-field-pair"><label class="tools-field">Màu sao<input id="sky-stars" type="color" value="#ffffff"></label><label class="tools-field">Màu nền<input id="sky-bg" type="color" value="#101d35"></label></div>
-          <label class="tools-check"><input id="sky-lines" type="checkbox" checked> Đường chòm sao</label><label class="tools-check"><input id="sky-grid" type="checkbox"> Lưới tọa độ</label><label class="tools-check"><input id="sky-transparent" type="checkbox"> Nền trong suốt</label>
+          <div class="tools-field-pair"><label class="tools-field">Màu sao<input id="sky-stars" type="color" value="#ffffff"></label><label class="tools-field">Màu nền<input id="sky-bg" type="color" value="#000000"></label></div>
+          <label class="tools-check"><input id="sky-lines" type="checkbox" checked> Đường chòm sao</label><label class="tools-check"><input id="sky-grid" type="checkbox"> Lưới tọa độ</label><label class="tools-check"><input id="sky-labels" type="checkbox"> Nhãn phương hướng</label><label class="tools-check"><input id="sky-transparent" type="checkbox"> Nền trong suốt</label>
+          <label class="tools-check"><input id="sky-effect" type="checkbox" checked> Effect Sky Star của panel (trắng đen)</label>
           <button id="sky-generate" class="tools-primary" type="button">Render Starmap <span>↗</span></button>
+          <button id="sky-reapply" class="tools-secondary" type="button">Apply lại effect / nền — không render lại</button>
+          <p class="tools-note">Cùng catalog sao, phép chiếu stereographic và effect của panel. Web xuất PNG trực tiếp; không chạy action Photoshop.</p>
         </section>
         <section data-controls="moon" hidden>
           <div class="control-heading"><span>01 / NHỮNG NGÀY ĐẶC BIỆT</span><span>DATE → MOON</span></div>
-          <label class="tools-field">Mỗi dòng YYYY-MM-DD<textarea id="moon-dates" rows="5" spellcheck="false">1998-05-11
-2000-06-15
-2024-08-10</textarea></label>
-          <div class="tools-field-pair"><label class="tools-field">Giờ địa phương<input id="moon-time" type="time" value="12:00" required></label><label class="tools-field">UTC offset<input id="moon-offset" type="number" min="-12" max="14" step="0.25" value="7" required></label></div>
+          <label class="tools-field">Dán danh sách ngày — mỗi dòng một ngày<textarea id="moon-dates" rows="5" spellcheck="false">05/11/1998
+06/15/2000
+08/10/2024</textarea></label>
+          <label class="tools-field">Thứ tự ngày số<select id="moon-date-order"><option value="MDY">MM/DD/YYYY — giống panel</option><option value="DMY">DD/MM/YYYY</option></select></label>
+          <p class="tools-note">Nhận cả YYYY-MM-DD và tên tháng tiếng Anh. Không cần chọn từng ngày trong lịch.</p>
+          <details class="tools-advanced"><summary>Nâng cao: thời điểm / nơi quan sát</summary>
+            <p class="tools-note">Mặc định 12:00 UTC, vị trí London như panel. Chỉ thay đổi khi cần một thời điểm cụ thể; pha tính trên web không phải bộ 16 ảnh của nhà cung cấp panel.</p>
+            <label class="tools-field">Giờ địa phương<input id="moon-time" type="text" value="12:00" placeholder="HH:mm" required></label>
+            <label class="tools-field">Múi giờ IANA<input id="moon-zone" value="UTC" placeholder="Asia/Ho_Chi_Minh"></label>
+            <label class="tools-check"><input id="moon-manual-offset" type="checkbox"> Ghi đè UTC offset</label><label class="tools-field">UTC offset<input id="moon-offset" type="number" min="-14" max="14" step="0.25" value="0"></label>
+            <div class="tools-field-pair"><label class="tools-field">Vĩ độ<input id="moon-lat" type="number" step="0.0001" min="-90" max="90" value="51.4809181"></label><label class="tools-field">Kinh độ<input id="moon-lon" type="number" step="0.0001" min="-180" max="180" value="-0.0207105"></label></div>
+          </details>
           <div class="control-heading"><span>02 / BỐ CỤC</span><span>PNG TRONG SUỐT</span></div>
-          <label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="6" value="3" required></label>
+          <div class="tools-field-pair"><label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="12" value="5" required></label><label class="tools-field">Size mỗi moon<input id="moon-size" type="number" min="100" max="1200" value="400" step="50" required></label></div>
+          <label class="tools-field">Màu Mặt Trăng<select id="moon-appearance"><option value="warm">Vàng ấm — gần màu panel</option><option value="natural">Màu texture NASA tự nhiên</option><option value="grayscale">Trắng đen</option></select></label>
+          <label class="tools-field">Hướng hiển thị<select id="moon-orientation"><option value="north">Bắc thiên cầu ở trên</option><option value="observer">Theo đường chân trời nơi quan sát</option><option value="phase">Pha quy ước — sáng phải khi trăng lớn</option></select></label>
           <label class="tools-check"><input id="moon-labels" type="checkbox" checked> Hiện ngày và độ chiếu sáng</label>
           <label class="tools-check"><input id="moon-transparent" type="checkbox" checked> Nền trong suốt</label>
           <div class="tools-field-pair"><label class="tools-field">Màu nhãn<input id="moon-label-color" type="color" value="#39465e"></label><label class="tools-field">Màu nền<input id="moon-bg" type="color" value="#f2f1ed"></label></div>
-          <p class="tools-note">Tính pha trăng theo thời điểm đã nhập ngay trong trình duyệt; không dùng ảnh mẫu cố định cho mọi ngày.</p>
+          <p class="tools-note">Tính pha chính xác theo thời điểm bằng SunCalc. PNG dùng texture NASA + màu bạn chọn; không giả là ảnh MoonPhases.co.uk của panel. Không gửi ngày lên máy chủ.</p>
           <button id="moon-generate" class="tools-primary" type="button">Tạo Moon Phase <span>↗</span></button>
+          <button id="moon-cancel" class="tools-secondary" type="button" hidden disabled>Hủy tạo Moon Phase</button>
+          <div id="moon-results" class="tools-moon-results" aria-live="polite"></div>
         </section>
         <div class="control-heading tools-export-heading"><span>03 / XUẤT FILE</span><span>PNG</span></div>
         <label class="tools-field">Kích thước xuất<select id="tool-size"><option value="1024">1024 px — bản nhanh</option><option value="2048" selected>2048 px</option><option value="3000">3000 px</option><option value="4000">4000 px</option></select></label>
@@ -137,9 +203,11 @@ OLIVER</textarea></label>
     <div class="tools-workspace">
       <header class="workspace-heading"><div><p class="micro">TOOLS / CREATIVE WORKSPACE</p><h1 id="workspace-title">3D Tool</h1></div><button id="ps-connect" class="tools-connect" type="button"><i></i><span>Kết nối Photoshop</span></button></header>
       <div class="workspace-toolbar"><span id="workspace-caption">Artwork của bạn. Góc nhìn của bạn.</span><div><button id="workspace-fit" type="button" title="Phóng lớn vùng làm việc" aria-pressed="false">⛶ <span>Rộng hơn</span></button></div></div>
+      <div id="depth-view-tabs" class="depth-view-tabs" hidden aria-label="Chế độ xem artwork và map"><button type="button" data-depth-view="artwork" aria-pressed="true">Artwork</button><button type="button" data-depth-view="map">Map ghép</button><button type="button" data-depth-view="moge">MoGe</button><button type="button" data-depth-view="da2">DA2</button><button type="button" data-depth-view="3d">Xem 3D</button></div>
       <div id="workspace-stage" class="workspace-stage">
         <div id="tool-empty" class="tool-empty"><div class="empty-orbit" aria-hidden="true"><span>◇</span><i></i><i></i></div><p class="micro">MADE FOR YOUR NEXT IDEA</p><h2 id="empty-title">Bắt đầu bằng artwork.</h2><p id="empty-description">Chọn ảnh bên trái để tạo chiều sâu,<br>xoay 3D và xuất góc nhìn của riêng bạn.</p><button id="empty-action" type="button">＋ Chọn artwork</button></div>
         <canvas id="depth-canvas" class="tool-canvas depth-canvas" width="1200" height="1200" hidden aria-label="3D preview. Kéo để xoay, cuộn để zoom."></canvas>
+        <canvas id="depth-preview-canvas" class="tool-canvas depth-preview-canvas" hidden aria-label="Artwork / PNG depth map · xem trực tiếp không cần 3D"></canvas>
         <canvas id="scrabble-canvas" class="tool-canvas" hidden aria-label="Kết quả bố cục Scrabble"></canvas>
         <canvas id="sky-canvas" class="tool-canvas" hidden aria-label="Kết quả bản đồ sao"></canvas>
         <canvas id="moon-canvas" class="tool-canvas" hidden aria-label="Kết quả các pha trăng"></canvas>

@@ -137,13 +137,15 @@ def _png(array, dpi, mode=None):
 
 
 def process_arrays(rgba, raw_depth, raw_normal, model_valid, intrinsics,
-                   da2_disparity, options, *, progress=None):
+                   da2_disparity, options, *, progress=None, output_mode="full"):
     """Run the native current-generation orchestration, using inferred arrays.
 
     Camera depth/normals/mask/intrinsics must already be reconstructed from
     MoGe forward outputs. DA2 input is raw relative disparity, not a display PNG.
     Input arrays are copied where mutated; caller can adjust again immutably.
     """
+    if output_mode not in ("maps", "full"):
+        raise ValueError("output_mode must be maps or full.")
     settings = _options(options)
     rgba = _rgba(rgba)
     source_h, source_w = rgba.shape[:2]
@@ -168,7 +170,7 @@ def process_arrays(rgba, raw_depth, raw_normal, model_valid, intrinsics,
               "composition_uses_original_native_modules": True,
               "native_uhd_inference": False,
               "native_uhd_note": "Postprocessing cannot attest the caller's model graph; no UHD claim is made.",
-              "geometry_frame": list(rectangle), "stages": []}
+              "geometry_frame": list(rectangle), "output_mode": output_mode, "stages": []}
     def stage(name):
         report["stages"].append(name)
         if progress is not None:
@@ -238,6 +240,54 @@ def process_arrays(rgba, raw_depth, raw_normal, model_valid, intrinsics,
         processing["source_detail"] = {"source_detail": 0., "enabled": False,
                                        "fallback_reason": "source_detail_disabled"}
     refined = np.where(valid, refined, 0).astype(np.float32)
+    # A depth-map download is a scalar raster, not a screenshot of a shaded
+    # triangulated mesh. In particular, do NOT apply canonical_height's nearest
+    # geometry fill here: on an opaque image that deliberately estimates all
+    # unknown background from the closest foreground and produces radial wedges.
+    # Invalid model samples remain black; an explicit map alpha is also returned.
+    stage("native-valid-masked-map-export")
+    map_height = dm.apply_relief(refined, valid, alpha, invert=settings["invert"])
+    moge_height, moge_valid = dm.restore_height(base_height, small_valid, (source_w, source_h))
+    da_height, da_valid_source = dm.restore_height(semantic_small, da_valid, (source_w, source_h))
+    moge_height = dm.apply_relief(moge_height, moge_valid, alpha)
+    da_height = dm.apply_relief(da_height, da_valid_source, alpha)
+    map_alpha = np.where(valid, alpha, 0).astype(np.uint8)
+    moge_alpha = np.where(moge_valid, alpha, 0).astype(np.uint8)
+    da_alpha = np.where(da_valid_source, alpha, 0).astype(np.uint8)
+    maps = {"map_height": map_height, "moge_height": moge_height, "da2_height": da_height,
+            "map_alpha": map_alpha, "moge_alpha": moge_alpha, "da2_alpha": da_alpha,
+            "map_depth_png": _png(np.rint(map_height * 65535).astype(np.uint16), settings["dpi"]),
+            "moge_depth_png": _png(np.rint(moge_height * 65535).astype(np.uint16), settings["dpi"]),
+            "da2_depth_png": _png(np.rint(da_height * 65535).astype(np.uint16), settings["dpi"])}
+    report["maps"] = {
+        "format": "grayscale16-png", "near_is_white": True,
+        "combined": "Native normal-guided MoGe + DA2 relief before product support and invalid-geometry filling.",
+        "moge": "Recovered camera depth normalized by native 2nd/98th percentiles; not metric depth bytes.",
+        "da2": "Native normalized relative disparity; DA2 has no independent foreground-confidence mask.",
+        "invalid_geometry_policy": "black; optional explicit validity alpha; never nearest-foreground extrapolation",
+        "background_removal": False,
+        "source_alpha_preserved": True,
+        "map_valid_pixels": int(np.count_nonzero(map_alpha)),
+        "source_visible_pixels": int(np.count_nonzero(alpha)),
+    }
+    if output_mode == "maps":
+        normal_encoded = dm.encode_normal(raw_normal, raw_valid, (source_w, source_h))
+        normal_encoded[~valid] = 0
+        depth16 = np.rint(map_height * 65535).astype(np.uint16)
+        preview = np.empty((source_h, source_w, 4), np.uint8)
+        preview[..., :3] = np.rint(map_height[..., None] * 255).astype(np.uint8)
+        preview[..., 3] = map_alpha
+        support = np.zeros_like(alpha)
+        report.update(relief_processing=processing, fullprint_processing={"applied": False,
+                      "reason": "map-only export; no product support, text composition or invalid-background fill"},
+                      normals_describe="Original MoGe geometry, not the final artistically refined height.",
+                      warning="Relative visual relief, not a measured scan or manufacturing millimetres.")
+        return {"height": np.ascontiguousarray(map_height, np.float32), "depth16": depth16,
+                "alpha": map_alpha, "normal": normal_encoded, "support": support,
+                "baseline": np.ascontiguousarray(map_height, np.float32),
+                "depth_png": maps["map_depth_png"], "preview_png": _png(preview, settings["dpi"], "RGBA"),
+                "alpha_png": _png(map_alpha, settings["dpi"]), "normal_png": _png(normal_encoded, settings["dpi"], "RGB"),
+                "support_png": _png(support, settings["dpi"]), "rgba": rgba.copy(), "metadata": report, **maps}
     stage("native-canonical-alpha-and-scalar-controls")
     canonical, final_valid, alpha_info = fp.canonical_height(refined, valid, alpha)
     baseline = dm.apply_relief(canonical, final_valid, alpha, mask=None,
@@ -264,7 +314,7 @@ def process_arrays(rgba, raw_depth, raw_normal, model_valid, intrinsics,
             "preview_png": _png(preview, settings["dpi"], "RGBA"),
             "alpha_png": _png(alpha, settings["dpi"]),
             "normal_png": _png(normal_encoded, settings["dpi"], "RGB"),
-            "support_png": _png(support, settings["dpi"]), "rgba": rgba.copy(), "metadata": report}
+            "support_png": _png(support, settings["dpi"]), "rgba": rgba.copy(), "metadata": report, **maps}
 
 
 def process_buffers(config_json, rgba_bytes, depth_bytes, normal_bytes, valid_bytes,
@@ -274,7 +324,7 @@ def process_buffers(config_json, rgba_bytes, depth_bytes, normal_bytes, valid_by
         raise ValueError("Need bounded JSON configuration.")
     config = json.loads(config_json)
     expected = {"width", "height", "geometry_width", "geometry_height", "da2_width", "da2_height", "options"}
-    if not isinstance(config, dict) or set(config) != expected:
+    if not isinstance(config, dict) or not expected <= set(config) or set(config) - (expected | {"output_mode"}):
         raise ValueError("Unexpected buffer configuration fields.")
     w, h = _size(config["width"], config["height"], "Source")
     gw, gh = _size(config["geometry_width"], config["geometry_height"], "Geometry")
@@ -292,7 +342,7 @@ def process_buffers(config_json, rgba_bytes, depth_bytes, normal_bytes, valid_by
         array(normal_bytes, "<f4", (gh, gw, 3), "normal"),
         array(valid_bytes, "u1", (gh, gw), "valid"),
         array(intrinsics_bytes, "<f4", (3, 3), "intrinsics"),
-        array(da2_bytes, "<f4", (dh, dw), "DA2"), config["options"])
+        array(da2_bytes, "<f4", (dh, dw), "DA2"), config["options"], output_mode=config.get("output_mode", "full"))
 
 
 def prepare_model_inputs(rgba, geometry_side=490, da2_side=224):
@@ -537,11 +587,14 @@ def process_packed_buffers(config_json, rgba_bytes, depth_bytes, normal_bytes, v
                            intrinsics_bytes, da2_bytes):
     result = process_buffers(config_json, rgba_bytes, depth_bytes, normal_bytes, valid_bytes,
                              intrinsics_bytes, da2_bytes)
-    packed = {name: result[name] for name in ("depth_png", "preview_png", "alpha_png", "normal_png", "support_png")}
+    packed = {name: result[name] for name in ("depth_png", "preview_png", "alpha_png", "normal_png", "support_png",
+                                             "map_depth_png", "moge_depth_png", "da2_depth_png")}
     for array_name, buffer_name, dtype in (("height", "height_f32", "<f4"),
         ("baseline", "baseline_f32", "<f4"), ("depth16", "depth16_u16", "<u2"),
         ("alpha", "alpha_u8", "u1"), ("normal", "normal_rgb_u8", "u1"), ("support", "support_u8", "u1"),
-        ("rgba", "rgba_u8", "u1")):
+        ("rgba", "rgba_u8", "u1"),
+        ("map_height", "map-height_f32", "<f4"), ("moge_height", "moge-height_f32", "<f4"), ("da2_height", "da2-height_f32", "<f4"),
+        ("map_alpha", "map-alpha_u8", "u1"), ("moge_alpha", "moge-alpha_u8", "u1"), ("da2_alpha", "da2-alpha_u8", "u1")):
         packed[buffer_name] = np.ascontiguousarray(result[array_name], dtype=dtype).tobytes()
     packed["metadata_json"] = json.dumps(result["metadata"], allow_nan=False)
     return packed

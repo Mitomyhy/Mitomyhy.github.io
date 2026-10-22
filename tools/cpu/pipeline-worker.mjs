@@ -1,11 +1,18 @@
 import {ORT_VERSION,PYODIDE_VERSION,PROFILE,check,size,validateManifest} from './contracts.mjs';
 import {loadPinnedModel,loadPinnedText} from './model-cache.mjs';
-import {BRIDGE_PYTHON} from './bridge-python.mjs';
+import {BRIDGE_PYTHON} from './bridge-python.mjs?v=20261022-flow-r5';
 
-let used=false;
+let used=false, running=false, composeCached=null;
 self.onmessage=async({data})=>{
-  if(used)return;used=true;
-  const {id,manifestURL,rgba,width,height,productType,options,threads}=data||{};
+  if(data?.command==='compose'){
+    if(!composeCached||running){self.postMessage({id:data.id,type:'error',code:'CPU_NO_CACHED_MAPS',message:'Chưa có dữ liệu AI để tạo 3D; hãy tạo map trước.'});return;}
+    running=true;
+    try{await composeCached(data);}catch(error){self.postMessage({id:data.id,type:'error',code:'CPU_COMPOSITION_FAILED',message:String(error?.message||error)});}
+    finally{running=false;}
+    return;
+  }
+  if(used)return;used=true;running=true;
+  const {id,manifestURL,rgba,width,height,productType,options,threads,outputMode='full'}=data||{};
   const send=(type,values={})=>self.postMessage({id,type,...values});
   const timings={}, modelReports={};let pyodide=null,session=null;
   async function stage(phase,run){send('phase',{phase});const start=performance.now();const result=await run();timings[phase]=performance.now()-start;send('timing',{timings:{...timings}});return result;}
@@ -43,6 +50,7 @@ self.onmessage=async({data})=>{
   try{
     size(width,height);check(rgba instanceof ArrayBuffer&&rgba.byteLength===width*height*4,'Nguồn RGBA không hợp lệ.');
     check(['acrylic','ceramic_circle','ceramic_heart'].includes(productType),'Loại sản phẩm không hợp lệ.');
+    check(['maps','full'].includes(outputMode),'Output mode không hợp lệ.');
     check([1,2,4].includes(threads)&&(threads===1||self.crossOriginIsolated),'Nhiều luồng cần crossOriginIsolated.');
     check(options&&typeof options==='object'&&!Array.isArray(options)&&JSON.stringify(options).length<100_000,'Tùy chọn xử lý không hợp lệ.');
     const base=new URL(manifestURL,self.location.href).href;
@@ -71,21 +79,39 @@ self.onmessage=async({data})=>{
     const camera=await stage('native-scipy-camera-recovery',()=>pyCall('mitom_recover',{width:490,height:490}));
     for(const name of ['points','normal','mask','metric_scale'])pyodide.FS.unlink(`/mitom_work/raw-${name}.f32`);
     await infer(ort,'da2','prep-da2_f32',manifest.models.da2,base,manifest.modelOrigins||[]);
-    const metadata=await stage('native-relief-composition',()=>pyCall('mitom_compose',{options,product_type:productType}));
-    const w=preparation.width,h=preparation.height,n=w*h;
-    const result={width:w,height:h,depth:readFloat('final-height_f32'),baseline:readFloat('final-baseline_f32'),
+    async function produce(mode,settings,type,inferenceReused=false){
+      check(['maps','full'].includes(mode)&&['acrylic','ceramic_circle','ceramic_heart'].includes(type),'Chế độ hoặc sản phẩm không hợp lệ.');
+      check(settings&&typeof settings==='object'&&!Array.isArray(settings)&&JSON.stringify(settings).length<100_000,'Tùy chọn xử lý không hợp lệ.');
+      const metadata=await stage(mode==='maps'?'native-depth-map-export':'native-relief-composition',()=>pyCall('mitom_compose',{options:settings,product_type:type,output_mode:mode}));
+      const w=preparation.width,h=preparation.height,n=w*h;
+      const result={width:w,height:h,depth:readFloat('final-height_f32'),baseline:readFloat('final-baseline_f32'),
       depth16:new Uint16Array(readBytes('final-depth16_u16').buffer),alpha:readBytes('final-alpha_u8'),
       normal:readBytes('final-normal_rgb_u8'),support:readBytes('final-support_u8'),rgba:readBytes('final-rgba_u8'),
       depth16PNG:readBytes('final-depth_png'),previewPNG:readBytes('final-preview_png'),alphaPNG:readBytes('final-alpha_png'),
       normalPNG:readBytes('final-normal_png'),supportPNG:readBytes('final-support_png'),
+      mapDepth:readFloat('final-map-height_f32'),mogeDepth:readFloat('final-moge-height_f32'),da2Depth:readFloat('final-da2-height_f32'),
+      mapAlpha:readBytes('final-map-alpha_u8'),mogeAlpha:readBytes('final-moge-alpha_u8'),da2Alpha:readBytes('final-da2-alpha_u8'),
+      mapDepth16PNG:readBytes('final-map_depth_png'),mogeDepth16PNG:readBytes('final-moge_depth_png'),da2Depth16PNG:readBytes('final-da2_depth_png'),
       metadata:{...metadata,profile:PROFILE,models:modelReports,preparation,camera,timings,threads,
         runtime:{onnx:ORT_VERSION,python:PYODIDE_VERSION,provider:'wasm-cpu'},
-        fullNativeComposition:true,nativeUHDInference:false,photoshopRequired:false,artworkUploaded:false}};
-    check(result.depth.length===n&&result.alpha.length===n&&result.rgba.length===n*4&&result.support.length===n&&result.depth16.length===n&&result.normal.length===n*3,'Kích thước kết quả không khớp ảnh nguồn đã xử lý.');
-    check(result.depth.every(v=>v>=0&&v<=1),'Height cuối ngoài0..1.');
-    const transfers=[...new Set(Object.values(result).filter(ArrayBuffer.isView).map(value=>value.buffer))];
-    check(transfers.every(value=>value instanceof ArrayBuffer),'Không chuyển shared WASM memory sang giao diện.');
-    send('phase',{phase:'complete'});self.postMessage({id,type:'result',result},transfers);
+        outputMode:mode,inferenceReused,fullNativeComposition:mode==='full',nativeDepthComposition:true,nativeUHDInference:false,photoshopRequired:false,artworkUploaded:false}};
+      check(result.depth.length===n&&result.alpha.length===n&&result.rgba.length===n*4&&result.support.length===n&&result.depth16.length===n&&result.normal.length===n*3,'Kích thước kết quả không khớp ảnh nguồn đã xử lý.');
+      check(result.depth.every(v=>v>=0&&v<=1),'Height cuối ngoài0..1.');
+      for(const prefix of ['map','moge','da2']){
+        check(result[prefix+'Depth'].length===n&&result[prefix+'Alpha'].length===n,'Kích thước map không khớp canvas.');
+        check(result[prefix+'Depth'].every(v=>v>=0&&v<=1),'Map ngoài0..1.');
+      }
+      return result;
+    }
+    function publish(result,commandId){
+      const transfers=[...new Set(Object.values(result).filter(ArrayBuffer.isView).map(value=>value.buffer))];
+      check(transfers.every(value=>value instanceof ArrayBuffer),'Không chuyển shared WASM memory sang giao diện.');
+      send('phase',{phase:'complete'});self.postMessage({id:commandId,type:'result',result,cacheReady:true},transfers);
+    }
+    // Only the reviewed native composition may be replayed. AI outputs remain
+    // in this worker; there is no second model inference or artwork upload.
+    composeCached=async command=>publish(await produce('full',command.options,command.productType||productType,true),command.id);
+    publish(await produce(outputMode,options,productType),id);
   }catch(error){send('error',{message:String(error?.message||error),code:'CPU_FULL_FLOW_FAILED'});}
-  finally{if(session)try{await session.release();}catch{}}
+  finally{running=false;if(session)try{await session.release();}catch{}}
 };

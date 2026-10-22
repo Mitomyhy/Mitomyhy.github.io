@@ -4,11 +4,13 @@
  * See assets/sky-moon/SOURCES.md for attribution and model limitations. */
 import {getMoonIllumination, getMoonPosition} from './assets/sky-moon/suncalc-2.1.1.js';
 import OfflineGeocoder from './assets/sky-moon/skymoon-offline-geocoder.js';
+import {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-flow-r5';
+export {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-flow-r5';
 
 const ASSETS = new URL('./assets/sky-moon/', import.meta.url);
 const RAD = Math.PI / 180, DAY = 86400000;
 const PHASE_NAMES = ['New Moon', 'Waxing Crescent', 'First Quarter', 'Waxing Gibbous', 'Full Moon', 'Waning Gibbous', 'Last Quarter', 'Waning Crescent'];
-let catalogPromise, placePromise, texturePromise;
+let catalogPromise, placePromise, texturePromise, zonePromise;
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
 const wrap = (x) => ((x % 360) + 360) % 360;
 
@@ -68,6 +70,13 @@ export function projectEquatorial(ra, dec, lat, lst) {
     z: Math.sin(p) * Math.sin(d) + Math.cos(p) * Math.cos(d) * Math.cos(h)};
 }
 
+/** Same upper-hemisphere stereographic projection family as the panel.
+ * The zenith is the centre; the geometric horizon has radius one. */
+export function projectStereographic(ra, dec, lat, lst) {
+  const p=projectEquatorial(ra,dec,lat,lst), denominator=1+p.z;
+  return {x:p.x/denominator,y:p.y/denominator,z:p.z};
+}
+
 async function boundedAsset(name, maxBytes = 2 * 1024 * 1024) {
   const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 45000);
   try {
@@ -125,7 +134,8 @@ function lineBetween(ctx, a, b, project, cx, cy, radius) {
 }
 
 export async function renderSky(canvas, options = {}) {
-  const date = parseInstant(options.date, options.time ?? '12:00', options.utcOffset ?? 0);
+  const date = options.instant ? new Date(options.instant) : parseInstant(parseCivilDate(options.date,options.dateOrder??'MDY').iso, options.time ?? '12:00', options.utcOffset ?? 0);
+  if(!Number.isFinite(date.getTime())) throw Error('Thời điểm Sky Star không hợp lệ.');
   const lat = finite(options.lat, -90, 90, 'Latitude'), lon = finite(options.lon, -180, 180, 'Longitude');
   const size = integer(options.size ?? 2400, 256, 4096, 'Kích thước');
   const bg = color(options.background, '#080d18'), star = color(options.starColor, '#ffffff'), line = color(options.lineColor, '#6686a8');
@@ -133,11 +143,13 @@ export async function renderSky(canvas, options = {}) {
   const data = await catalogs(), ctx = context(canvas, size, size), center = size / 2, radius = size * .455;
   if (!options.transparent) { ctx.fillStyle = bg; ctx.fillRect(0, 0, size, size); }
   const lst = wrap(meanSiderealDegreesUtc(date) + lon);
-  const project = (ra, dec) => { const p = precessJ2000(ra, dec, date); return projectEquatorial(p[0], p[1], lat, lst); };
+  const projection=options.projection??'stereographic';
+  if(!['stereographic','orthographic'].includes(projection)) throw Error('Phép chiếu Sky Star không hợp lệ.');
+  const project = (ra, dec) => { const p = precessJ2000(ra, dec, date); return (projection==='stereographic'?projectStereographic:projectEquatorial)(p[0], p[1], lat, lst); };
   ctx.save(); ctx.beginPath(); ctx.arc(center, center, radius, 0, Math.PI * 2); ctx.clip();
   if (options.grid) {
     ctx.strokeStyle = line; ctx.globalAlpha = .3; ctx.lineWidth = size / 2400;
-    [0, 30, 60].forEach(alt => { ctx.beginPath(); ctx.arc(center, center, radius * Math.cos(alt * RAD), 0, Math.PI * 2); ctx.stroke(); });
+    [0, 30, 60].forEach(alt => { ctx.beginPath(); ctx.arc(center, center, radius * (projection==='stereographic'?Math.cos(alt*RAD)/(1+Math.sin(alt*RAD)):Math.cos(alt * RAD)), 0, Math.PI * 2); ctx.stroke(); });
     for (let a = 0; a < 360; a += 30) { ctx.beginPath(); ctx.moveTo(center, center); ctx.lineTo(center + radius * Math.sin(a * RAD), center - radius * Math.cos(a * RAD)); ctx.stroke(); }
     ctx.globalAlpha = 1;
   }
@@ -159,16 +171,50 @@ export async function renderSky(canvas, options = {}) {
     ctx.fillStyle = star; ctx.font = `${Math.round(size * .017)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     [['N', center, center - radius - size * .02], ['S', center, center + radius + size * .02], ['E', center - radius - size * .02, center], ['W', center + radius + size * .02, center]].forEach(v => ctx.fillText(...v));
   }
-  return {kind: 'sky', utc: date.toISOString(), lat, lon, utcOffset: Number(options.utcOffset ?? 0), width: size, height: size, starsRendered: count, projection: 'orthographic-upper-hemisphere', catalog: 'D3-Celestial stars.6 (J2000)', localSiderealDegrees: lst,
-    model: 'J2000 catalog + IAU-1976 precession + GMST; geometric horizon, no refraction/proper-motion', note: 'Web projection differs from panel stereographic rendering; not a random decorative star field.'};
+  return {kind: 'sky', utc: date.toISOString(), lat, lon, utcOffset: Number(options.utcOffset ?? 0), width: size, height: size, starsRendered: count, projection: `${projection}-upper-hemisphere`, catalog: 'D3-Celestial stars.6 (J2000)', localSiderealDegrees: lst,
+    model: 'J2000 catalog + IAU-1976 precession + GMST; geometric horizon, no refraction/proper-motion', note: 'Same panel star catalog and stereographic projection family; browser renderer is not a Photoshop action or pixel-identical D3-Celestial capture.'};
 }
 
-export function moonMetadata(date, time = '12:00', utcOffset = 0, lat = 51.4809181, lon = -.0207105) {
-  const instant = parseInstant(date, time, utcOffset), latitude = finite(lat, -90, 90, 'Latitude'), longitude = finite(lon, -180, 180, 'Longitude');
+/** Port of the panel's local Sky effect LUT + four-neighbour unsharp mask.
+ * Reapply operates on an unchanged raw canvas; it never compounds effects. */
+export function applySkyAppearance(target, raw, options={}) {
+  const ctx=context(target,raw.width,raw.height);ctx.drawImage(raw,0,0);
+  const image=ctx.getImageData(0,0,target.width,target.height), src=image.data;
+  for(let at=0;at<src.length;at+=4) {
+    let gray=Math.round(.299*src[at]+.587*src[at+1]+.114*src[at+2]);
+    if(options.effect!==false) {let value=clamp((gray-10)/235,0,1);value=Math.pow(value,1/1.2);gray=Math.round(clamp(((value-.5)*1.15+.5)*1.05,0,1)*255);src[at]=src[at+1]=src[at+2]=gray;}
+    if(options.transparent) src[at+3]=gray;
+  }
+  if(options.effect!==false) {
+    const copy=new Uint8ClampedArray(src), width=target.width;
+    for(let y=1;y<target.height-1;y++)for(let x=1;x<width-1;x++){const at=(y*width+x)*4;for(let c=0;c<3;c++)src[at+c]=clamp(copy[at+c]*2.2-.3*(copy[at-width*4+c]+copy[at-4+c]+copy[at+4+c]+copy[at+width*4+c]),0,255);}
+  }
+  ctx.putImageData(image,0,0);return target;
+}
+
+export function moonMetadata(date, time = '12:00', utcOffset = 0, lat = 51.4809181, lon = -.0207105, exactInstant=null) {
+  const instant = exactInstant ? new Date(exactInstant) : parseInstant(date, time, utcOffset), latitude = finite(lat, -90, 90, 'Latitude'), longitude = finite(lon, -180, 180, 'Longitude');
+  if(!Number.isFinite(instant.getTime())) throw Error('Thời điểm Moon Phase không hợp lệ.');
   const illumination = getMoonIllumination(instant), position = getMoonPosition(instant, latitude, longitude);
   return {date, utc: instant.toISOString(), illumination: illumination.fraction * 100, fraction: illumination.fraction, phase: illumination.phase,
-    phaseName: PHASE_NAMES[Math.round(illumination.phase * 8) % 8], waxing: illumination.waxing, brightLimbAngle: illumination.angle,
+    phaseName: moonPhaseName(illumination.phase), waxing: illumination.waxing, brightLimbAngle: illumination.angle,
     parallacticAngle: position.parallacticAngle, distanceKm: position.distance, altitude: position.altitude, azimuth: position.azimuth, model: 'SunCalc 2.1.1 / Meeus'};
+}
+
+/** Do not label an entire ~3.7-day nearest-eighth band "Full Moon". The
+ * principal phase names apply only close to the corresponding phase instant;
+ * crescent/gibbous remain meaningful on neighbouring high-illumination dates. */
+export function moonPhaseName(phase) {
+  phase=finite(phase,0,1,'Pha Mặt Trăng');
+  if(phase<=.01||phase>=.99)return PHASE_NAMES[0];
+  if(Math.abs(phase-.25)<=.01)return PHASE_NAMES[2];
+  if(Math.abs(phase-.5)<=.01)return PHASE_NAMES[4];
+  if(Math.abs(phase-.75)<=.01)return PHASE_NAMES[6];
+  return phase<.25?PHASE_NAMES[1]:phase<.5?PHASE_NAMES[3]:phase<.75?PHASE_NAMES[5]:PHASE_NAMES[7];
+}
+
+function checkCancelled(signal) {
+  if(signal?.aborted){const error=Error('Đã hủy tạo Moon Phase; không xuất kết quả dở dang.');error.code='CANCELLED';throw error;}
 }
 
 function texture() {
@@ -187,12 +233,15 @@ function texture() {
 
 /** North-up near-side texture plus physically calculated illuminated hemisphere.
  * Appearance is illustrative: no libration, lunar-axis rotation, eclipse or relief. */
-export function shadeMoonPixels(size, meta, surface) {
+export function shadeMoonPixels(size, meta, surface, options={}) {
   integer(size, 1, 1200, 'Size mỗi moon');
   finite(meta?.fraction, 0, 1, 'Tỷ lệ chiếu sáng'); finite(meta?.brightLimbAngle, -360, 360, 'Góc chiếu sáng');
   if (!surface || !Number.isInteger(surface.width) || !Number.isInteger(surface.height) || surface.width < 1 || surface.height < 1 || surface.width * surface.height > 8388608 || !surface.pixels || surface.pixels.length !== surface.width * surface.height * 4) throw new Error('Texture Moon không hợp lệ.');
   const bytes = new Uint8ClampedArray(size * size * 4), lz = clamp(2 * meta.fraction - 1, -1, 1);
-  const planar = Math.sqrt(Math.max(0, 1 - lz * lz)), angle = meta.brightLimbAngle * RAD;
+  const orientation=options.orientation??'north', appearance=options.appearance??'natural';
+  if(!['north','observer','phase'].includes(orientation)||!['natural','warm','grayscale'].includes(appearance))throw Error('Kiểu hiển thị Moon không hợp lệ.');
+  const degrees=orientation==='observer'?meta.brightLimbAngle-Number(meta.parallacticAngle??0):orientation==='phase'?(meta.waxing?-90:90):meta.brightLimbAngle;
+  const planar = Math.sqrt(Math.max(0, 1 - lz * lz)), angle = degrees * RAD;
   const lx = -Math.sin(angle) * planar, ly = Math.cos(angle) * planar;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const nx = (x + .5 - size / 2) / (size / 2), ny = (size / 2 - y - .5) / (size / 2), rr = nx * nx + ny * ny;
@@ -204,35 +253,44 @@ export function shadeMoonPixels(size, meta, surface) {
     const sample = (ty * surface.width + tx) * 4, at = (y * size + x) * 4;
     const light = dot > 0 ? .08 + .92 * Math.pow(dot, .32) : .018;
     bytes[at] = surface.pixels[sample] * light; bytes[at + 1] = surface.pixels[sample + 1] * light; bytes[at + 2] = surface.pixels[sample + 2] * light;
+    if(appearance!=='natural') {
+      const gray=.299*bytes[at]+.587*bytes[at+1]+.114*bytes[at+2];
+      bytes[at]=gray;bytes[at+1]=gray*(appearance==='warm'?.94:1);bytes[at+2]=gray*(appearance==='warm'?.69:1);
+    }
     bytes[at + 3] = Math.round(255 * clamp((1 - Math.sqrt(rr)) * size / 2, 0, 1));
   }
   return bytes;
 }
 
 export async function renderMoons(canvas, options = {}) {
-  let dates = Array.isArray(options.dates) ? options.dates : String(options.dates ?? options.date ?? '').split(/[\n\r,;]+/).map(s => s.trim()).filter(Boolean);
-  if (!dates.length || dates.length > 60) throw new Error('Nhập từ 1 đến 60 ngày YYYY-MM-DD, mỗi ngày một dòng.');
+  checkCancelled(options.signal);
+  const civilDates=parseDateList(options.dates??options.date??'',options.dateOrder??'MDY'),dates=civilDates.map(date=>date.iso);
+  if(options.instants!==undefined&&(!Array.isArray(options.instants)||options.instants.length!==dates.length||options.instants.some(value=>!Number.isFinite(new Date(value).getTime()))))throw Error('Danh sách thời điểm không khớp các ngày Moon Phase.');
   const columns = integer(options.columns ?? 3, 1, 12, 'Số cột'), size = integer(options.size ?? 400, 100, 1200, 'Size mỗi moon');
   const time = options.time ?? '12:00', offset = options.utcOffset ?? 0, lat = options.lat ?? 51.4809181, lon = options.lon ?? -.0207105;
-  const items = dates.map(date => moonMetadata(date, time, offset, lat, lon));
-  const cols = Math.min(columns, items.length), rows = Math.ceil(items.length / cols), pad = Math.round(size * .11), labelH = options.showLabels === false ? 0 : Math.round(size * .19);
-  const w = cols * (size + pad) + pad, h = rows * (size + pad + labelH) + pad;
+  const items = dates.map((date,i) => ({...moonMetadata(date, time, offset, lat, lon,options.instants?.[i]),display:civilDates[i].display}));
+  const cols = Math.min(columns, items.length), rows = Math.ceil(items.length / cols), labelH = options.showLabels === false ? 0 : Math.max(34,Math.round(size*.13));
+  const w = cols*size, h = rows*(size+labelH);
   if (w * h > 16777216 || w > 8192 || h > 8192) throw new Error('PNG ghép quá lớn. Giảm size hoặc số ngày (tối đa 16 megapixel).');
   const bg = color(options.background, '#080d18'), label = color(options.labelColor, '#d8deec');
-  const surface = await texture(), ctx = context(canvas, w, h);
+  const surface = await texture();checkCancelled(options.signal);const ctx = context(canvas, w, h);
   if (!options.transparent) { ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h); }
   const tile = document.createElement('canvas'); tile.width = size; tile.height = size;
   const tctx = tile.getContext('2d');
   for (let i = 0; i < items.length; i++) {
-    const x = pad + i % cols * (size + pad), y = pad + Math.floor(i / cols) * (size + pad + labelH);
-    const image = tctx.createImageData(size, size); image.data.set(shadeMoonPixels(size, items[i], surface)); tctx.putImageData(image, 0, 0); ctx.drawImage(tile, x, y);
+    checkCancelled(options.signal);
+    const x = i % cols * size, y = Math.floor(i / cols) * (size+labelH);
+    const image = tctx.createImageData(size, size); image.data.set(shadeMoonPixels(size, items[i], surface,{appearance:options.appearance??'warm',orientation:options.orientation??'north'})); tctx.putImageData(image, 0, 0);
+    const individual=document.createElement('canvas');individual.width=size;individual.height=size;individual.getContext('2d').drawImage(tile,0,0);
+    items[i].canvas=individual;ctx.drawImage(tile,x+size*.03,y+size*.03,size*.94,size*.94);
     if (labelH) { ctx.fillStyle = label; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.font = `${Math.max(12, Math.round(size * .048))}px sans-serif`;
-      ctx.fillText(items[i].date, x + size / 2, y + size + size * .025); ctx.font = `${Math.max(10, Math.round(size * .037))}px sans-serif`;
-      ctx.fillText(`${items[i].illumination.toFixed(1)}% · ${items[i].phaseName}`, x + size / 2, y + size + size * .095); }
+      ctx.fillText(items[i].display, x + size / 2, y + size + size * .01);ctx.font=`${Math.max(10,Math.round(size*.03))}px sans-serif`;
+      ctx.fillText(`${items[i].illumination.toFixed(1)}% · ${items[i].phaseName}`,x+size/2,y+size+Math.max(18,size*.075));}
     await new Promise(resolve => setTimeout(resolve, 0));
   }
+  checkCancelled(options.signal);
   return {kind: 'moon', items, width: w, height: h, model: 'SunCalc 2.1.1 / Meeus', texture: "NASA's Scientific Visualization Studio / LROC",
-    note: 'Illumination/phase calculated for exact UTC. North-up illustrative texture: no libration, lunar-axis rotation or eclipses. Different engine from legacy panel API.'};
+    note: 'Local computed PNG, not the panel provider 16-image lookup. No libration, lunar-axis rotation or eclipses; warm is an appearance preset, not different astronomical data.'};
 }
 
 async function places() {
@@ -252,12 +310,26 @@ export async function searchPlace(query) {
   const coordinate = OfflineGeocoder.parseCoordinates(query);
   if (coordinate?.error) throw new Error(coordinate.error);
   if (coordinate) return {status: 'matched', result: coordinate};
-  return (await places())(query);
+  const found=(await places())(query),zones=await cityTimezones();
+  const enrich=place=>({...place,timeZone:zones.get(place.geonameId)??null});
+  if(found.result)found.result=enrich(found.result);if(found.candidates)found.candidates=found.candidates.map(enrich);
+  return found;
+}
+
+async function cityTimezones() {
+  if(!zonePromise)zonePromise=(async()=>{
+    const bytes=await boundedAsset('city-timezones.json.gz',2*1024*1024),stream=new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    const reader=stream.getReader(),chunks=[];let size=0;
+    while(true){const next=await reader.read();if(next.done)break;size+=next.value.byteLength;if(size>8*1024*1024){await reader.cancel();throw Error('Dữ liệu múi giờ quá lớn.');}chunks.push(next.value);}
+    const data=JSON.parse(await new Blob(chunks).text());
+    if(data.schema!==1||!Array.isArray(data.zones)||data.zones.length>1000||!Array.isArray(data.cities)||data.cities.length>500000)throw Error('Dữ liệu múi giờ thành phố không hợp lệ.');
+    return new Map(data.cities.map(row=>[row[0],data.zones[row[1]]]));
+  })().catch(error=>{zonePromise=null;throw error;});return zonePromise;
 }
 
 export function getCapabilities() {
   return {sky: true, moon: true, placeSearch: 'bundled-GeoNames-exact-match', localOnly: true, browserOnly: true, remoteApiRequired: false,
     dateRange: [1900, 2100], utcOffsetUnit: 'hours-east-of-UTC', moonEngine: 'SunCalc 2.1.1', moonOrientation: 'north-up-illustrative-no-libration',
-    skyProjection: 'orthographic-upper-hemisphere', catalog: 'same bundled panel D3-Celestial stars.6', pixelLimit: 16777216};
+    skyProjection: 'stereographic-upper-hemisphere', cityTimezone:'GeoNames city ID / browser Intl IANA DST', catalog: 'same bundled panel D3-Celestial stars.6', pixelLimit: 16777216};
 }
 export const getcapabilities = getCapabilities;

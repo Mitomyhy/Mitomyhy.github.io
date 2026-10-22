@@ -1,5 +1,6 @@
-import { checkSize, bytesDataURL } from './depth-pixels.js';
-import { createCPUPipeline } from './cpu/client.mjs';
+import { checkSize, bytesDataURL, encodeGray16PNG } from './depth-pixels.js?v=20261022-flow-r5';
+import { createCPUPipeline } from './cpu/client.mjs?v=20261022-flow-r5';
+import { createLocalDepthEdits } from './depth-local-edit.js?v=20261022-flow-r5';
 
 const TYPES = new Set(['acrylic', 'ceramic_circle', 'ceramic_heart']);
 const TEMPLATE_URL = new URL('./assets/templates/template-descriptors.json', import.meta.url);
@@ -36,7 +37,7 @@ async function rendererFactory(canvas, settings) {
 }
 
 function png16(bytes, width, height) {
-  if (!(bytes instanceof Uint8Array) || bytes.length < 33 || bytes[0]!==137 || bytes[1]!==80 || bytes[2]!==78 || bytes[3]!==71 || bytes[24]!==16 || bytes[25]!==0)
+  if (!(bytes instanceof Uint8Array) || bytes.length < 33 || bytes[0]!==137 || bytes[1]!==80 || bytes[2]!==78 || bytes[3]!==71 || bytes[24]!==16 || ![0,4].includes(bytes[25]))
     throw Error('CPU chưa trả về PNG depth grayscale 16 bit hợp lệ.');
   const view = new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);
   if (view.getUint32(16)!==width || view.getUint32(20)!==height) throw Error('PNG depth và kết quả không cùng canvas.');
@@ -48,7 +49,7 @@ export function createDepthTool(canvas, options={}) {
   if (!canvas?.ownerDocument) throw Error('Cần canvas để mở 3D tool.');
   const document=canvas.ownerDocument, onStatus=options.onStatus||(()=>{}), onProgress=options.onProgress||(()=>{});
   const makeRenderer=options.rendererFactory||rendererFactory, readImage=options.readPixels||(file=>decodeImage(file,document));
-  let viewer=null, descriptor=null, productType='acrylic', artwork=null, source=null, result=null;
+  let viewer=null, descriptor=null, productType='acrylic', artwork=null, source=null, result=null, edits=null, resultMode=null;
   let imageName='', busy=false, disposed=false, version=0, imageSelection=0, queue=Promise.resolve(), templateCatalog=null, shapeBitmap=null;
   let appearance={rimBoost:1.2,reliefBoost:6,gloss:.65};
   const pipeline=(options.pipelineFactory||createCPUPipeline)({manifestURL:MANIFEST_URL,onProgress(value){
@@ -61,7 +62,7 @@ export function createDepthTool(canvas, options={}) {
   }});
   const check=()=>{if(disposed)throw Error('3D tool đã đóng.');};
   const noBusy=()=>{check();if(busy)throw Error('Đang Generate; bấm Hủy nếu muốn thay template hoặc artwork.');};
-  const clearResult=()=>{result=null;version++;};
+  const clearResult=()=>{pipeline.cancel();result=null;edits=null;resultMode=null;viewer?.dispose();viewer=null;version++;};
   function pixelsCanvas(data) {
     const out=document.createElement('canvas');out.width=data.width;out.height=data.height;
     out.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(data.rgba),data.width,data.height),0,0);return out;
@@ -76,13 +77,18 @@ export function createDepthTool(canvas, options={}) {
     out.width=out.height=1;return alpha;
   }
   async function draw(recreate=false) {
+    const token=version;
     queue=queue.catch(()=>{}).then(async()=>{
-      check();if(recreate&&viewer){viewer.dispose();viewer=null;}
-      if(!viewer)viewer=await makeRenderer(canvas,{product_type:productType,appearance,maxGrid:384});
-      check();if(!source)return;
-      const data=result?{width:result.width,height:result.height,rgba:result.rgba}:source;
-      const depth=result?.depth||new Float32Array(data.width*data.height).fill(.5);
-      viewer.setData({...data,depth,shape_alpha:currentShape(data.width,data.height),support:result?.support,product_type:productType});
+      check();if(token!==version||!result)return;
+      if(recreate&&viewer){viewer.dispose();viewer=null;}
+      if(!viewer){
+        const candidate=await makeRenderer(canvas,{product_type:productType,appearance,maxGrid:384});
+        if(disposed||token!==version||!result){candidate.dispose();throw Object.assign(Error('Đã đổi nguồn hoặc đóng bộ xem 3D.'),{code:'CANCELLED'});}
+        viewer=candidate;
+      }
+      check();if(token!==version||!result)return;
+      const data=edits?.current()||result;
+      viewer.setData({...data,shape_alpha:currentShape(data.width,data.height),product_type:productType});
     });return queue;
   }
   function fitArtwork() {
@@ -121,43 +127,83 @@ export function createDepthTool(canvas, options={}) {
       if(bitmap.width!==next.width||bitmap.height!==next.height){bitmap.close();throw Error('Shape gốc sai canvas.');}
     }
     if(version!==token||disposed){bitmap?.close();return api.state();}
-    shapeBitmap?.close();shapeBitmap=bitmap;descriptor=next;productType=type;clearResult();fitArtwork();await draw(true);
+    shapeBitmap?.close();shapeBitmap=bitmap;descriptor=next;productType=type;clearResult();fitArtwork();
+    viewer?.dispose();viewer=null;
     onStatus(`Đã mở template ${type==='acrylic'?'Acrylic':type==='ceramic_circle'?'Circle':'Heart'} · ${next.width} × ${next.height} · 300 DPI. ${artwork?'Artwork được đặt lại; cần Generate mới.':'Chọn artwork tiếp theo.'}`);
     return api.state();
   }
-  function ready(){check();if(!result||!viewer)throw Error('Generate kết quả hiện tại trước khi xuất.');}
+  function ready(){check();if(!result)throw Error('Generate map hoặc nhập PNG depth trước khi xuất.');}
+  function adopt(value,mode,rebase=false){
+    const {width,height,depth,rgba,support}=value||{},depth16PNG=value?.depth16PNG||value?.depthPNG;
+    if(!Number.isInteger(width)||!Number.isInteger(height)||Math.min(width,height)<8||Math.max(width,height)>2048)throw Error('CPU trả canvas ngoài giới hạn 2048.');
+    const n=width*height;
+    if(!(depth instanceof Float32Array)||depth.length!==n||!depth.every(v=>Number.isFinite(v)&&v>=0&&v<=1)||
+      !(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray)||rgba.length!==n*4||
+      (support!==undefined&&(!(support instanceof Uint8Array)||support.length!==n)))throw Error('CPU trả dữ liệu không hợp lệ; không xuất bản thay thế.');
+    for(const key of ['alpha','mapAlpha','mogeAlpha','da2Alpha'])if(value[key]!==undefined&&(!(value[key] instanceof Uint8Array||value[key] instanceof Uint8ClampedArray)||value[key].length!==n))throw Error('CPU trả alpha không hợp lệ.');
+    for(const key of ['mapDepth','mogeDepth','da2Depth'])if(value[key]!==undefined&&(!(value[key] instanceof Float32Array)||value[key].length!==n||!value[key].every(v=>Number.isFinite(v)&&v>=0&&v<=1)))throw Error('CPU trả map không hợp lệ.');
+    png16(depth16PNG,width,height);const next={...value,depth16PNG,rgba:new Uint8ClampedArray(rgba)};
+    let nextEdits=edits;if(rebase&&nextEdits)nextEdits.rebase(next);else nextEdits=createLocalDepthEdits(next,document);
+    result=next;edits=nextEdits;resultMode=mode;
+  }
+  function mapData(kind='depth'){
+    ready();const current=edits?.current()||result;
+    if(kind==='depth')return{depth:current.depth,alpha:current.alpha||result.mapAlpha||null,width:result.width,height:result.height};
+    if(kind==='map'){
+      const depth=current.mapDepth||result.mapDepth||current.depth;
+      return{depth,alpha:result.mapAlpha||current.alpha||null,width:result.width,height:result.height};
+    }
+    const field=kind==='moge'?'moge':kind==='da2'?'da2':null;
+    if(!field||!(result[field+'Depth'] instanceof Float32Array))throw Error('Chưa có map '+kind+' ở lượt này.');
+    return{depth:result[field+'Depth'],alpha:result[field+'Alpha']||null,width:result.width,height:result.height};
+  }
   const api={
     openTemplate:loadTemplate,
     async loadImage(file){noBusy();const selection=++imageSelection;if(!descriptor)await loadTemplate(productType);check();
       if(selection!==imageSelection||!descriptor)return api.state();const token=++version,data=await readImage(file);check();
       if(token!==version||selection!==imageSelection)return api.state();checkSize(data.width,data.height);
       if(!data.rgba||data.rgba.length!==data.width*data.height*4||!data.rgba.some((v,i)=>i%4===3&&v>0))throw Error('Artwork rỗng hoặc không hợp lệ.');
-      artwork={width:data.width,height:data.height,rgba:new Uint8ClampedArray(data.rgba)};imageName=String(file.name||'artwork');clearResult();fitArtwork();await draw();
-      onStatus('Đã đặt artwork vào In · contain ở giữa canvas, không mô phỏng PSD warp. Bấm Generate.');return api.state();},
-    async generate(settings={}){noBusy();if(!artwork||!source)throw Error('Mở template và chọn artwork trước.');
-      busy=true;const token=++version;result=null;
+      artwork={width:data.width,height:data.height,rgba:new Uint8ClampedArray(data.rgba)};imageName=String(file.name||'artwork');clearResult();fitArtwork();
+      onStatus('Artwork đã hiện trên canvas. Tạo PNG map trước; xem / xuất 3D là bước riêng.');return api.state();},
+    async generate(settings={},mode='full'){noBusy();if(!artwork||!source)throw Error('Mở template và chọn artwork trước.');
+      if(!['maps','full'].includes(mode))throw Error('Chọn map hoặc workflow 3D.');
+      busy=true;const token=++version;result=null;edits=null;viewer?.dispose();viewer=null;
       try {
-        const value=await pipeline.run({rgba:source.rgba,width:source.width,height:source.height,productType,options:settings,threads:1});check();
+        const value=await pipeline.run({rgba:source.rgba,width:source.width,height:source.height,productType,options:settings,threads:1,outputMode:mode});check();
         if(version!==token)throw Object.assign(Error('Đã hủy hoặc đổi nguồn; không áp dụng kết quả cũ.'),{code:'CANCELLED'});
-        const {width,height,depth,rgba,support}=value||{},depth16PNG=value?.depth16PNG||value?.depthPNG;
-        if(!Number.isInteger(width)||!Number.isInteger(height)||Math.min(width,height)<8||Math.max(width,height)>2048)throw Error('CPU trả canvas ngoài giới hạn 2048.');
-        const n=width*height;
-        if(!(depth instanceof Float32Array)||depth.length!==n||!depth.every(v=>Number.isFinite(v)&&v>=0&&v<=1)||
-          !(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray)||rgba.length!==n*4||
-          (support!==undefined&&(!(support instanceof Uint8Array)||support.length!==n)))throw Error('CPU trả dữ liệu không hợp lệ; không xuất bản thay thế.');
-        png16(depth16PNG,width,height);result={...value,depth16PNG,rgba:new Uint8ClampedArray(rgba)};await draw();
-        onStatus(`Đã ghép MoGe + DA2 + thuật toán gốc · ${width} × ${height} · Standard 1225 tokens, không phải UHD.`);return api.state();
+        adopt(value,mode);if(mode==='full')await draw();
+        onStatus(mode==='maps'?`Đã có PNG map ${result.width} × ${result.height} · tải map ngay, không cần dựng 3D.`:`Đã ghép MoGe + DA2 + thuật toán gốc · ${result.width} × ${result.height} · Standard, không phải UHD.`);return api.state();
       } finally {busy=false;}
     },
+    async compose(settings={},render3D=true){noBusy();ready();if(resultMode==='imported')return api.show3D();if(typeof pipeline.compose!=='function'||!pipeline.canCompose)throw Error('Cache AI không còn. Tạo map lại trước khi ghép 3D.');
+      busy=true;const token=++version;
+      try{const value=await pipeline.compose({options:settings,productType});check();if(version!==token)throw Object.assign(Error('Đã hủy ghép 3D.'),{code:'CANCELLED'});adopt(value,'full',true);if(render3D)await draw();else{viewer?.dispose();viewer=null;}return api.state();}finally{busy=false;}
+    },
+    async show3D(){noBusy();ready();await draw();return api.state();},
+    render2D(target,view='artwork'){
+      check();if(!target?.getContext)throw Error('Thiếu canvas 2D.');
+      const data=view==='artwork'?(result?(edits?.current()||result):source):mapData(view);if(!data)return;
+      const max=Math.min(1200,Math.max(data.width,data.height)),scale=max/Math.max(data.width,data.height);
+      target.width=Math.max(1,Math.round(data.width*scale));target.height=Math.max(1,Math.round(data.height*scale));
+      const image=document.createElement('canvas');image.width=data.width;image.height=data.height;
+      const context=image.getContext('2d');let rgba;
+      if(view==='artwork')rgba=new Uint8ClampedArray(data.rgba);else{rgba=new Uint8ClampedArray(data.width*data.height*4);for(let i=0;i<data.depth.length;i++){const shade=Math.round(data.depth[i]*255);rgba[i*4]=rgba[i*4+1]=rgba[i*4+2]=shade;rgba[i*4+3]=data.alpha?data.alpha[i]:255;}}
+      context.putImageData(new ImageData(rgba,data.width,data.height),0,0);target.getContext('2d').drawImage(image,0,0,target.width,target.height);image.width=image.height=1;
+    },
+    setText(value){noBusy();ready();edits.setText(value);return api.state();},
+    beginStroke(){noBusy();ready();edits.beginStroke();},paint(value){noBusy();ready();return edits.paint(value);},endStroke(){edits?.endStroke();},
+    undo(){noBusy();ready();return edits.undo();},resetEdits(){noBusy();ready();edits.reset();return api.state();},
     setProductType:loadTemplate,
-    invalidate(){noBusy();clearResult();draw().catch(error=>onStatus(error.message));return api.state();},
-    cancel(){version++;pipeline.cancel();result=null;draw().catch(error=>onStatus(error.message));onStatus('Đã hủy Generate · artwork và template vẫn được giữ.');},
+    invalidate(){noBusy();clearResult();return api.state();},
+    cancel(){version++;pipeline.cancel();result=null;edits=null;resultMode=null;viewer?.dispose();viewer=null;onStatus('Đã hủy Generate · artwork và template vẫn được giữ.');},
     async setAppearance(value){check();appearance={...appearance,...value};await queue;if(viewer)viewer.setAppearance(appearance);return api.state();},
     preset(value){check();viewer?.preset(value);},render(){check();viewer?.render();},
-    exportPNG(size){noBusy();ready();const png=viewer.exportFullPNG({width:size,height:size,padding:.06});if(typeof png!=='string'||!png.startsWith('data:image/png;base64,'))throw Error('GPU không xuất được mockup PNG.');return png;},
-    exportDepthPNG(){noBusy();ready();return bytesDataURL(result.depth16PNG);},
+    getView(){check();if(!viewer)throw Error('Mở 3D trước.');return viewer.getView();},setView(value){check();if(!viewer)throw Error('Mở 3D trước.');viewer.setView(value);},
+    exportPNG(size){noBusy();ready();if(!viewer)throw Error('Bấm Xem 3D trước khi xuất mockup.');const png=viewer.exportFullPNG({width:size,height:size,padding:.06});if(typeof png!=='string'||!png.startsWith('data:image/png;base64,'))throw Error('GPU không xuất được mockup PNG.');return png;},
+    exportDepthPNG(kind='depth',transparent=false){noBusy();ready();if(kind==='depth'&&!transparent&&!edits?.changed&&resultMode!=='full')return bytesDataURL(result.depth16PNG);const data=mapData(kind);let values=data.depth;if(data.alpha&&!transparent){values=values.slice();for(let i=0;i<values.length;i++)if(data.alpha[i]===0)values[i]=0;}return bytesDataURL(encodeGray16PNG(values,data.width,data.height,transparent?data.alpha:null));},
     state(){return{hasTemplate:!!descriptor,hasImage:!!artwork,hasDepth:!!result,busy,productType,imageName,template:descriptor&&{width:descriptor.width,height:descriptor.height,dpi:descriptor.dpi},
+      has3D:!!result&&!!viewer,resultMode,hasMaps:!!result?.mogeDepth&&!!result?.da2Depth,canCompose:!!pipeline.canCompose,canUndo:!!edits?.canUndo,edited:!!edits?.changed,
       width:result?.width||source?.width||0,height:result?.height||source?.height||0,metadata:result?.metadata||null,profile:'cpu-standard-fp32-1225',nativeUHDInference:false,panelEquivalent:false,templateFit:'browser-canvas-contain-not-PSD-warp'};},
-    dispose(){if(disposed)return;disposed=true;version++;pipeline.dispose();viewer?.dispose();shapeBitmap?.close();viewer=null;source=artwork=result=null;}
+    dispose(){if(disposed)return;disposed=true;version++;pipeline.dispose();viewer?.dispose();shapeBitmap?.close();viewer=null;source=artwork=result=edits=null;}
   };return api;
 }

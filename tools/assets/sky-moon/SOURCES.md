@@ -13,8 +13,10 @@ Assets are fetched only from this site's own `tools/assets/sky-moon/` directory.
 - Copyright Volodymyr Agafonkin; BSD-2-Clause notice retained in `SUNCALC-LICENSE.txt`.
 
 SunCalc uses Meeus astronomical models. Its v2 angles are degrees, not the radians
-used by v1. Inputs are strict Gregorian dates and an explicit numeric UTC offset
-in **hours east of UTC**. The workstation's timezone is never inferred. Moon
+used by v1. Inputs accept pasted panel-style MM/DD/YYYY (default), an explicit
+DD/MM/YYYY selector, ISO dates and English month names. City-selected sky times
+use an IANA zone and date-specific DST via the browser's Intl database. Advanced
+numeric UTC offsets are **hours east of UTC**. The workstation timezone is never inferred. Moon
 illumination is geocentric; position metadata uses the requested observer.
 
 The rendered moon has a computed illuminated hemisphere over a fixed north-up
@@ -22,10 +24,24 @@ near-side surface texture. It is an illustrative product-design rendering, not
 a telescope prediction: lunar libration, lunar-axis position angle, surface
 relief shadows and eclipses are not modeled. Numerical illumination and phase
 are calculated for the exact UTC instant, not selected from 16 fixed images.
-Phase names are rounded to the nearest of eight conventional names.
+Principal phase labels apply within 0.01 lunar cycle of new/quarter/full phase;
+neighbouring dates retain crescent/gibbous labels (98% illumination alone does
+not mean the exact Full Moon phase). These descriptive labels are not a calendar
+prediction of an exact principal-phase event.
 
 This is intentionally a different web engine from the legacy panel's
-moonphases.co.uk/London observer API. It is not advertised as pixel-identical.
+moonphases.co.uk/London observer API. The web default is 12:00 UTC with the same
+London observer coordinates. Warm, natural and grayscale are explicit appearance
+presets. Orientation may be celestial-north-up, observer/zenith-relative, or the
+conventional waxing-right phase display. PNGs are available individually without
+labels and as a combined grid. It is not advertised as pixel-identical.
+
+On 2026-10-22, the panel provider's public exact-date metadata service permitted
+cross-origin reads, but its large PNG image response did not send an
+Access-Control-Allow-Origin header. Those images cannot be read back from a
+browser canvas for PNG export. We do not bypass that browser protection, copy
+the provider's 16-image library into this site, or treat public widget embedding
+permission as a license for redistributing its artwork.
 
 ## Moon texture
 
@@ -56,9 +72,12 @@ D3-Celestial credits the XHIP compilation (Anderson and Francis 2012,
 VizieR V/137D) for these stars and the IAU constellation source with Frohn's
 line modifications. RA/Dec are J2000 coordinates. This browser renderer applies
 IAU-1976 precession and Greenwich mean sidereal time before projecting the
-geometric upper hemisphere orthographically. East is left when looking up.
-It does not model atmospheric refraction or stellar proper motion. The panel
-uses a different stereographic presentation; both use the real bundled catalog.
+geometric upper hemisphere stereographically (the same projection family as the
+panel). East is left when looking up. The local panel Sky effect LUT and
+four-neighbour unsharp mask are ported; reapply always starts from a retained raw
+render. It does not model atmospheric refraction or stellar proper motion.
+This independent Canvas renderer is not claimed pixel-identical to D3-Celestial
+or a Photoshop action.
 
 ## Places
 
@@ -68,3 +87,14 @@ The lookup factory is unchanged; the adapter adds only a globalThis root and
 an ESM export. Exact aliases plus qualifiers are used. Ambiguous names require
 the user to select a candidate; population is never used to choose silently.
 Coordinates can be entered directly without loading the place catalog.
+
+`city-timezones.json.gz` supplements the unchanged place catalog by exact
+GeoNames city ID using the source's IANA timezone column. Source:
+https://download.geonames.org/export/dump/cities500.zip (retrieved 2026-10-22),
+same CC BY 4.0 GeoNames attribution. The supplement has 236,632 city IDs and
+394 IANA zone names. Missing IDs are not guessed by country or longitude: use
+the advanced IANA zone field. The browser Intl database supplies the offset for
+the chosen civil date, including DST. A nonexistent or repeated transition hour
+is rejected and can be resolved with the explicit advanced UTC offset override.
+Timezone law/data can change; use a current browser and verify legally unusual
+historical dates if exact historical civil time is critical.

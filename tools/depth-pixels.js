@@ -86,10 +86,12 @@ function chunk(type, bytes) {
   for (const part of [tag, bytes]) for (const b of part) c = crcTable[(c ^ b) & 255] ^ (c >>> 8);
   return concat([u32(bytes.length), tag, bytes, u32((c ^ 0xffffffff) >>> 0)]);
 }
-export function encodeGray16PNG(depth, width, height) {
+export function encodeGray16PNG(depth, width, height, alpha = null) {
   checkSize(width, height);
   if (!(depth instanceof Float32Array) || depth.length !== width * height) throw new Error('Chưa có depth để xuất.');
-  const scan = new Uint8Array(height * (width * 2 + 1));
+  if (alpha !== null && (!(alpha instanceof Uint8Array || alpha instanceof Uint8ClampedArray) || alpha.length !== width * height))
+    throw new Error('Alpha của map không khớp canvas.');
+  const scan = new Uint8Array(height * (width * (alpha === null ? 2 : 4) + 1));
   let offset = 0;
   for (let y = 0; y < height; y++) {
     scan[offset++] = 0;
@@ -97,6 +99,10 @@ export function encodeGray16PNG(depth, width, height) {
       const n = depth[y * width + x];
       if (!Number.isFinite(n) || n < 0 || n > 1) throw new Error('Depth không hợp lệ.');
       const v = Math.round(n * 65535); scan[offset++] = v >>> 8; scan[offset++] = v & 255;
+      // PNG color type4 preserves the scalar channel at16 bits. Replicating an
+      // 8-bit alpha into both bytes maps0..255 exactly into0..65535; no Canvas
+      // 8-bit RGB quantisation and no inferred white-background removal.
+      if (alpha !== null) { scan[offset++] = alpha[y * width + x]; scan[offset++] = alpha[y * width + x]; }
     }
   }
   // RFC 1950 zlib + RFC 1951 stored blocks: deterministic 16-bit PNG, no
@@ -109,7 +115,7 @@ export function encodeGray16PNG(depth, width, height) {
   let a = 1, b = 0;
   for (const byte of scan) { a = (a + byte) % 65521; b = (b + a) % 65521; }
   blocks.push(u32(((b << 16) | a) >>> 0));
-  const header = concat([u32(width), u32(height), new Uint8Array([16, 0, 0, 0, 0])]);
+  const header = concat([u32(width), u32(height), new Uint8Array([16, alpha === null ? 0 : 4, 0, 0, 0])]);
   return concat([new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), chunk('IHDR', header), chunk('IDAT', concat(blocks)), chunk('IEND', new Uint8Array())]);
 }
 

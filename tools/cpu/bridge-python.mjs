@@ -45,7 +45,8 @@ def mitom_compose(config_json):
         'label':'Browser CPU Standard FP32 1225; full native composition; NOT 14400-token UHD inference'}
     process_config = {'width':prep['width'],'height':prep['height'],
         'geometry_width':490,'geometry_height':490,
-        'da2_width':da_metadata['width'],'da2_height':da_metadata['height'],'options':options}
+        'da2_width':da_metadata['width'],'da2_height':da_metadata['height'],'options':options,
+        'output_mode':config.get('output_mode','full')}
     return _write_packed('final', _bp.process_packed_buffers(json.dumps(process_config),
         _read('prep-rgba_u8'),_read('camera-depth_f32'),_read('camera-normal_f32'),
         _read('camera-valid_u8'),_read('camera-intrinsics_f32'),restored['disparity_f32']))
