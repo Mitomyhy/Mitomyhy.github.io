@@ -13,7 +13,8 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261022-sky-moon-r6">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261022-repair1">
+  <link rel="stylesheet" href="video/video.css?v=20261022-1">
   <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
   <link rel="stylesheet" href="tools/sky-moon-controls.css?v=20261022-flow-r5">
   <script defer src="site-config.js?v=20261021-panel-full-launcher4"></script>
@@ -21,7 +22,8 @@
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261022-sky-moon-r6"></script>
+  <script type="module" src="tools/workbench.js?v=20261022-repair1"></script>
+  <script type="module" src="video/video.js?v=20261022-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
@@ -30,7 +32,7 @@
     <nav class="primary-nav" data-i18n-aria-label="nav.main" aria-label="Main navigation">
       <a href="#home" class="nav-home" data-i18n="nav.home">HOME</a>
       <a href="#tools/depth" class="nav-tools" data-i18n="nav.tools">TOOLS</a>
-      <button data-action="upcoming" data-section="VIDEO" data-i18n="nav.video">VIDEO</button>
+      <a href="#video" class="nav-video" data-i18n="nav.video">VIDEO</a>
       <details class="nav-resources"><summary><span data-i18n="nav.resources">RESOURCES</span> <span aria-hidden="true">⌄</span></summary><div><a href="#workflow"><span data-i18n="nav.workflow">PANEL WORKFLOW</span> ↗</a><a href="#support" data-i18n="nav.guide">GUIDE</a><a href="https://github.com/Mitomyhy" target="_blank" rel="noopener">GITHUB ↗</a></div></details>
       <a href="#download" data-i18n="nav.download">DOWNLOAD</a><a href="#support" data-i18n="nav.support">SUPPORT</a><a href="#apps" class="nav-apps" data-i18n="nav.mitomApps">MITOM APPS</a>
     </nav>
@@ -44,28 +46,26 @@
       <button class="menu-toggle icon-button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-nav"><span></span><span></span></button>
     </div>
   </header>
-  <nav id="mobile-nav" class="mobile-nav" data-i18n-aria-label="nav.mobile" aria-label="Mobile navigation" hidden><a href="#home" data-i18n="nav.home">HOME</a><a href="#apps" data-i18n="nav.apps">APPS</a><a href="#tools/depth" data-i18n="nav.tools">TOOLS</a><button data-action="upcoming" data-section="VIDEO" data-i18n="nav.video">VIDEO</button><a href="#workflow" data-i18n="nav.resources">RESOURCES</a><a href="#download" data-i18n="nav.download">DOWNLOAD</a><a href="#support" data-i18n="nav.support">SUPPORT</a><button data-action="upcoming" data-section="PRICING" data-i18n="nav.pricing">PRICING</button><button data-action="upcoming" data-section="COMMUNITY" data-i18n="nav.community">COMMUNITY</button><button data-action="settings" data-i18n="settings.title">Settings</button></nav>
+  <nav id="mobile-nav" class="mobile-nav" data-i18n-aria-label="nav.mobile" aria-label="Mobile navigation" hidden><a href="#home" data-i18n="nav.home">HOME</a><a href="#apps" data-i18n="nav.apps">APPS</a><a href="#tools/depth" data-i18n="nav.tools">TOOLS</a><a href="#video" class="nav-video" data-i18n="nav.video">VIDEO</a><a href="#workflow" data-i18n="nav.resources">RESOURCES</a><a href="#download" data-i18n="nav.download">DOWNLOAD</a><a href="#support" data-i18n="nav.support">SUPPORT</a><button data-action="upcoming" data-section="PRICING" data-i18n="nav.pricing">PRICING</button><button data-action="upcoming" data-section="COMMUNITY" data-i18n="nav.community">COMMUNITY</button><button data-action="settings" data-i18n="settings.title">Settings</button></nav>
 
   <main id="tools-app" class="tools-app" hidden aria-label="MITOM Tools workspace">
     <aside class="tools-sidebar">
       <div class="tools-side-heading"><span class="micro">MITOM / CREATE</span><span class="tools-local-dot" title="Xử lý trên thiết bị của bạn"></span></div>
       <nav class="tool-picker" aria-label="Chọn công cụ">
-        <a href="#tools/depth" data-tool="depth"><span class="tool-icon">◇</span><span>3D Tool<small>ARTWORK → RELIEF</small></span><span class="tool-arrow">↗</span></a>
-        <a href="#tools/scrabble" data-tool="scrabble"><span class="tool-icon tool-letters">Aa</span><span>Scrabble<small>NAMES → LAYOUT</small></span><span class="tool-arrow">↗</span></a>
-        <a href="#tools/sky" data-tool="sky"><span class="tool-icon">✧</span><span>Sky Starmap<small>A MOMENT IN THE STARS</small></span><span class="tool-arrow">↗</span></a>
-        <a href="#tools/moon" data-tool="moon"><span class="tool-icon">◑</span><span>Moon Phase<small>YOUR DATES. YOUR MOONS.</small></span><span class="tool-arrow">↗</span></a>
+        <a href="#tools/depth" data-tool="depth"><span class="tool-icon">◇</span><span>3D Tool</span><span class="tool-arrow">↗</span></a>
+        <a href="#tools/scrabble" data-tool="scrabble"><span class="tool-icon tool-letters">Aa</span><span>Scrabble</span><span class="tool-arrow">↗</span></a>
+        <a href="#tools/sky" data-tool="sky"><span class="tool-icon">✧</span><span>Sky Starmap</span><span class="tool-arrow">↗</span></a>
+        <a href="#tools/moon" data-tool="moon"><span class="tool-icon">◑</span><span>Moon Phase</span><span class="tool-arrow">↗</span></a>
       </nav>
       <form id="tool-form" class="tools-controls">
         <section data-controls="depth">
           <div class="control-heading"><span>01 / MỞ TEMPLATE</span><span>IN · DEPTH · CUT</span></div>
           <label class="tools-field">Template gốc<select id="depth-product"><option value="acrylic">Acrylic — theo viền artwork</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label>
           <button id="depth-open-template" class="tools-secondary" type="button">Mở template <span>↗</span></button>
-          <p class="tools-note">Giữ canvas / shape gốc của panel; không cần Photoshop. Artwork hiện ngay ở vùng làm việc. Bạn có thể chỉ tạo map, không cần dựng 3D.</p>
           <div class="control-heading"><span>02 / ĐẶT ARTWORK VÀO IN</span><span>PNG · JPG · WEBP</span></div>
-          <label class="tools-upload"><span>＋ Chọn artwork</span><small>Ảnh được xử lý trên máy, không upload lên máy chủ.</small><input id="depth-art" type="file" accept="image/png,image/jpeg,image/webp"></label>
-          <p id="depth-file-name" class="tools-note">Ưu tiên PNG nền trong suốt.</p>
-          <div class="depth-cpu-notice"><strong>MoGe + DA2 · CPU trên máy này</strong><p>Model khoảng 1,43 GB ở lần đầu; lưu cache nếu trình duyệt còn chỗ. Thư viện xử lý tải thêm riêng. Máy yếu có thể chạy vài phút và dùng nhiều RAM.</p><p>Standard FP32: MoGe 1225 tokens + DA2 1036 px; ghép bằng thuật toán gốc, đầu ra tối đa 2048 px. <strong>Không phải mức UHD 14400 tokens của panel.</strong></p></div>
-          <label class="tools-check depth-consent"><input id="depth-consent" type="checkbox"> Tôi đồng ý tải AI và dùng CPU / RAM của máy này. Không cần Photoshop.</label>
+          <label class="tools-upload"><span>＋ Chọn artwork</span><input id="depth-art" type="file" accept="image/png,image/jpeg,image/webp"></label>
+          <p id="depth-file-name" class="tools-note" role="status"></p>
+          <label class="tools-check depth-consent"><input id="depth-consent" type="checkbox"> Cho phép tải mô hình AI</label>
           <button id="depth-generate" class="tools-primary" type="button">Tạo PNG map · MoGe + DA2 <span>↗</span></button>
           <button id="depth-reapply" class="tools-secondary" type="button" disabled>Áp dụng từ map đã có · không chạy AI lại</button>
           <button id="depth-cancel" class="tools-secondary depth-cancel" type="button" hidden disabled>Hủy Generate — giữ artwork <span>×</span></button>
@@ -77,13 +77,11 @@
             <label class="tools-range">Source detail <output id="depth-source-detail-value">100%</output><input id="depth-source-detail" type="range" min="0" max="100" value="100"></label>
             <label class="tools-check"><input id="depth-support" type="checkbox" checked> Nhận diện support trắng theo thuật toán gốc</label>
             <label class="tools-range">Support depth <output id="depth-support-depth-value">12%</output><input id="depth-support-depth" type="range" min="1" max="40" value="12"></label>
-            <p class="tools-note">Đổi các thông số này cần Generate lại; không tự dùng depth cũ.</p>
           </details>
           <div class="control-heading"><span>03 / PNG MAP</span><span>KHÔNG CẦN DỰNG 3D</span></div>
           <label class="tools-field">Loại map PNG<select id="depth-map-kind"><option value="map">Map ghép · vùng hợp lệ (kèm Fix / chữ)</option><option value="moge">MoGe · hình học</option><option value="da2">DA2 · chi tiết</option><option value="depth">Depth sau ghép template / support</option></select></label>
           <label class="tools-check"><input id="depth-map-transparent" type="checkbox" checked> Nền map trong suốt (PNG 16 bit + alpha)</label>
           <button id="depth-download" class="tools-secondary" type="button" disabled>Tải PNG map 16 bit <span>↓</span></button>
-          <p class="tools-note">Map là raster gốc, không phải ảnh chụp lưới 3D. Vùng MoGe không xác nhận để rỗng / đen; không kéo giãn thành các mảng nhọn.</p>
           <div class="control-heading"><span>04 / FIX & CHỮ</span><span>CHỈNH MAP CỤC BỘ</span></div>
           <div class="tools-button-row"><button id="depth-fix-light" type="button" aria-pressed="false">Fix sáng</button><button id="depth-fix-dark" type="button" aria-pressed="false">Fix tối</button><button id="depth-fix-stop" type="button">Dừng tô</button></div>
           <label class="tools-range">Cỡ brush <output id="depth-brush-size-value">5%</output><input id="depth-brush-size" type="range" min="1" max="20" value="5"></label>
@@ -96,23 +94,20 @@
             <label class="tools-range">Cỡ chữ <output id="depth-text-size-value">8%</output><input id="depth-text-size" type="range" min="1" max="40" value="8"></label>
             <div class="tools-field-pair"><label class="tools-field">Vị trí X (%)<input id="depth-text-x" type="number" min="0" max="100" value="50"></label><label class="tools-field">Vị trí Y (%)<input id="depth-text-y" type="number" min="0" max="100" value="50"></label></div>
             <button id="depth-text-apply" class="tools-secondary" type="button">Áp dụng chữ / effect · không chạy lại AI</button>
-            <p class="tools-note">Chữ mới là lớp riêng trong phiên web. Chữ đã dính vào PNG không thể tự biến lại thành Type layer như PSD.</p>
           </details>
           <div class="control-heading"><span>05 / XEM 3D · TÙY CHỌN</span><span>DÙNG LẠI MAP</span></div>
           <button id="depth-build-3d" class="tools-secondary" type="button" disabled>Ghép template & xem 3D <span>↗</span></button>
-          <p class="tools-note">Dùng lại kết quả MoGe / DA2 trong tab này, không chạy AI lần nữa. Đổi template hoặc artwork sẽ cần tạo map mới.</p>
           <label class="tools-range">Nổi viền <output id="rim-value">20%</output><input id="depth-rim" type="range" min="0" max="100" value="20"></label>
           <label class="tools-range">Nổi bề mặt <output id="relief-value">50%</output><input id="depth-relief" type="range" min="0" max="100" value="50"></label>
           <label class="tools-range">Độ bóng <output id="gloss-value">65%</output><input id="depth-gloss" type="range" min="0" max="100" value="65"></label>
           <div class="tools-button-row"><button type="button" data-preset="front">Chính diện</button><button type="button" data-preset="side">Nghiêng</button><button type="button" data-preset="back">Mặt sau</button></div>
           <button id="depth-nine" class="tools-secondary" type="button" disabled>Tải 9 góc mockup PNG · ZIP <span>↓</span></button>
-          <p class="tools-note">Kết quả là relief hình ảnh, không phải bản quét đo lường hay độ sâu gia công tính bằng mm. Nút Photoshop chỉ để gửi mockup nếu máy có Photoshop.</p>
         </section>
         <section data-controls="scrabble" hidden>
           <div class="control-heading"><span>01 / TEMPLATE A–1 → A–Z</span><span>CHẠY TRÊN WEB</span></div>
           <label class="tools-field">Bộ ô chữ<select id="scrabble-source"><option value="template">Tạo từ template chữ A + điểm 1</option><option value="images">Dùng bộ ô A–Z của tôi</option></select></label>
           <div id="scrabble-template-controls">
-            <div class="scrabble-template-preview"><canvas id="scrabble-seed" width="800" height="800" aria-label="Template chữ A và điểm 1"></canvas><p>Chỉnh ô A–1 một lần → tạo đủ A–Z, dùng ngay để xếp tên. Template 800 × 800 px.</p></div>
+            <div class="scrabble-template-preview"><canvas id="scrabble-seed" width="800" height="800" aria-label="Template chữ A và điểm 1"></canvas></div>
             <div class="tools-field-pair"><label class="tools-field">Màu ô<input id="scrabble-tile" type="color" value="#e3c48b"></label><label class="tools-field">Màu chữ<input id="scrabble-ink" type="color" value="#29251f"></label></div>
             <label class="tools-field">Font chữ<select id="scrabble-font"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Tahoma">Tahoma</option><option value="Times New Roman">Times New Roman</option><option value="Verdana">Verdana</option></select></label>
             <details class="tools-details"><summary>Ảnh nền ô, font riêng & vị trí chữ</summary>
@@ -124,7 +119,7 @@
             </details>
             <label class="tools-check"><input id="scrabble-score" type="checkbox" checked> Hiện điểm chữ · đúng bộ điểm panel</label>
           </div>
-          <div id="scrabble-image-controls" hidden><label class="tools-field">Chọn các ô nguồn A.png … Z.png<input id="scrabble-tiles" type="file" accept="image/png,image/jpeg,image/webp" multiple></label><p class="tools-note">Ảnh ô đã có chữ/điểm; giữ nguyên hình. Chỉ cần các chữ dùng trong tên. Không tự bù chữ thiếu bằng kiểu khác.</p></div>
+          <div id="scrabble-image-controls" hidden><label class="tools-field">Chọn các ô nguồn A.png … Z.png<input id="scrabble-tiles" type="file" accept="image/png,image/jpeg,image/webp" multiple></label></div>
           <p id="scrabble-source-state" class="scrabble-source-state" role="status">Template A–1 sẵn sàng · đổi kiểu là thấy ngay.</p>
           <button id="scrabble-alphabet" type="button" class="tools-secondary">Tạo / xem bộ A–Z <span>↗</span></button>
           <div id="scrabble-alphabet-preview" class="scrabble-alphabet" hidden aria-label="26 ô chữ A đến Z"></div>
@@ -139,48 +134,43 @@ OLIVER</textarea></label>
           <button id="scrabble-generate" type="button" class="tools-primary">Tạo lại các bố cục <span>↗</span></button>
           <label class="tools-field">Dạng bố cục<select id="scrabble-category"><option value="all">Tất cả · vuông / đứng / nằm</option><option value="square">Vuông</option><option value="portrait">Chữ nhật đứng</option><option value="landscape">Chữ nhật nằm</option></select></label>
           <label class="tools-field">Phương án<select id="scrabble-variant" disabled><option>Chưa có bố cục</option></select></label>
-          <p id="scrabble-info" class="tools-note">Dùng cùng thuật toán xếp chữ với panel. Không tự bỏ tên.</p>
+          <p id="scrabble-info" class="tools-note" role="status"></p>
           <div class="control-heading"><span>03 / VÙNG XẾP & KHOẢNG CÁCH</span><span>GIỐNG PANEL</span></div>
           <div class="tools-field-pair"><label class="tools-field">Canvas rộng<input id="scrabble-width" type="number" min="100" max="30000" value="800"></label><label class="tools-field">Canvas cao<input id="scrabble-height" type="number" min="100" max="30000" value="800"></label></div>
           <label class="tools-range">Khoảng cách <output id="gap-value">4%</output><input id="scrabble-gap" type="range" min="0" max="15" value="4"></label>
           <label class="tools-range">Lề an toàn <output id="scrabble-inset-value">4%</output><input id="scrabble-inset" type="range" min="0" max="20" value="4"></label>
           <label class="tools-field">Vùng bố cục<select id="scrabble-shape"><option value="rect">Chữ nhật / vuông</option><option value="ellipse">Ellipse / tròn</option></select></label>
-          <p class="tools-note">Web xuất PNG trong suốt và bộ A–Z riêng; có thể thêm PNG vào Photoshop bằng nút dưới. Dữ liệu ở trên máy. PSD / Smart Object / đọc layer nguồn vẫn dùng trong panel, không giả lập thành PNG.</p>
         </section>
         <section data-controls="sky" hidden>
           <div class="control-heading"><span>01 / THỜI GIAN & ĐỊA ĐIỂM</span><span>YOUR MOMENT</span></div>
           <label class="tools-field">Dán địa điểm<input id="sky-place" type="search" value="Leeds, UK" placeholder="Ví dụ: Leeds, UK / Đà Nẵng, Vietnam" autocomplete="off"></label>
           <div id="sky-places" class="tools-places" aria-live="polite"></div>
           <div class="tools-field-pair"><label class="tools-field">Ngày · MM/DD/YYYY<input id="sky-date" type="text" value="10/22/2026" placeholder="MM/DD/YYYY" required></label><label class="tools-field">Giờ tại địa điểm<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
-          <p id="sky-resolved" class="tools-note" aria-live="polite">Dán địa điểm; web tự nhận tọa độ và múi giờ, kể cả giờ mùa hè theo ngày. Không cần nhập thông số kỹ thuật.</p>
+          <p id="sky-resolved" class="tools-note" aria-live="polite"></p>
           <div class="control-heading"><span>02 / HIỂN THỊ</span><span>STAR CATALOGUE</span></div>
           <div class="tools-field-pair"><label class="tools-field">Màu sao<input id="sky-stars" type="color" value="#ffffff"></label><label class="tools-field">Màu nền<input id="sky-bg" type="color" value="#000000"></label></div>
           <label class="tools-check"><input id="sky-lines" type="checkbox" checked> Đường chòm sao</label><label class="tools-check"><input id="sky-grid" type="checkbox"> Lưới tọa độ</label><label class="tools-check"><input id="sky-labels" type="checkbox"> Nhãn phương hướng</label><label class="tools-check"><input id="sky-transparent" type="checkbox"> Nền trong suốt</label>
           <label class="tools-check"><input id="sky-effect" type="checkbox" checked> Effect Sky Star của panel (trắng đen)</label>
           <button id="sky-generate" class="tools-primary" type="button">Render Starmap <span>↗</span></button>
           <button id="sky-reapply" class="tools-secondary" type="button">Apply lại effect / nền — không render lại</button>
-          <p class="tools-note">Dùng đúng engine D3-Celestial và cấu hình mặc định của panel. Cuộn chuột trên bản đồ để zoom; kéo để di chuyển. Zoom xem không thay đổi PNG xuất.</p>
         </section>
         <section data-controls="moon" hidden>
           <div class="control-heading"><span>01 / NHỮNG NGÀY ĐẶC BIỆT</span><span>DATE → MOON</span></div>
           <label class="tools-field">Dán ngày MM/DD/YYYY — mỗi dòng một ngày<textarea id="moon-dates" rows="5" spellcheck="false" placeholder="MM/DD/YYYY">05/11/1998
 06/15/2000
 08/10/2024</textarea></label>
-          <p id="moon-date-help" class="tools-note">Cố định tháng/ngày/năm: 08/10/2024 là ngày 10 tháng 8, không phải 8 tháng 10. Không tự đảo ngày/tháng.</p>
           <div class="control-heading"><span>02 / BỐ CỤC</span><span>PNG TRONG SUỐT</span></div>
           <div class="tools-field-pair"><label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="12" value="5" required></label><label class="tools-field">Size mỗi moon<input id="moon-size" type="number" min="100" max="1200" value="400" step="50" required></label></div>
           <label class="tools-field">Màu Mặt Trăng<select id="moon-appearance"><option value="warm">Vàng ấm — gần màu panel</option><option value="natural">Màu texture NASA tự nhiên</option><option value="grayscale">Trắng đen</option></select></label>
           <label class="tools-check"><input id="moon-labels" type="checkbox" checked> Hiện ngày và độ chiếu sáng</label>
           <label class="tools-check"><input id="moon-transparent" type="checkbox" checked> Nền trong suốt</label>
           <div class="tools-field-pair"><label class="tools-field">Màu nhãn<input id="moon-label-color" type="color" value="#39465e"></label><label class="tools-field">Màu nền<input id="moon-bg" type="color" value="#f2f1ed"></label></div>
-          <p class="tools-note">Ngày, pha và góc xoay được đối chiếu trực tiếp với MoonPhases.co.uk như panel (1950–2050). Chỉ ngày được gửi tới nguồn. PNG web dùng texture NASA để tải/ghép được, không phải ảnh chụp gốc của nguồn.</p>
           <button id="moon-generate" class="tools-primary" type="button">Tạo Moon Phase <span>↗</span></button>
           <button id="moon-cancel" class="tools-secondary" type="button" hidden disabled>Hủy tạo Moon Phase</button>
           <div id="moon-results" class="tools-moon-results" aria-live="polite"></div>
         </section>
         <div class="control-heading tools-export-heading"><span>03 / XUẤT FILE</span><span>PNG</span></div>
         <label class="tools-field">Kích thước xuất<select id="tool-size"><option value="1024">1024 px — bản nhanh</option><option value="2048" selected>2048 px</option><option value="3000">3000 px</option><option value="4000">4000 px</option></select></label>
-        <p class="tools-note tools-privacy">Không cần đăng nhập để tạo và tải ảnh. Các workflow trên panel vẫn được giữ nguyên.</p>
         <a class="tools-credit-link" href="tools/credits.html" target="_blank" rel="noopener">Nguồn dữ liệu & giới hạn công cụ ↗</a>
       </form>
     </aside>
@@ -189,7 +179,7 @@ OLIVER</textarea></label>
       <div class="workspace-toolbar"><span id="workspace-caption">Artwork của bạn. Góc nhìn của bạn.</span><div><button id="sky-zoom-reset" type="button" hidden title="Đặt lại mức zoom Starmap">100% · Đặt lại</button><button id="workspace-fit" type="button" title="Phóng lớn vùng làm việc" aria-pressed="false">⛶ <span>Rộng hơn</span></button></div></div>
       <div id="depth-view-tabs" class="depth-view-tabs" hidden aria-label="Chế độ xem artwork và map"><button type="button" data-depth-view="artwork" aria-pressed="true">Artwork</button><button type="button" data-depth-view="map">Map ghép</button><button type="button" data-depth-view="moge">MoGe</button><button type="button" data-depth-view="da2">DA2</button><button type="button" data-depth-view="3d">Xem 3D</button></div>
       <div id="workspace-stage" class="workspace-stage">
-        <div id="tool-empty" class="tool-empty"><div class="empty-orbit" aria-hidden="true"><span>◇</span><i></i><i></i></div><p class="micro">MADE FOR YOUR NEXT IDEA</p><h2 id="empty-title">Bắt đầu bằng artwork.</h2><p id="empty-description">Chọn ảnh bên trái để tạo chiều sâu,<br>xoay 3D và xuất góc nhìn của riêng bạn.</p><button id="empty-action" type="button">＋ Chọn artwork</button></div>
+        <div id="tool-empty" class="tool-empty"><div class="empty-orbit" aria-hidden="true"><span>◇</span><i></i><i></i></div><h2 id="empty-title">Bắt đầu bằng artwork.</h2><p id="empty-description" hidden></p><button id="empty-action" type="button">＋ Chọn artwork</button></div>
         <canvas id="depth-canvas" class="tool-canvas depth-canvas" width="1200" height="1200" hidden aria-label="3D preview. Kéo để xoay, cuộn để zoom."></canvas>
         <canvas id="depth-preview-canvas" class="tool-canvas depth-preview-canvas" hidden aria-label="Artwork / PNG depth map · xem trực tiếp không cần 3D"></canvas>
         <canvas id="scrabble-canvas" class="tool-canvas" hidden aria-label="Kết quả bố cục Scrabble"></canvas>

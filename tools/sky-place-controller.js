@@ -7,6 +7,9 @@ export function createPlaceResolver({search,onState=()=>{},delay=350,setTimer=se
   function valid(place){if(!place||!Number.isFinite(place.lat)||Math.abs(place.lat)>90||!Number.isFinite(place.lon)||Math.abs(place.lon)>180||typeof place.label!=='string'||!place.label||typeof place.timeZone!=='string'||!place.timeZone)throw Error('Chưa xác định được thành phố và múi giờ. Dán tên thành phố kèm quốc gia.');try{new Intl.DateTimeFormat('en',{timeZone:place.timeZone});}catch{throw Error('Múi giờ của địa điểm chưa được trình duyệt hỗ trợ.');}return {...place};}
   async function lookup(text,id){
     if(disposed)throw Error('Bộ tra địa điểm đã đóng.');
+    // clearTimeout cannot retract a callback already queued by the browser.
+    // Reject it before it can replace the current city's matched state.
+    if(id!==serial)throw Object.assign(Error('Đã dán địa điểm mới; bỏ kết quả cũ.'),{code:'CANCELLED'});
     emit({status:'loading',query:text,place:null,candidates:[],message:'Đang nhận địa điểm và múi giờ…'});
     try{
       const found=await search(text);
