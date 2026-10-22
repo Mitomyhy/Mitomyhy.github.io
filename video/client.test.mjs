@@ -1,36 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildVideoPayload,parseVideoResponse,requestVideo,validateEndpoint} from './client.mjs';
-
-test('manual prompt stays unchanged and optional photo selects image flow',()=>{
-  const prompt='Keep the printed names unchanged. Slow clockwise orbit, soft daylight.';
-  assert.deepEqual(buildVideoPayload({prompt,aspectRatio:'9:16'}),{prompt,aspect_ratio:'9:16'});
-  assert.deepEqual(buildVideoPayload({prompt,imageBase64:'data:image/png;base64,aGVsbG8=',imageName:'photo.png'}),{prompt,aspect_ratio:'16:9',imageBase64:'data:image/png;base64,aGVsbG8=',imageName:'photo.png'});
-  assert.equal(buildVideoPayload({prompt,imageUrl:'https://example.com/product.png'}).imageUrl,'https://example.com/product.png');
-});
-test('bad input cannot trigger a generation',()=>{
-  for(const value of [{prompt:''},{prompt:'x'.repeat(5001)},{prompt:'ok',aspectRatio:'1:1'},{prompt:'ok',imageUrl:'file:///private.png'},{prompt:'ok',imageBase64:'data:text/html;base64,aA=='}])assert.throws(()=>buildVideoPayload(value));
-  for(const url of ['javascript:alert(1)','http://public.example/webhook','https://user:password@example.com/webhook'])assert.throws(()=>validateEndpoint(url));
-  assert.equal(validateEndpoint('http://localhost:5678/webhook/test'),'http://localhost:5678/webhook/test');
-});
-test('pending task, successful video and provider errors are distinct, including HTTP200 body errors',()=>{
-  assert.deepEqual(parseVideoResponse({code:200,data:{taskId:'job-42'}}),{state:'pending',taskId:'job-42'});
-  assert.deepEqual(parseVideoResponse({code:200,data:{taskId:'job-42',state:'success',resultJson:JSON.stringify({resultUrls:['https://cdn.example.com/video.mp4']})}}),{state:'success',taskId:'job-42',videoUrl:'https://cdn.example.com/video.mp4'});
-  assert.throws(()=>parseVideoResponse({code:402,msg:'Insufficient credits'}),/Insufficient credits/);
-  assert.throws(()=>parseVideoResponse({code:200,data:{taskId:'job-42',state:'fail',failMsg:'Generation rejected'}}),/Generation rejected/);
-  assert.throws(()=>parseVideoResponse({code:200,data:{taskId:'job-42',state:'success',resultJson:'{}'}}),/without a download URL/);
-  assert.throws(()=>parseVideoResponse({code:200,data:{resultUrls:['javascript:alert(1)']}}),/unsafe/);
-});
-test('client submits once with session webhook token, then polls existing task without re-generating',async()=>{
-  const calls=[];
-  const fetchFn=async(url,options)=>{calls.push({url,...options});return{ok:true,json:async()=>calls.length===1?{code:200,data:{taskId:'job-42'}}:{code:200,data:{taskId:'job-42',state:'success',resultJson:'{"resultUrls":["https://cdn.example.com/video.mp4"]}'}}};};
-  const connection='https://n8n.example.com/webhook/';
-  const pending=await requestVideo(connection+'mitom-video-generate',buildVideoPayload({prompt:'Show my ornament'}),'session-token',{fetchFn});
-  const complete=await requestVideo(connection+'mitom-video-status',{taskId:pending.taskId},'session-token',{fetchFn});
-  assert.equal(calls.length,2);assert.equal(calls[0].headers['X-MITOM-Token'],'session-token');assert.deepEqual(JSON.parse(calls[1].body),{taskId:'job-42'});assert.equal(complete.state,'success');assert.equal(calls[0].credentials,'omit');
-});
-test('failed transport is never retried implicitly or reported as a generated video',async()=>{
-  let calls=0;
-  await assert.rejects(requestVideo('https://n8n.example.com/webhook/generate',{prompt:'hello'},'',{fetchFn:async()=>{calls++;throw new TypeError('Failed to fetch');}}),/Failed to fetch/);assert.equal(calls,1);
-  await assert.rejects(requestVideo('https://n8n.example.com/webhook/generate',{},'',{fetchFn:async()=>({ok:false,status:401})}),/HTTP 401/);
-});
+import {ASPECTS,MOTIONS,MAX_IMAGE_BYTES,validatePhoto,readImageDimensions,bitmapSize,motionFromBrief,photoGeometry,drawPhotoFrame} from './client.mjs';
+function png(width,height){const bytes=new Uint8Array(24);bytes.set([137,80,78,71,13,10,26,10]);bytes.set([73,72,68,82],12);const view=new DataView(bytes.buffer);view.setUint32(16,width);view.setUint32(20,height);return bytes.buffer;}
+function jpeg(width,height){const bytes=new Uint8Array([255,216,255,192,0,8,8,0,0,0,0,1]);const view=new DataView(bytes.buffer);view.setUint16(7,height);view.setUint16(9,width);return bytes.buffer;}
+function webp(width,height){const bytes=new Uint8Array(30);bytes.set([82,73,70,70],0);bytes.set([87,69,66,80,86,80,56,88],8);new DataView(bytes.buffer).setUint32(16,10,true);for(let i=0;i<3;i++){bytes[24+i]=((width-1)>>>(i*8))&255;bytes[27+i]=((height-1)>>>(i*8))&255;}return bytes.buffer;}
+test('one local product photo is required and capped at15MiB',()=>{assert.throws(()=>validatePhoto(null));assert.throws(()=>validatePhoto({type:'video/mp4',size:1}));assert.throws(()=>validatePhoto({type:'image/png',size:MAX_IMAGE_BYTES+1}));assert.equal(validatePhoto({type:'image/png',size:MAX_IMAGE_BYTES}).size,MAX_IMAGE_BYTES);});
+test('PNG/JPEG/WebP dimensions are read beforedecode; oversized or corruptphotosare rejected',()=>{for(const[type,bytes]of [['image/png',png(1200,800)],['image/jpeg',jpeg(1200,800)],['image/webp',webp(1200,800)]])assert.deepEqual(readImageDimensions(bytes,type),{width:1200,height:800});assert.throws(()=>readImageDimensions(png(8000,6000),'image/png'),/24 megapixels/);assert.throws(()=>readImageDimensions(png(12001,1),'image/png'),/12,000/);assert.throws(()=>readImageDimensions(new ArrayBuffer(1),'image/png'),/invalid/);});
+test('decoded working image is bounded to4096px withoutchangingaspect',()=>{assert.deepEqual(bitmapSize(8000,4000),{width:4096,height:2048});assert.deepEqual(bitmapSize(600,900),{width:600,height:900});});
+test('motion keywords are deterministic in EnglishandVietnamese andunknownbriefsarenotAIgenerated',()=>{for(const[text,motion]of [['zoom in','zoomIn'],['pull back','zoomOut'],['pan left','panLeft'],['move right','panRight'],['static','still'],['phóng to','zoomIn'],['thu nhỏ','zoomOut'],['sang trái','panLeft'],['sang phải','panRight'],['đứng yên','still']])assert.equal(motionFromBrief(text),motion,text);assert.equal(motionFromBrief('Generate a new360degree3Dview'),null);});
+for(const[ratio,{width,height}]of Object.entries(ASPECTS))test(ratio+' outputhas720pxshortedge andevenvideo dimensions',()=>{assert.equal(Math.min(width,height),720);assert.equal(width%2,0);assert.equal(height%2,0);});
+for(const motion of MOTIONS)test('fit '+motion+' keeps the entireproductphotoinsideframe atalltimes',()=>{for(const[sourceWidth,sourceHeight]of [[2000,1000],[1000,2000]])for(const t of [0,.25,.5,.75,1]){const r=photoGeometry(sourceWidth,sourceHeight,1280,720,{motion,fit:'fit'},t);assert.ok(r.x>=-1e-8);assert.ok(r.y>=-1e-8);assert.ok(r.x+r.width<=1280+1e-8);assert.ok(r.y+r.height<=720+1e-8);assert.ok(Math.abs(r.width/r.height-sourceWidth/sourceHeight)<1e-10);}});
+for(const motion of MOTIONS)test('cover '+motion+' coversframewithoutchangingphotoaspect',()=>{for(const[sourceWidth,sourceHeight]of [[2000,1000],[1000,2000]])for(const t of [0,.25,.5,.75,1]){const r=photoGeometry(sourceWidth,sourceHeight,1280,720,{motion,fit:'cover'},t);assert.ok(r.x<=1e-8);assert.ok(r.y<=1e-8);assert.ok(r.x+r.width>=1280-1e-8);assert.ok(r.y+r.height>=720-1e-8);assert.ok(Math.abs(r.width/r.height-sourceWidth/sourceHeight)<1e-10);}});
+test('motions moveinexpected directions, clamp time, andstillframesdo notmove',()=>{const box=(motion,t)=>photoGeometry(1000,1000,720,720,{motion,fit:'cover'},t);assert.ok(box('zoomIn',1).width>box('zoomIn',0).width);assert.ok(box('zoomOut',1).width<box('zoomOut',0).width);assert.ok(box('panLeft',1).x<box('panLeft',0).x);assert.ok(box('panRight',1).x>box('panRight',0).x);assert.deepEqual(box('still',0),box('still',1));assert.deepEqual(box('zoomIn',-5),box('zoomIn',0));assert.deepEqual(box('zoomIn',50),box('zoomIn',1));assert.throws(()=>photoGeometry(0,100,100,100));});
+test('everyframeusesoriginalphotopixelsandselectedbackground',()=>{const calls=[],ctx={fillRect(...args){calls.push(['background',...args]);},drawImage(...args){calls.push(['photo',...args]);}},photo={width:100,height:200};drawPhotoFrame(ctx,photo,{motion:'still',fit:'fit',background:'#123456'},.5,720,720);assert.equal(ctx.fillStyle,'#123456');assert.deepEqual(calls[0],['background',0,0,720,720]);assert.equal(calls[1][1],photo);assert.equal(calls.length,2);});
