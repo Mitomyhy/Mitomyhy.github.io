@@ -3,12 +3,15 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {parseCivilDate,parseDateList,zonedDateTime,projectEquatorial,projectStereographic,moonMetadata,moonPhaseName,shadeMoonPixels,renderMoons,renderSky,applySkyAppearance,searchPlace,getCapabilities} from '../sky-moon.js';
 import {createHash} from 'node:crypto';
+import * as inputAPI from '../sky-moon-inputs.js';
+import {normalizeMoonProviderMetadata} from '../moon-provider.js';
 
 test('pasted panel MDY and explicit DMY are distinct; ISO and named dates stay unambiguous',()=>{
   assert.equal(parseCivilDate('05/11/1998').iso,'1998-05-11');
   assert.equal(parseCivilDate('05/11/1998','DMY').iso,'1998-11-05');
   for(const value of ['1998-05-11','May 11, 1998','11 May 1998','ngày 11 tháng 5 năm 1998'])assert.equal(parseCivilDate(value).iso,'1998-05-11');
-  assert.equal(parseCivilDate('15/06/2000').iso,'2000-06-15');
+  assert.throws(()=>parseCivilDate('15/06/2000','MDY'),'strict MDY never flips a day larger than 12 into the month');
+  assert.equal(parseCivilDate('15/06/2000','DMY').iso,'2000-06-15');
   assert.deepEqual(parseDateList('05/11/1998\n06/15/2000\n08/10/2024').map(x=>x.iso),['1998-05-11','2000-06-15','2024-08-10']);
 });
 test('real dates checked and ambiguous numeric order is never machine-local',()=>{
@@ -82,12 +85,61 @@ test('sky renderer uses real catalog and exported panel effect is non-compoundin
   assert.equal(meta.projection,'stereographic-upper-hemisphere');assert.ok(meta.starsRendered>500);assert.equal(meta.utc,'2024-08-10T19:00:00.000Z');
   const before=raw.pixels,target=new Canvas();applySkyAppearance(target,raw,{effect:true,transparent:true});const once=new Uint8ClampedArray(target.pixels);applySkyAppearance(target,raw,{effect:true,transparent:true});assert.deepEqual(target.pixels,once);assert.equal(raw.pixels,before);
 });
-test('UI supports pasted dates, hidden advanced inputs and per-moon PNG, without Photoshop action claims',async()=>{
+test('UI supports pasted dates and per-moon PNG with strict Moon MDY, automatic Sky timezone and no manual coordinate controls',async()=>{
   const html=await readFile(new URL('../../index.html',import.meta.url),'utf8'),controller=await readFile(new URL('../workbench.js',import.meta.url),'utf8');
-  assert.match(html,/id="sky-date" type="text"/);assert.doesNotMatch(html,/id="sky-date" type="date"/);assert.match(html,/<details class="tools-advanced">/);
-  for(const id of ['moon-date-order','moon-size','moon-appearance','moon-orientation','moon-results','sky-reapply'])assert.match(html,new RegExp(`id="${id}"`));
+  assert.match(html,/id="sky-date" type="text"/);assert.doesNotMatch(html,/id="sky-date" type="date"/);
+  for(const id of ['moon-size','moon-appearance','moon-results','sky-reapply'])assert.match(html,new RegExp(`id="${id}"`));
   assert.match(controller,/Tải PNG riêng/);assert.match(controller,/api\.zonedDateTime/);
-  assert.match(controller,/zone=\$\('sky-zone'\)\.value\.trim\(\)\|\|place\.timeZone/);assert.match(controller,/moonAbort\.signal/);assert.match(html,/id="moon-cancel"/);
+  assert.match(controller,/place\.timeZone/);assert.match(controller,/moonAbort\.signal/);assert.match(html,/id="moon-cancel"/);
+  const sky=html.match(/<section data-controls="sky"[^>]*>([\s\S]*?)<\/section>/)?.[1],moon=html.match(/<section data-controls="moon"[^>]*>([\s\S]*?)<\/section>/)?.[1];assert.ok(sky);assert.ok(moon);
+  for(const id of ['sky-lat','sky-lon','sky-zone','sky-offset','sky-manual','sky-manual-offset']){assert.doesNotMatch(sky,new RegExp(`id="${id}"`));assert.doesNotMatch(controller,new RegExp(`\\$\\('${id}'\\)`));}
+  assert.doesNotMatch(moon,/id="moon-date-order"/);assert.doesNotMatch(moon,/<option[^>]*value="DMY"/);assert.doesNotMatch(moon,/DD\/MM\/YYYY/);assert.match(moon,/MM\/DD\/YYYY/);
+  assert.doesNotMatch(moon,/id="moon-orientation"/,'provider tilt is automatic, not a user interpretation selector');
+  for(const id of ['moon-lat','moon-lon','moon-zone','moon-offset','moon-manual-offset','moon-time'])assert.doesNotMatch(moon,new RegExp(`id="${id}"`));
+});
+test('Moon pasted date helper accepts only numeric month/day/year and never auto-swaps',()=>{
+  assert.equal(typeof inputAPI.parseMoonDates,'function','strict Moon-specific paste parser exists');
+  const dates=inputAPI.parseMoonDates('08/10/2024\n05/11/1998\n06/15/2000\n8/1/2024');
+  assert.deepEqual(dates.map(value=>value.iso),['2024-08-10','1998-05-11','2000-06-15','2024-08-01']);
+  assert.deepEqual(dates.map(value=>value.display),['08/10/2024','05/11/1998','06/15/2000','08/01/2024']);
+  for(const date of ['02/30/2024','13/01/2024','15/06/2000','02/29/2023','2024-08-10','August 10, 2024'])assert.throws(()=>inputAPI.parseMoonDates(date),date);
+  assert.equal(inputAPI.parseMoonDates('02/29/2024')[0].iso,'2024-02-29');
+});
+test('Moon numeric dates render exactly the intended month/day, including ambiguous dates',async()=>{
+  const result=await renderMoons(new Canvas(),{dates:['08/10/2024','05/11/1998','06/15/2000'],columns:3,size:100,transparent:true});
+  assert.deepEqual(result.items.map(item=>item.date),['2024-08-10','1998-05-11','2000-06-15']);
+  assert.deepEqual(result.items.map(item=>item.utc),['2024-08-10T12:00:00.000Z','1998-05-11T12:00:00.000Z','2000-06-15T12:00:00.000Z']);
+});
+test('Moon rendering rejects invalid MDY or a DMY override, but accepts internal ISO dates',async()=>{
+  for(const date of ['02/30/2024','13/01/2024','15/06/2000'])await assert.rejects(renderMoons(new Canvas(),{dates:[date],size:100}),date);
+  await assert.rejects(renderMoons(new Canvas(),{dates:['05/11/1998'],dateOrder:'DMY',size:100}),'Moon does not expose a DMY reinterpretation');
+  assert.equal((await renderMoons(new Canvas(),{dates:['2024-08-10'],size:100})).items[0].display,'08/10/2024');
+});
+const providerFixtures=[
+  {dateISO:'1998-05-11',date_serial:'19980511',phase:.5,phase_name:'Full Moon',phase_img:'8.png',illumination:100,tilt:0},
+  {dateISO:'2000-06-15',date_serial:'20000615',phase:.46,phase_name:'Waxing Gibbous',phase_img:'9.png',illumination:98,tilt:3.1},
+  {dateISO:'2024-08-10',date_serial:'20240810',phase:.19,phase_name:'Waxing Crescent',phase_img:'13.png',illumination:30,tilt:23.9}
+];
+test('Moon reconstruction uses date-verified provider illumination, phase and tilt fixtures, not recalculated substitutions',async()=>{
+  const metadata=providerFixtures.map(item=>normalizeMoonProviderMetadata({days:[item]},item.dateISO));
+  const result=await renderMoons(new Canvas(),{dates:['05/11/1998','06/15/2000','08/10/2024'],providerMetadata:metadata,orientation:'provider',size:100,transparent:true});
+  for(let i=0;i<metadata.length;i++){const item=result.items[i],expected=metadata[i];assert.equal(item.date,expected.dateISO);assert.equal(item.sourceDateSerial,expected.sourceDateSerial);assert.equal(item.illumination,expected.illumination);assert.equal(item.fraction,expected.illumination/100);assert.equal(item.phaseName,expected.phaseName);assert.equal(item.providerTilt,expected.providerTilt);assert.equal(item.sourceImageURL,expected.sourceImageURL);}
+  assert.match(result.model,/MoonPhases/);assert.match(result.note,/not the provider photograph/);
+});
+test('Moon reconstruction refuses provider metadata from another date or incomplete provider lists',async()=>{
+  const fixture=normalizeMoonProviderMetadata({days:[providerFixtures[2]]},'2024-08-10');
+  for(const source of [{...fixture,dateISO:'2024-10-08'},{...fixture,sourceDateSerial:'20241008'},{...fixture,illumination:101},{...fixture,providerTilt:Infinity},{...fixture,phaseName:'unknown'}])await assert.rejects(renderMoons(new Canvas(),{dates:['08/10/2024'],providerMetadata:[source],orientation:'provider',size:100}));
+  await assert.rejects(renderMoons(new Canvas(),{dates:['08/10/2024'],providerMetadata:[],orientation:'provider',size:100}));
+});
+function brightnessCentroid(pixels,size){let weight=0,x=0,y=0;for(let row=0;row<size;row++)for(let col=0;col<size;col++){const at=(row*size+col)*4,w=pixels[at]*pixels[at+3]/255;weight+=w;x+=(col+.5-size/2)*w;y+=(row+.5-size/2)*w;}return{x:x/weight,y:y/weight};}
+test('provider tilt rotates lit-hemisphere centroid clockwise rather than reversing angle units',()=>{
+  const size=80,meta={fraction:.3,brightLimbAngle:-90,waxing:true,providerTilt:0};const zero=shadeMoonPixels(size,meta,surface,{appearance:'natural',orientation:'provider'}),clockwise=shadeMoonPixels(size,{...meta,providerTilt:90},surface,{appearance:'natural',orientation:'provider'});
+  const a=brightnessCentroid(zero,size),b=brightnessCentroid(clockwise,size);assert.ok(a.x>5);assert.ok(Math.abs(a.y)<.1);assert.ok(b.y>5,'positive provider tilt rotates bright right side down');assert.ok(Math.abs(b.x)<.1);assert.ok(Math.abs(a.x-b.y)<.1);
+});
+test('provider tilt rotates the complete texture and alpha disk, not only the terminator',()=>{
+  const size=80,pattern={width:32,height:16,pixels:Uint8ClampedArray.from({length:32*16*4},(_,i)=>i%4===3?255:i%4===0?30+Math.floor(i/4)%32*6:i%4===1?40+Math.floor(Math.floor(i/4)/32)*10:100)};
+  const meta={fraction:.3,brightLimbAngle:-90,waxing:true,providerTilt:0},zero=shadeMoonPixels(size,meta,pattern,{appearance:'natural',orientation:'provider'}),turned=shadeMoonPixels(size,{...meta,providerTilt:90},pattern,{appearance:'natural',orientation:'provider'});
+  for(const[x,y]of [[22,17],[56,24],[31,61],[58,53]])for(let channel=0;channel<4;channel++){const expected=zero[((size-1-x)*size+y)*4+channel],actual=turned[(y*size+x)*4+channel];assert.ok(Math.abs(expected-actual)<=1,`rotated texture sample ${x},${y},${channel}`);}
 });
 test('Sky/Moon manifest lists all current asset hashes including timezone supplement and sources',async()=>{
   const manifest=JSON.parse(await readFile(new URL('../assets/sky-moon/asset-manifest.json',import.meta.url),'utf8'));assert.equal(manifest.files.length,11);

@@ -10,7 +10,7 @@ export function parseCivilDate(input, order = 'MDY') {
   else if ((match=/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2}|\d{4})$/.exec(value))) {
     const a=Number(match[1]), b=Number(match[2]); y=Number(match[3]);
     if (match[3].length===2) y+=y<50?2000:1900;
-    if(a>12) {d=a;m=b;} else if(b>12) {m=a;d=b;} else if(order==='DMY') {d=a;m=b;} else {m=a;d=b;}
+    if(order==='DMY') {d=a;m=b;} else {m=a;d=b;}
   } else if ((match=/^([A-Za-z]+)\.?\s+(\d{1,2})(?:st|nd|rd|th)?\s*,?\s+(\d{4})$/i.exec(value))) {m=MONTHS[match[1].toLowerCase()];d=match[2];y=match[3];}
   else if ((match=/^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\.?\s*,?\s+(\d{4})$/i.exec(value))) {d=match[1];m=MONTHS[match[2].toLowerCase()];y=match[3];}
   else if ((match=/^(?:ng[aà]y\s*)?(\d{1,2})\s*th[aá]ng\s*(\d{1,2})\s*n[aă]m\s*(\d{4})$/i.exec(value))) {d=match[1];m=match[2];y=match[3];}
@@ -24,6 +24,12 @@ export function parseDateList(text, order='MDY') {
   const lines=Array.isArray(text)?text:String(text??'').split(/[\r\n;]+/).map(s=>s.trim()).filter(Boolean);
   if(!lines.length||lines.length>60) throw Error('Dán từ 1 đến 60 ngày, mỗi ngày một dòng.');
   return lines.map(line=>parseCivilDate(line,order));
+}
+/** Moon form contract: month/day/four-digit-year only. Never infer DMY. */
+export function parseMoonDates(text) {
+  const lines=Array.isArray(text)?text:String(text??'').split(/[\r\n;]+/).map(s=>s.trim()).filter(Boolean);
+  if(!lines.length||lines.length>60)throw Error('Dán từ 1 đến 60 ngày theo MM/DD/YYYY, mỗi ngày một dòng.');
+  return lines.map(input=>{const value=String(input).trim();if(!/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(value))throw Error(`Moon Phase chỉ nhận MM/DD/YYYY (tháng/ngày/năm): ${value}.`);return parseCivilDate(value,'MDY');});
 }
 function timeParts(time) {
   const match=/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(String(time));
@@ -43,8 +49,8 @@ export function zonedDateTime(date, time='12:00', zone='UTC') {
     const probe=wall+delta*86400000, offset=clock(probe)-probe, candidate=wall-offset;
     if(clock(candidate)===wall) candidates.add(candidate);
   }
-  if(candidates.size===0) throw Error('Giờ này không tồn tại do đổi giờ mùa hè. Chọn giờ khác hoặc dùng UTC offset trong phần nâng cao.');
-  if(candidates.size>1) throw Error('Giờ này lặp lại do kết thúc giờ mùa hè. Dùng UTC offset trong phần nâng cao để xác định lần mong muốn.');
+  if(candidates.size===0) throw Error('Giờ này không tồn tại do đổi giờ mùa hè. Chọn một giờ khác tại địa điểm này.');
+  if(candidates.size>1) throw Error('Giờ này lặp lại do kết thúc giờ mùa hè. Chọn một giờ khác ngoài khoảng giờ lặp.');
   const epoch=[...candidates][0], utcOffset=(wall-epoch)/3600000;
   return {instant:new Date(epoch),utcOffset,timeZone:zone};
 }

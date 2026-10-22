@@ -4,8 +4,8 @@
  * See assets/sky-moon/SOURCES.md for attribution and model limitations. */
 import {getMoonIllumination, getMoonPosition} from './assets/sky-moon/suncalc-2.1.1.js';
 import OfflineGeocoder from './assets/sky-moon/skymoon-offline-geocoder.js';
-import {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-flow-r5';
-export {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-flow-r5';
+import {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-sky-moon-r6';
+export {parseCivilDate, parseDateList, parseMoonDates, zonedDateTime} from './sky-moon-inputs.js?v=20261022-sky-moon-r6';
 
 const ASSETS = new URL('./assets/sky-moon/', import.meta.url);
 const RAD = Math.PI / 180, DAY = 86400000;
@@ -239,15 +239,18 @@ export function shadeMoonPixels(size, meta, surface, options={}) {
   if (!surface || !Number.isInteger(surface.width) || !Number.isInteger(surface.height) || surface.width < 1 || surface.height < 1 || surface.width * surface.height > 8388608 || !surface.pixels || surface.pixels.length !== surface.width * surface.height * 4) throw new Error('Texture Moon không hợp lệ.');
   const bytes = new Uint8ClampedArray(size * size * 4), lz = clamp(2 * meta.fraction - 1, -1, 1);
   const orientation=options.orientation??'north', appearance=options.appearance??'natural';
-  if(!['north','observer','phase'].includes(orientation)||!['natural','warm','grayscale'].includes(appearance))throw Error('Kiểu hiển thị Moon không hợp lệ.');
-  const degrees=orientation==='observer'?meta.brightLimbAngle-Number(meta.parallacticAngle??0):orientation==='phase'?(meta.waxing?-90:90):meta.brightLimbAngle;
+  if(!['north','observer','phase','provider'].includes(orientation)||!['natural','warm','grayscale'].includes(appearance))throw Error('Kiểu hiển thị Moon không hợp lệ.');
+  const degrees=orientation==='observer'?meta.brightLimbAngle-Number(meta.parallacticAngle??0):['phase','provider'].includes(orientation)?(meta.waxing?-90:90):meta.brightLimbAngle;
+  const rotation=orientation==='provider'?finite(meta.providerTilt,-180,180,'Góc xoay nguồn Moon')*RAD:0,cos=Math.cos(rotation),sin=Math.sin(rotation);
   const planar = Math.sqrt(Math.max(0, 1 - lz * lz)), angle = degrees * RAD;
   const lx = -Math.sin(angle) * planar, ly = Math.cos(angle) * planar;
   for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
     const nx = (x + .5 - size / 2) / (size / 2), ny = (size / 2 - y - .5) / (size / 2), rr = nx * nx + ny * ny;
     if (rr >= 1) continue;
-    const nz = Math.sqrt(1 - rr), dot = nx * lx + ny * ly + nz * lz;
-    const longitude = Math.atan2(nx, nz), latitude = Math.asin(ny);
+    // Provider rotates the complete disk clockwise in screen coordinates.
+    const sx=cos*nx-sin*ny,sy=sin*nx+cos*ny;
+    const nz = Math.sqrt(1 - rr), dot = sx * lx + sy * ly + nz * lz;
+    const longitude = Math.atan2(sx, nz), latitude = Math.asin(sy);
     const tx = Math.min(surface.width - 1, Math.max(0, Math.floor((.5 + longitude / (2 * Math.PI)) * surface.width)));
     const ty = Math.min(surface.height - 1, Math.max(0, Math.floor((.5 - latitude / Math.PI) * surface.height)));
     const sample = (ty * surface.width + tx) * 4, at = (y * size + x) * 4;
@@ -264,11 +267,21 @@ export function shadeMoonPixels(size, meta, surface, options={}) {
 
 export async function renderMoons(canvas, options = {}) {
   checkCancelled(options.signal);
-  const civilDates=parseDateList(options.dates??options.date??'',options.dateOrder??'MDY'),dates=civilDates.map(date=>date.iso);
+  if(options.dateOrder!==undefined&&options.dateOrder!=='MDY')throw Error('Moon Phase dùng MM/DD/YYYY; không đổi sang DD/MM/YYYY.');
+  const civilDates=parseDateList(options.dates??options.date??'','MDY'),dates=civilDates.map(date=>date.iso);
   if(options.instants!==undefined&&(!Array.isArray(options.instants)||options.instants.length!==dates.length||options.instants.some(value=>!Number.isFinite(new Date(value).getTime()))))throw Error('Danh sách thời điểm không khớp các ngày Moon Phase.');
   const columns = integer(options.columns ?? 3, 1, 12, 'Số cột'), size = integer(options.size ?? 400, 100, 1200, 'Size mỗi moon');
   const time = options.time ?? '12:00', offset = options.utcOffset ?? 0, lat = options.lat ?? 51.4809181, lon = options.lon ?? -.0207105;
-  const items = dates.map((date,i) => ({...moonMetadata(date, time, offset, lat, lon,options.instants?.[i]),display:civilDates[i].display}));
+  const provider=options.providerMetadata;
+  if(provider!==undefined&&(!Array.isArray(provider)||provider.length!==dates.length))throw Error('Dữ liệu nguồn Moon không khớp danh sách ngày.');
+  const items = dates.map((date,i) => {
+    const calculated=moonMetadata(date,time,offset,lat,lon,options.instants?.[i]);
+    if(!provider)return{...calculated,display:civilDates[i].display};
+    const source=provider[i];
+    if(source?.dateISO!==date||source.sourceDateSerial!==date.replaceAll('-','')||(!PHASE_NAMES.includes(source.phaseName)&&source.phaseName!=='Third Quarter')||typeof source.waxing!=='boolean')throw Error('Nguồn Moon trả ngày/pha không khớp; không xuất ảnh ngày khác.');
+    const illumination=finite(source.illumination,0,100,'Chiếu sáng nguồn'),providerTilt=finite(source.providerTilt,-180,180,'Góc xoay nguồn');
+    return{...calculated,...source,date,display:civilDates[i].display,fraction:illumination/100,illumination,providerTilt,model:'MoonPhases date-only protocol / NASA illustrative raster'};
+  });
   const cols = Math.min(columns, items.length), rows = Math.ceil(items.length / cols), labelH = options.showLabels === false ? 0 : Math.max(34,Math.round(size*.13));
   const w = cols*size, h = rows*(size+labelH);
   if (w * h > 16777216 || w > 8192 || h > 8192) throw new Error('PNG ghép quá lớn. Giảm size hoặc số ngày (tối đa 16 megapixel).');
@@ -289,8 +302,8 @@ export async function renderMoons(canvas, options = {}) {
     await new Promise(resolve => setTimeout(resolve, 0));
   }
   checkCancelled(options.signal);
-  return {kind: 'moon', items, width: w, height: h, model: 'SunCalc 2.1.1 / Meeus', texture: "NASA's Scientific Visualization Studio / LROC",
-    note: 'Local computed PNG, not the panel provider 16-image lookup. No libration, lunar-axis rotation or eclipses; warm is an appearance preset, not different astronomical data.'};
+  return {kind: 'moon', items, width: w, height: h, model:provider?'MoonPhases date-only verified metadata':'SunCalc 2.1.1 / Meeus', texture: "NASA's Scientific Visualization Studio / LROC",
+    note:provider?'Date, illumination and disk tilt verified with the panel provider. PNG is a NASA reconstruction, not the provider photograph.':'Local computed PNG, not the panel provider 16-image lookup. No libration, lunar-axis rotation or eclipses; warm is an appearance preset, not different astronomical data.'};
 }
 
 async function places() {

@@ -1,0 +1,54 @@
+{
+  "schema": "mitom.sky-panel.v1",
+  "source": "Exact public vendor/catalog bytes verified against installed Photoshop panel on2026-10-22",
+  "files": {
+    "d3.min.js": {
+      "bytes": 151736,
+      "sha256": "54add204da301145a792a3a60cff7677e827b4c189b2668311d7428581edaeec"
+    },
+    "d3.geo.projection.min.js": {
+      "bytes": 46781,
+      "sha256": "2cbb20601deb5cdac17e5cb97ce747949bbaa44641a1b4c3bb5e9bf31e15dda1"
+    },
+    "celestial.min.js": {
+      "bytes": 124709,
+      "sha256": "c9bddddde8a4774506adf903d2514cf0bde5a57446c164025ad5b1fabf419119"
+    },
+    "data/mw.json": {
+      "bytes": 534254,
+      "sha256": "aee221a7a0e879418e685de00c3e68fbdfac5667c0a8aab74929ef9cf4aab4fb"
+    },
+    "data/constellations.json": {
+      "bytes": 50580,
+      "sha256": "11e14f1ee19b71bff5ca8af3f6e6a20596c4609dd86d43c9a796054fce88030c"
+    },
+    "data/constellations.borders.json": {
+      "bytes": 47311,
+      "sha256": "d118ffadfe6cc4a76435c969d09f8e6889c54b72c215dd416fb55e4507a39d30"
+    },
+    "data/constellations.lines.json": {
+      "bytes": 27136,
+      "sha256": "294f66bef5d5cf50b1e17f16d2efa1d97a15131612c68dd935adef6e7373e13c"
+    },
+    "data/stars.6.json": {
+      "bytes": 656721,
+      "sha256": "0297b8fa3adfbce1dc26566f61c4abcc1df4f29c6a28729ca06b56d1c6d25602"
+    },
+    "data/starnames.json": {
+      "bytes": 675483,
+      "sha256": "044a73db97f45c51e194db64e2555dc295be57897bf9da90bc3781dcd17ba216"
+    },
+    "data/dsos.bright.json": {
+      "bytes": 8328,
+      "sha256": "10a55eb314b74179cf0a457969a76177a609639efc364cc532b44d2e6ffffd45"
+    },
+    "data/dsonames.json": {
+      "bytes": 236309,
+      "sha256": "251914f7c2d0bb4a6dc41bc2d333fde3c578939979d3d6ab0157a5b7cdde3741"
+    },
+    "data/planets.json": {
+      "bytes": 8178,
+      "sha256": "5fca7ea95880f6feeaab75f306a058aa36f86deedd45ec82cd37e48d20899953"
+    }
+  }
+}

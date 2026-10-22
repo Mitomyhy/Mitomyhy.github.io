@@ -1,7 +1,37 @@
 # Sky Star and Moon Phase sources
 
-The browser tools do not send dates, place queries, or artwork to an external API.
-Assets are fetched only from this site's own `tools/assets/sky-moon/` directory.
+## Current production flow — 2026-10-22 R6
+
+Sky location queries and artwork stay on-device. Moon selected civil dates are
+sent directly to MoonPhases.co.uk to match the panel's date-only source protocol.
+
+- Sky now uses the exact installed-panel D3-Celestial, D3 v3 and projection
+  libraries plus all nine native catalogs in `../../vendor/sky-panel/`.
+  Their independent manifest pins every library/catalog byte. Native observer
+  and UTC zenith are verified before canvas capture. No handwritten projection
+  fallback is used by the production workspace.
+- Location paste resolves with the bundled GeoNames city ID and IANA timezone
+  supplement. The entered clock means local time at the selected city; DST is
+  applied before calling Celestial. Manual latitude, longitude and UTC-offset
+  controls are removed. Scroll/pan changes preview CSS, never exported pixels.
+- Moon accepts numeric MM/DD/YYYY only, with no automatic day/month swapping.
+  Production metadata uses the exact panel endpoint with fixed London observer,
+  `len=1`, `tz=0`; returned `date_serial` must match the requested date exactly.
+- Illumination, phase name and clockwise disk tilt come from the provider. The
+  API has no hour parameter: do not call its daily result an exact noon instant.
+- Downloadable Moon PNGs remain a NASA reconstruction, not the provider photo.
+  The whole disk/texture rotates by provider tilt. Provider PNG bytes are not
+  proxied or redistributed; missing image CORS headers still prevent their
+  cross-origin canvas export in a browser-only app.
+- Official reference: https://moonphases.co.uk/js/widget.js chooses `phase_img`
+  and rotates with `tilt`. No different date or computed metadata is silently
+  substituted when the source API fails.
+
+## Historical R1/R2 implementation notes
+
+The notes below document the former local renderer. The R6 production behavior
+above supersedes conflicting descriptions; SunCalc remains available as a
+standalone library/test path, not a fallback in the production Moon workflow.
 
 ## Moon calculation
 

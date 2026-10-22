@@ -13,7 +13,7 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261022-flow-r5">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261022-sky-moon-r6">
   <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
   <link rel="stylesheet" href="tools/sky-moon-controls.css?v=20261022-flow-r5">
   <script defer src="site-config.js?v=20261021-panel-full-launcher4"></script>
@@ -21,7 +21,7 @@
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261022-flow-r5"></script>
+  <script type="module" src="tools/workbench.js?v=20261022-sky-moon-r6"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
@@ -149,47 +149,31 @@ OLIVER</textarea></label>
         </section>
         <section data-controls="sky" hidden>
           <div class="control-heading"><span>01 / THỜI GIAN & ĐỊA ĐIỂM</span><span>YOUR MOMENT</span></div>
-          <label class="tools-field">Thành phố / quốc gia<input id="sky-place" type="search" value="Leeds, UK" placeholder="Ví dụ: Leeds, UK / Đà Nẵng, Vietnam" autocomplete="off"></label>
-          <button id="sky-find" type="button" class="tools-secondary">Tìm địa điểm</button><div id="sky-places" class="tools-places" aria-live="polite"></div>
-          <div class="tools-field-pair"><label class="tools-field">Dán ngày<input id="sky-date" type="text" value="10/22/2026" placeholder="MM/DD/YYYY hoặc YYYY-MM-DD" required></label><label class="tools-field">Giờ địa phương<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
-          <label class="tools-field">Thứ tự ngày số<select id="sky-date-order"><option value="MDY">MM/DD/YYYY — giống panel</option><option value="DMY">DD/MM/YYYY</option></select></label>
-          <p id="sky-resolved" class="tools-note" aria-live="polite">Chỉ nhập thành phố, ngày và giờ. Múi giờ / giờ mùa hè được tra tự động.</p>
-          <details class="tools-advanced"><summary>Nâng cao: tọa độ / múi giờ</summary>
-            <label class="tools-check"><input id="sky-manual" type="checkbox"> Dùng tọa độ tự nhập</label>
-            <div class="tools-field-pair"><label class="tools-field">Vĩ độ<input id="sky-lat" type="number" step="0.0001" min="-90" max="90" value="53.79648"></label><label class="tools-field">Kinh độ<input id="sky-lon" type="number" step="0.0001" min="-180" max="180" value="-1.54785"></label></div>
-            <label class="tools-field">Múi giờ IANA<input id="sky-zone" value="Europe/London" placeholder="Europe/London"></label>
-            <label class="tools-check"><input id="sky-manual-offset" type="checkbox"> Ghi đè UTC offset (giờ)</label><label class="tools-field">UTC offset<input id="sky-offset" type="number" min="-14" max="14" step="0.25" value="0"></label>
-          </details>
+          <label class="tools-field">Dán địa điểm<input id="sky-place" type="search" value="Leeds, UK" placeholder="Ví dụ: Leeds, UK / Đà Nẵng, Vietnam" autocomplete="off"></label>
+          <div id="sky-places" class="tools-places" aria-live="polite"></div>
+          <div class="tools-field-pair"><label class="tools-field">Ngày · MM/DD/YYYY<input id="sky-date" type="text" value="10/22/2026" placeholder="MM/DD/YYYY" required></label><label class="tools-field">Giờ tại địa điểm<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
+          <p id="sky-resolved" class="tools-note" aria-live="polite">Dán địa điểm; web tự nhận tọa độ và múi giờ, kể cả giờ mùa hè theo ngày. Không cần nhập thông số kỹ thuật.</p>
           <div class="control-heading"><span>02 / HIỂN THỊ</span><span>STAR CATALOGUE</span></div>
           <div class="tools-field-pair"><label class="tools-field">Màu sao<input id="sky-stars" type="color" value="#ffffff"></label><label class="tools-field">Màu nền<input id="sky-bg" type="color" value="#000000"></label></div>
           <label class="tools-check"><input id="sky-lines" type="checkbox" checked> Đường chòm sao</label><label class="tools-check"><input id="sky-grid" type="checkbox"> Lưới tọa độ</label><label class="tools-check"><input id="sky-labels" type="checkbox"> Nhãn phương hướng</label><label class="tools-check"><input id="sky-transparent" type="checkbox"> Nền trong suốt</label>
           <label class="tools-check"><input id="sky-effect" type="checkbox" checked> Effect Sky Star của panel (trắng đen)</label>
           <button id="sky-generate" class="tools-primary" type="button">Render Starmap <span>↗</span></button>
           <button id="sky-reapply" class="tools-secondary" type="button">Apply lại effect / nền — không render lại</button>
-          <p class="tools-note">Cùng catalog sao, phép chiếu stereographic và effect của panel. Web xuất PNG trực tiếp; không chạy action Photoshop.</p>
+          <p class="tools-note">Dùng đúng engine D3-Celestial và cấu hình mặc định của panel. Cuộn chuột trên bản đồ để zoom; kéo để di chuyển. Zoom xem không thay đổi PNG xuất.</p>
         </section>
         <section data-controls="moon" hidden>
           <div class="control-heading"><span>01 / NHỮNG NGÀY ĐẶC BIỆT</span><span>DATE → MOON</span></div>
-          <label class="tools-field">Dán danh sách ngày — mỗi dòng một ngày<textarea id="moon-dates" rows="5" spellcheck="false">05/11/1998
+          <label class="tools-field">Dán ngày MM/DD/YYYY — mỗi dòng một ngày<textarea id="moon-dates" rows="5" spellcheck="false" placeholder="MM/DD/YYYY">05/11/1998
 06/15/2000
 08/10/2024</textarea></label>
-          <label class="tools-field">Thứ tự ngày số<select id="moon-date-order"><option value="MDY">MM/DD/YYYY — giống panel</option><option value="DMY">DD/MM/YYYY</option></select></label>
-          <p class="tools-note">Nhận cả YYYY-MM-DD và tên tháng tiếng Anh. Không cần chọn từng ngày trong lịch.</p>
-          <details class="tools-advanced"><summary>Nâng cao: thời điểm / nơi quan sát</summary>
-            <p class="tools-note">Mặc định 12:00 UTC, vị trí London như panel. Chỉ thay đổi khi cần một thời điểm cụ thể; pha tính trên web không phải bộ 16 ảnh của nhà cung cấp panel.</p>
-            <label class="tools-field">Giờ địa phương<input id="moon-time" type="text" value="12:00" placeholder="HH:mm" required></label>
-            <label class="tools-field">Múi giờ IANA<input id="moon-zone" value="UTC" placeholder="Asia/Ho_Chi_Minh"></label>
-            <label class="tools-check"><input id="moon-manual-offset" type="checkbox"> Ghi đè UTC offset</label><label class="tools-field">UTC offset<input id="moon-offset" type="number" min="-14" max="14" step="0.25" value="0"></label>
-            <div class="tools-field-pair"><label class="tools-field">Vĩ độ<input id="moon-lat" type="number" step="0.0001" min="-90" max="90" value="51.4809181"></label><label class="tools-field">Kinh độ<input id="moon-lon" type="number" step="0.0001" min="-180" max="180" value="-0.0207105"></label></div>
-          </details>
+          <p id="moon-date-help" class="tools-note">Cố định tháng/ngày/năm: 08/10/2024 là ngày 10 tháng 8, không phải 8 tháng 10. Không tự đảo ngày/tháng.</p>
           <div class="control-heading"><span>02 / BỐ CỤC</span><span>PNG TRONG SUỐT</span></div>
           <div class="tools-field-pair"><label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="12" value="5" required></label><label class="tools-field">Size mỗi moon<input id="moon-size" type="number" min="100" max="1200" value="400" step="50" required></label></div>
           <label class="tools-field">Màu Mặt Trăng<select id="moon-appearance"><option value="warm">Vàng ấm — gần màu panel</option><option value="natural">Màu texture NASA tự nhiên</option><option value="grayscale">Trắng đen</option></select></label>
-          <label class="tools-field">Hướng hiển thị<select id="moon-orientation"><option value="north">Bắc thiên cầu ở trên</option><option value="observer">Theo đường chân trời nơi quan sát</option><option value="phase">Pha quy ước — sáng phải khi trăng lớn</option></select></label>
           <label class="tools-check"><input id="moon-labels" type="checkbox" checked> Hiện ngày và độ chiếu sáng</label>
           <label class="tools-check"><input id="moon-transparent" type="checkbox" checked> Nền trong suốt</label>
           <div class="tools-field-pair"><label class="tools-field">Màu nhãn<input id="moon-label-color" type="color" value="#39465e"></label><label class="tools-field">Màu nền<input id="moon-bg" type="color" value="#f2f1ed"></label></div>
-          <p class="tools-note">Tính pha chính xác theo thời điểm bằng SunCalc. PNG dùng texture NASA + màu bạn chọn; không giả là ảnh MoonPhases.co.uk của panel. Không gửi ngày lên máy chủ.</p>
+          <p class="tools-note">Ngày, pha và góc xoay được đối chiếu trực tiếp với MoonPhases.co.uk như panel (1950–2050). Chỉ ngày được gửi tới nguồn. PNG web dùng texture NASA để tải/ghép được, không phải ảnh chụp gốc của nguồn.</p>
           <button id="moon-generate" class="tools-primary" type="button">Tạo Moon Phase <span>↗</span></button>
           <button id="moon-cancel" class="tools-secondary" type="button" hidden disabled>Hủy tạo Moon Phase</button>
           <div id="moon-results" class="tools-moon-results" aria-live="polite"></div>
@@ -202,7 +186,7 @@ OLIVER</textarea></label>
     </aside>
     <div class="tools-workspace">
       <header class="workspace-heading"><div><p class="micro">TOOLS / CREATIVE WORKSPACE</p><h1 id="workspace-title">3D Tool</h1></div><button id="ps-connect" class="tools-connect" type="button"><i></i><span>Kết nối Photoshop</span></button></header>
-      <div class="workspace-toolbar"><span id="workspace-caption">Artwork của bạn. Góc nhìn của bạn.</span><div><button id="workspace-fit" type="button" title="Phóng lớn vùng làm việc" aria-pressed="false">⛶ <span>Rộng hơn</span></button></div></div>
+      <div class="workspace-toolbar"><span id="workspace-caption">Artwork của bạn. Góc nhìn của bạn.</span><div><button id="sky-zoom-reset" type="button" hidden title="Đặt lại mức zoom Starmap">100% · Đặt lại</button><button id="workspace-fit" type="button" title="Phóng lớn vùng làm việc" aria-pressed="false">⛶ <span>Rộng hơn</span></button></div></div>
       <div id="depth-view-tabs" class="depth-view-tabs" hidden aria-label="Chế độ xem artwork và map"><button type="button" data-depth-view="artwork" aria-pressed="true">Artwork</button><button type="button" data-depth-view="map">Map ghép</button><button type="button" data-depth-view="moge">MoGe</button><button type="button" data-depth-view="da2">DA2</button><button type="button" data-depth-view="3d">Xem 3D</button></div>
       <div id="workspace-stage" class="workspace-stage">
         <div id="tool-empty" class="tool-empty"><div class="empty-orbit" aria-hidden="true"><span>◇</span><i></i><i></i></div><p class="micro">MADE FOR YOUR NEXT IDEA</p><h2 id="empty-title">Bắt đầu bằng artwork.</h2><p id="empty-description">Chọn ảnh bên trái để tạo chiều sâu,<br>xoay 3D và xuất góc nhìn của riêng bạn.</p><button id="empty-action" type="button">＋ Chọn artwork</button></div>
