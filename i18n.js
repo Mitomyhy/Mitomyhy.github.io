@@ -11,7 +11,7 @@
     'nav.main': ['Main navigation', 'Điều hướng chính'],
     'nav.mobile': ['Mobile navigation', 'Điều hướng di động'],
     'nav.home': ['HOME', 'TRANG CHỦ'],
-    'nav.image': ['IMAGE', 'HÌNH ẢNH'],
+    'nav.tools': ['TOOLS', 'TOOLS'],
     'nav.video': ['VIDEO', 'VIDEO'],
     'nav.resources': ['RESOURCES', 'TÀI NGUYÊN'],
     'nav.workflow': ['PANEL WORKFLOW', 'QUY TRÌNH PANEL'],

@@ -1,0 +1,4 @@
+# Keep copied renderer/catalog/license hash pins byte-exact on Windows and Pages.
+tools/assets/** -text
+tools/vendor/** -text
+tools/downloads/*.zip -text
