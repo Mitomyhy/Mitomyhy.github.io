@@ -1,60 +1,66 @@
-# Browser 3D implementation
+# MITOM browser CPU 3D — 2026-10-22
 
-`depth-viewer.js` is an exact copy of the user's installed MITOM/UOY renderer,
-copied without altering the installed Photoshop Panel:
+The Photoshop installation is not modified by this website. All inference and
+image processing take place in browser workers on the visitor's CPU. Photoshop
+and the optional local PNG receiver are not required to generate or download.
 
-- Source: `com.uoy.orderpanel/js/depth-viewer.js`
-- SHA-256: `1c287534e96036c5cbb13c1254105b287e7837c298c2a96d11f2d5de0fb3e1c8`
-- Size: 142,424 bytes
+## Models and modifications
 
-The preview is illustrative geometry. It is not a manufacturing mesh. Browser
-ceramic circle/heart masks are generated preview blanks, not the Panel's exact
-PSD template masks. The original Photoshop workflows remain installed and
-untouched.
+- MoGe-2 Large + Normal, original FP32 weights from
+  https://huggingface.co/Ruicheng/moge-2-vitl-normal . Static 490×490 input,
+  1225 image tokens. Query chunks64 retain every key/value; no quantization,
+  attention window, or model substitution. Conversion SHA256:
+  `dbf975ba6cd84a95b51333fa4cee0f6b80c63306a46df3805937584c653e92ce`.
+  1,325,313,091 bytes. [Upstream notices](../../cpu/LICENSE-MoGe).
+- Depth Anything V2 Small, original FP32 weights from
+  https://github.com/DepthAnything/Depth-Anything-V2 . Native1024 lower-bound
+  preprocessing produces1036×1036 normalized input. Positional embedding is
+  frozen at its exact74×74 grid. Conversion SHA256:
+  `b4027ef3d5dc332cb2a756ea0f2209e9d20b454f4a794c5cc391a62f09fac961`.
+  105,249,387 bytes. [Apache-2.0](../../cpu/LICENSE-DA2).
+- Full conversion files are distributed as byte-preserving48MiB parts in
+  https://github.com/Mitomyhy/mitom-browser-models at immutable commit
+  `dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb`. Every part and the assembled
+  graph are SHA-256 checked before inference. Completed verified parts can be
+  retained in origin-private browser storage; cancel/retry reuses valid parts.
 
-## Optional on-device AI
+These weights total1,430,562,478 bytes, excluding runtimes and browser cache
+overhead. Download requires explicit consent and Generate. No AI file or model
+request is made merely by opening a template or loading an artwork.
+CDN/model hosts receive ordinary request/IP information, never artwork pixels.
 
-No AI library, model, or ONNX runtime is requested until the user presses
-Generate AI. Model inference runs in a dedicated browser worker. The application
-passes local pixels to this worker; it does not upload the artwork or use a
-remote inference API. First-time library/runtime/model requests still disclose
-the visitor's IP and ordinary request information to their respective hosts.
+## Runtime and original algorithms
 
-- [Transformers.js 3.8.1](https://github.com/huggingface/transformers.js/tree/3.8.1), Apache-2.0.
-- [Depth Anything V2 Small ONNX](https://huggingface.co/onnx-community/depth-anything-v2-small), Apache-2.0.
-- Immutable model revision: `4472b7362082ad9968fee890ca0f1e5aca36b93d`.
-- Variant: `q8` (`onnx/model_quantized.onnx`, 27,258,801 bytes).
-- Model SHA-256 published by Hugging Face LFS:
-  `fcf51f1b230362b28690bb9d1809bf0431f29cad20534e3f589bd7285547f20d`.
-- [Original Depth Anything V2 project](https://github.com/DepthAnything/Depth-Anything-V2).
-- ONNX Runtime Web is a transitive runtime of Transformers.js, under the
-  [MIT license](https://github.com/microsoft/onnxruntime/blob/main/LICENSE).
+- ONNX Runtime Web1.23.2, explicitly WASM CPU; MIT:
+  https://github.com/microsoft/onnxruntime .
+- Pyodide314.0.7, official distribution:
+  https://pyodide.org/en/stable/ . Package licenses accompany its wheels.
+- NumPy2.4.6, SciPy1.18.0, Pillow12.2.0 and OpenCV Python4.11.0.86.
+- Reviewed original relief modules are copied unchanged and individually
+  size/SHA-256 checked. Native geometry validity, normal-guided Poisson,
+  PCHIP/multiscale fusion, plane balancing, transition smoothing, source detail,
+  support/text composition and16-bit PNG export run in Pyodide.
+- Camera recovery uses the original SciPy LM objective. DA2 uses actual
+  Pillow/OpenCV preprocessing and FP32 align-corners bilinear restoration.
 
-The model weights are not included in the website distribution. They are
-downloaded from Hugging Face after the explicit click, and may be retained in
-browser-managed cache. This implementation pins the library release and exact
-model revision; it does not claim a cryptographic runtime attestation.
+## Templates, renderer, and limits
 
-Primary API references consulted on 2026-10-22:
+The original panel WebGL renderer is unchanged. Circle/Heart cut masks are the
+actual authored raster transparency extracted from the template's embedded In
+Smart Object; no mathematical heart/circle is substituted. Template descriptors
+record original canvas dimensions and source hashes. Artwork uses a centered
+contain placement; this is not a general PSD warp/action/effect/font renderer.
 
-- [Vanilla JavaScript CDN installation](https://huggingface.co/docs/transformers.js/v3.8.1/en/installation)
-- [DepthEstimationPipeline 3.8.1 source](https://github.com/huggingface/transformers.js/blob/3.8.1/src/pipelines.js#L2818-L2888)
-- [RawImage 3.8.1 source](https://github.com/huggingface/transformers.js/blob/3.8.1/src/utils/image.js)
-- [Quantization API](https://huggingface.co/docs/transformers.js/v3.8.1/en/guides/dtypes)
-- [Model usage and license](https://huggingface.co/onnx-community/depth-anything-v2-small)
+This complete composition workflow has an explicit **Standard** model budget.
+It is **not** the native panel's14400-token UHD inference, nor a promise of
+pixel-identical PSD composition. Source/output preparation is bounded to2048px;
+larger mockup exports do not add AI detail. Dedicated workers support cancel.
+Processing time and peak memory on16/32GB weaker machines are not guaranteed.
 
-Browser AI is Depth Anything V2 **Small** alone, not the Panel's MoGe + DA2
-pipeline. Inference is limited to a 1024 px longest-side input; its floating-point
-depth output is normalized and bilinearly mapped to the source canvas. Artwork
-is retained at its loaded resolution (up to 16 megapixels / 8192 px per side).
+Native and browser regression fixtures passed within stated numerical
+tolerances; newer SciPy/Pillow builds are not asserted bit-identical. Depth PNG
+is genuine grayscale16-bit. Relative relief and illustrative sealed WebGL
+geometry are not calibrated manufacturing millimetres or a measured3D scan.
 
-Imported depth images must exactly match the artwork dimensions. Browser Canvas
-decodes these imported files to 8-bit pixels; the interface discloses this.
-Exported depth is a true 16-bit grayscale PNG container and preserves the
-available normalized Float32 depth to 16-bit precision; it does not invent lost
-precision in an imported 8-bit image.
-
-Mockup PNG exports call the existing renderer's native-texture tiled
-`exportFullPNG` operation at the requested output resolution. They do not upscale
-a screenshot. Unsupported GPU dimensions or exhausted memory are surfaced as
-errors rather than silently producing a smaller image.
+The former R1 DA2-only q8 implementation is retained as unused source history;
+the active workbench imports `depth-flow-tool.js`, not `depth-tool.js`.

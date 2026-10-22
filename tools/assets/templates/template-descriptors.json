@@ -1,0 +1,658 @@
+{
+  "schema": "mitom.native-template-blueprints.v1",
+  "source": "read-only installed source PSD embedded PSB channels",
+  "generic_psd_renderer": false,
+  "products": {
+    "acrylic": {
+      "product_type": "acrylic",
+      "width": 3000,
+      "height": 3001,
+      "dpi": 300,
+      "parent_width": 3543,
+      "parent_height": 1181,
+      "source_psd": {
+        "file": "Template acrylic.psd",
+        "sha256": "6161e431321c4925dfa3f2c3d7d536febb225c426a961a8181214187fd70d2b8"
+      },
+      "roles": {
+        "input": {
+          "source_layer_name": "layer in",
+          "source_layer_id": 5,
+          "embedded_id": "c56fc12f-934c-5d41-8319-46f37b982846",
+          "embedded_sha256": "b0589b3648bd4c9b6c0c1cad8f9cfdb7e1b99d65110fdfad91468e513a41e241",
+          "width": 3000,
+          "height": 3001,
+          "source_parent_bounds": [
+            0,
+            0,
+            1180,
+            1181
+          ],
+          "source_parent_transform": [
+            -0.09143122709924478,
+            0.21187162915828706,
+            1180.0914312270993,
+            0.21187162915828706,
+            1180.0914312270993,
+            1180.7881283708416,
+            -0.09143122709924478,
+            1180.7881283708416
+          ],
+          "descriptor_fully_parsed": false,
+          "helpers": [
+            {
+              "name": "Rectangle 1",
+              "bounds": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "visible": true,
+              "tags": [
+                "SoCo",
+                "vmsk",
+                "vowv",
+                "vogk",
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "vstk",
+                "fxrp",
+                "lyvr"
+              ]
+            },
+            {
+              "name": "Layer 2",
+              "bounds": [
+                0,
+                0,
+                3000,
+                3001
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        },
+        "depth": {
+          "source_layer_name": "layer depth map",
+          "source_layer_id": 8,
+          "embedded_id": "adf95601-811e-584f-b94e-4fe9fa91f660",
+          "embedded_sha256": "aa6aa57ea4137b213bc6505f8b045ee191a2fd14cc4d1f13f7e6bf7e57672a40",
+          "width": 3000,
+          "height": 3001,
+          "source_parent_bounds": [
+            1182,
+            0,
+            2361,
+            1181
+          ],
+          "source_parent_transform": [
+            1182.0,
+            0.0,
+            2361.0,
+            0.0,
+            2361.0,
+            1181.0,
+            1182.0,
+            1181.0
+          ],
+          "descriptor_fully_parsed": false,
+          "helpers": [
+            {
+              "name": "Rectangle 1",
+              "bounds": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "visible": true,
+              "tags": [
+                "SoCo",
+                "vmsk",
+                "vowv",
+                "vogk",
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "vstk",
+                "fxrp",
+                "lyvr"
+              ]
+            },
+            {
+              "name": "Layer 1",
+              "bounds": [
+                0,
+                0,
+                3000,
+                3001
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        },
+        "cut": {
+          "source_layer_name": "layer cắt",
+          "source_layer_id": 11,
+          "embedded_id": "f12be163-d8ba-4344-b173-ce3c060014cb",
+          "embedded_sha256": "64ea85908d82ef86e71d20d842143f22e453406190a1ff38a6e7f5e3db4c72f7",
+          "width": 3000,
+          "height": 3001,
+          "source_parent_bounds": [
+            2363,
+            0,
+            3542,
+            1181
+          ],
+          "source_parent_transform": [
+            2363.0,
+            0.0,
+            3542.0,
+            0.0,
+            3542.0,
+            1181.0,
+            2363.0,
+            1181.0
+          ],
+          "descriptor_fully_parsed": false,
+          "helpers": [
+            {
+              "name": "Rectangle 1",
+              "bounds": [
+                0,
+                0,
+                0,
+                0
+              ],
+              "visible": true,
+              "tags": [
+                "SoCo",
+                "vmsk",
+                "vowv",
+                "vogk",
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "vstk",
+                "fxrp",
+                "lyvr"
+              ]
+            },
+            {
+              "name": "Layer 1",
+              "bounds": [
+                0,
+                0,
+                3000,
+                3001
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lnsr",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        }
+      },
+      "fixed_substrate": false,
+      "shape": null,
+      "guide": null
+    },
+    "ceramic_circle": {
+      "product_type": "ceramic_circle",
+      "width": 2799,
+      "height": 2799,
+      "dpi": 300,
+      "parent_width": 1866,
+      "parent_height": 933,
+      "source_psd": {
+        "file": "Circleceramic-Template.psd",
+        "sha256": "79b758e54cc3abf3b7675f8385e3b8fd9212237989767760be7bcdc292386976"
+      },
+      "roles": {
+        "input": {
+          "source_layer_name": "layer in",
+          "source_layer_id": 200,
+          "embedded_id": "55c0a89c-41b9-9749-a033-eb6b0534eae0",
+          "embedded_sha256": "6a146e15f2c9ac70cf91d0ae5c33ad870a0244527a6a82a69470a6d32913e53f",
+          "width": 2799,
+          "height": 2799,
+          "source_parent_bounds": [
+            0,
+            0,
+            933,
+            933
+          ],
+          "source_parent_transform": [
+            0.0,
+            0.0,
+            933.0,
+            0.0,
+            933.0,
+            933.0,
+            0.0,
+            933.0
+          ],
+          "descriptor_fully_parsed": true,
+          "helpers": [
+            {
+              "name": "shape",
+              "bounds": [
+                0,
+                0,
+                2799,
+                2799
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            },
+            {
+              "name": "Safe zone",
+              "bounds": [
+                0,
+                0,
+                2799,
+                2799
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        },
+        "depth": {
+          "source_layer_name": "layer depth map",
+          "source_layer_id": 201,
+          "embedded_id": "ef5d49ff-c636-b749-9c1b-8adb273a13c7",
+          "embedded_sha256": "a3404ec3f8d01a09de5666334fa1a9163c61ac690cc3fcb716a07823cdf35721",
+          "width": 2799,
+          "height": 2799,
+          "source_parent_bounds": [
+            933,
+            0,
+            1866,
+            933
+          ],
+          "source_parent_transform": [
+            932.952409061953,
+            -0.04759093804717751,
+            1866.047590938047,
+            -0.04759093804717751,
+            1866.047590938047,
+            933.0475909380473,
+            932.952409061953,
+            933.0475909380473
+          ],
+          "descriptor_fully_parsed": true,
+          "helpers": [
+            {
+              "name": "Safe zone",
+              "bounds": [
+                0,
+                0,
+                2799,
+                2799
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        }
+      },
+      "fixed_substrate": true,
+      "shape": {
+        "source_layer_name": "shape",
+        "source_layer_id": 24,
+        "source_bounds": [
+          0,
+          0,
+          2799,
+          2799
+        ],
+        "native_canvas": [
+          2799,
+          2799
+        ],
+        "isolation_verified": {
+          "normal_blend": true,
+          "full_opacity": true,
+          "no_clipping": true,
+          "no_user_vector_mask": true,
+          "no_effects_or_filters": true
+        },
+        "alpha": {
+          "file": "ceramic-circle-shape-alpha.png",
+          "sha256": "4107a0da71d3edf4d1291f4b17b9329a0c49417961dfe9bc453cb29f88efdf10",
+          "bytes": 74407,
+          "encoding": "grayscale value stores source alpha"
+        },
+        "rgba": {
+          "file": "ceramic-circle-shape-rgba.png",
+          "sha256": "f931560a71278a9fd60acaa1c9a33cc3dafbf3be22b06b47bed671e2aa8aeb8f",
+          "bytes": 134166,
+          "encoding": "straight source RGBA; original ICC retained if present"
+        }
+      },
+      "guide": {
+        "source_layer_name": "Safe zone",
+        "source_layer_id": 23,
+        "source_bounds": [
+          0,
+          0,
+          2799,
+          2799
+        ],
+        "native_canvas": [
+          2799,
+          2799
+        ],
+        "isolation_verified": {
+          "normal_blend": true,
+          "full_opacity": true,
+          "no_clipping": true,
+          "no_user_vector_mask": true,
+          "no_effects_or_filters": true
+        },
+        "alpha": {
+          "file": "ceramic-circle-guide-alpha.png",
+          "sha256": "4107a0da71d3edf4d1291f4b17b9329a0c49417961dfe9bc453cb29f88efdf10",
+          "bytes": 74407,
+          "encoding": "grayscale value stores source alpha"
+        },
+        "rgba": {
+          "file": "ceramic-circle-guide-rgba.png",
+          "sha256": "990397a75da1bc87af3215f52f120021530b8c25d629fd08a9f534773e0cfbf3",
+          "bytes": 1697609,
+          "encoding": "straight source RGBA; original ICC retained if present"
+        }
+      }
+    },
+    "ceramic_heart": {
+      "product_type": "ceramic_heart",
+      "width": 2799,
+      "height": 2568,
+      "dpi": 300,
+      "parent_width": 1866,
+      "parent_height": 856,
+      "source_psd": {
+        "file": "Heartceramic-Template.psd",
+        "sha256": "768102a90a3f0a2701239b4dc6bf1d8bdf61e9399ca5bb6b0ea22caffaac5e16"
+      },
+      "roles": {
+        "input": {
+          "source_layer_name": "layer in",
+          "source_layer_id": 248,
+          "embedded_id": "e6aaca99-dd7c-f84d-a27b-3dd5a05b3629",
+          "embedded_sha256": "9eae3457aa46a988c56ab34370cdcd1c04d3780e9f277e3f534726c97724df06",
+          "width": 2799,
+          "height": 2568,
+          "source_parent_bounds": [
+            1,
+            2,
+            933,
+            855
+          ],
+          "source_parent_transform": [
+            0.02098556291343856,
+            0.019253635427464777,
+            932.9790144370868,
+            0.019253635427464777,
+            932.9790144370868,
+            855.9807463645723,
+            0.02098556291343856,
+            855.9807463645723
+          ],
+          "descriptor_fully_parsed": true,
+          "helpers": [
+            {
+              "name": "shape",
+              "bounds": [
+                3,
+                6,
+                2799,
+                2565
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            },
+            {
+              "name": "safe zone",
+              "bounds": [
+                3,
+                6,
+                2799,
+                2565
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        },
+        "depth": {
+          "source_layer_name": "layer depth map",
+          "source_layer_id": 249,
+          "embedded_id": "3338a84f-7c2c-4a44-9a5a-f1526d5193a9",
+          "embedded_sha256": "aeb0b5f84b3a8b7ec060e77d1748c959f83f83713dce95d92bb37da53f39621c",
+          "width": 2799,
+          "height": 2568,
+          "source_parent_bounds": [
+            934,
+            2,
+            1866,
+            855
+          ],
+          "source_parent_transform": [
+            933.0053761393128,
+            0.004932449358949265,
+            1865.9946238606874,
+            0.004932449358949265,
+            1865.9946238606874,
+            855.9950675506411,
+            933.0053761393128,
+            855.9950675506411
+          ],
+          "descriptor_fully_parsed": true,
+          "helpers": [
+            {
+              "name": "safe zone",
+              "bounds": [
+                3,
+                6,
+                2799,
+                2565
+              ],
+              "visible": true,
+              "tags": [
+                "luni",
+                "lyid",
+                "clbl",
+                "infx",
+                "knko",
+                "lspf",
+                "lclr",
+                "shmd",
+                "fxrp"
+              ]
+            }
+          ]
+        }
+      },
+      "fixed_substrate": true,
+      "shape": {
+        "source_layer_name": "shape",
+        "source_layer_id": 251,
+        "source_bounds": [
+          3,
+          6,
+          2799,
+          2565
+        ],
+        "native_canvas": [
+          2799,
+          2568
+        ],
+        "isolation_verified": {
+          "normal_blend": true,
+          "full_opacity": true,
+          "no_clipping": true,
+          "no_user_vector_mask": true,
+          "no_effects_or_filters": true
+        },
+        "alpha": {
+          "file": "ceramic-heart-shape-alpha.png",
+          "sha256": "1f9e8c292418fc105e1c00e2a2bc3fabd49d5478eb7035912c489e8a5fd29b52",
+          "bytes": 69500,
+          "encoding": "grayscale value stores source alpha"
+        },
+        "rgba": {
+          "file": "ceramic-heart-shape-rgba.png",
+          "sha256": "7afd85b91063f2086e49d74d5f649455ce756f476189f65e9ba936defbd90e61",
+          "bytes": 127713,
+          "encoding": "straight source RGBA; original ICC retained if present"
+        }
+      },
+      "guide": {
+        "source_layer_name": "safe zone",
+        "source_layer_id": 250,
+        "source_bounds": [
+          3,
+          6,
+          2799,
+          2565
+        ],
+        "native_canvas": [
+          2799,
+          2568
+        ],
+        "isolation_verified": {
+          "normal_blend": true,
+          "full_opacity": true,
+          "no_clipping": true,
+          "no_user_vector_mask": true,
+          "no_effects_or_filters": true
+        },
+        "alpha": {
+          "file": "ceramic-heart-guide-alpha.png",
+          "sha256": "e0c633fff7656c649ce42696e1f04bd99cc4e1769f2eb60e2d485df6a81cb4bd",
+          "bytes": 384406,
+          "encoding": "grayscale value stores source alpha"
+        },
+        "rgba": {
+          "file": "ceramic-heart-guide-rgba.png",
+          "sha256": "308991e5b527a6d89a36074b9b11435a38690c238ecef4d3719b9e27a0407801",
+          "bytes": 1418122,
+          "encoding": "straight source RGBA; original ICC retained if present"
+        }
+      }
+    }
+  },
+  "limitations": [
+    "Blueprints open a browser-native working canvas, not Photoshop or an executable PSD.",
+    "Embedded Smart Object role/canvas identity is mapped; arbitrary PSD warps/effects/actions/fonts are not ported by this descriptor.",
+    "Circle/heart masks retain the authored stored raster alpha, not a mathematical replacement shape.",
+    "These blank-template masks have no hanging hole; native preview-only holes are separate from the manufacturing alpha.",
+    "Guide assets are display-only; never bake safety guides into artwork, depth or manufacturing masks."
+  ]
+}

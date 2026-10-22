@@ -13,13 +13,13 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261022-1">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261022-cpu-r4">
   <script defer src="site-config.js?v=20261021-panel-full-launcher4"></script>
   <script defer src="i18n.js?v=20261021-helvetica-normal"></script>
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261022-1"></script>
+  <script type="module" src="tools/workbench.js?v=20261022-cpu-r4"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-i18n="skip">Skip to main content</a>
@@ -55,19 +55,34 @@
       </nav>
       <form id="tool-form" class="tools-controls">
         <section data-controls="depth">
-          <div class="control-heading"><span>01 / NGUỒN ẢNH</span><span>PNG · JPG · WEBP</span></div>
+          <div class="control-heading"><span>01 / MỞ TEMPLATE</span><span>IN · DEPTH · CUT</span></div>
+          <label class="tools-field">Template gốc<select id="depth-product"><option value="acrylic">Acrylic — theo viền artwork</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label>
+          <button id="depth-open-template" class="tools-secondary" type="button">Mở template <span>↗</span></button>
+          <p class="tools-note">Giữ canvas / shape gốc của panel. Web đặt ảnh theo <em>contain</em> giữa canvas; không chạy Photoshop hoặc mô phỏng PSD warp.</p>
+          <div class="control-heading"><span>02 / ĐẶT ARTWORK VÀO IN</span><span>PNG · JPG · WEBP</span></div>
           <label class="tools-upload"><span>＋ Chọn artwork</span><small>Ảnh được xử lý trên máy, không upload lên máy chủ.</small><input id="depth-art" type="file" accept="image/png,image/jpeg,image/webp"></label>
           <p id="depth-file-name" class="tools-note">Ưu tiên PNG nền trong suốt.</p>
-          <label class="tools-field">Sản phẩm<select id="depth-product"><option value="acrylic">Acrylic — theo viền artwork</option><option value="ceramic_circle">Ceramic — hình tròn</option><option value="ceramic_heart">Ceramic — trái tim</option></select></label>
-          <button id="depth-generate" class="tools-primary" type="button">Generate AI depth <span>↗</span></button>
-          <p class="tools-note">DA2 Small chạy trong trình duyệt. Lần đầu tải model; không phải pipeline MoGe + DA2 trong panel. Hình sản phẩm là bản xem trước, không phải khuôn sản xuất.</p>
-          <details class="tools-details"><summary>Đã có depth map?</summary><label class="tools-field">Chọn depth PNG<input id="depth-map" type="file" accept="image/png,image/jpeg"></label><p class="tools-note">Cần cùng kích thước artwork. Canvas đọc depth nhập ở 8 bit; xuất depth PNG 16 bit không khôi phục độ chính xác đã mất.</p><button id="depth-invert" type="button" class="tools-secondary">Đảo nổi / lõm</button></details>
-          <div class="control-heading"><span>02 / BỀ MẶT</span><span>LIVE PREVIEW</span></div>
+          <div class="depth-cpu-notice"><strong>MoGe + DA2 · CPU trên máy này</strong><p>Model khoảng 1,43 GB ở lần đầu; lưu cache nếu trình duyệt còn chỗ. Thư viện xử lý tải thêm riêng. Máy yếu có thể chạy vài phút và dùng nhiều RAM.</p><p>Standard FP32: MoGe 1225 tokens + DA2 1036 px; ghép bằng thuật toán gốc, đầu ra tối đa 2048 px. <strong>Không phải mức UHD 14400 tokens của panel.</strong></p></div>
+          <label class="tools-check depth-consent"><input id="depth-consent" type="checkbox"> Tôi đồng ý tải AI và dùng CPU / RAM của máy này. Không cần Photoshop.</label>
+          <button id="depth-generate" class="tools-primary" type="button">Generate MoGe + DA2 <span>↗</span></button>
+          <button id="depth-cancel" class="tools-secondary depth-cancel" type="button" hidden disabled>Hủy Generate — giữ artwork <span>×</span></button>
+          <progress id="depth-progress" max="100" hidden aria-label="Tiến trình CPU"></progress><p id="depth-progress-label" class="tools-note" role="status" aria-live="polite"></p>
+          <details class="tools-details"><summary>Thiết lập thuật toán gốc</summary>
+            <label class="tools-range">Detail <output id="depth-detail-value">91%</output><input id="depth-detail" type="range" min="0" max="100" value="91"></label>
+            <label class="tools-range">Flatten <output id="depth-flatten-value">65%</output><input id="depth-flatten" type="range" min="0" max="100" value="65"></label>
+            <label class="tools-range">Smoothing <output id="depth-smoothing-value">17%</output><input id="depth-smoothing" type="range" min="0" max="100" value="17"></label>
+            <label class="tools-range">Source detail <output id="depth-source-detail-value">100%</output><input id="depth-source-detail" type="range" min="0" max="100" value="100"></label>
+            <label class="tools-check"><input id="depth-support" type="checkbox" checked> Nhận diện support trắng theo thuật toán gốc</label>
+            <label class="tools-range">Support depth <output id="depth-support-depth-value">12%</output><input id="depth-support-depth" type="range" min="1" max="40" value="12"></label>
+            <p class="tools-note">Đổi các thông số này cần Generate lại; không tự dùng depth cũ.</p>
+          </details>
+          <div class="control-heading"><span>03 / XEM 3D</span><span>LIVE PREVIEW</span></div>
           <label class="tools-range">Nổi viền <output id="rim-value">20%</output><input id="depth-rim" type="range" min="0" max="100" value="20"></label>
           <label class="tools-range">Nổi bề mặt <output id="relief-value">50%</output><input id="depth-relief" type="range" min="0" max="100" value="50"></label>
           <label class="tools-range">Độ bóng <output id="gloss-value">65%</output><input id="depth-gloss" type="range" min="0" max="100" value="65"></label>
           <div class="tools-button-row"><button type="button" data-preset="front">Chính diện</button><button type="button" data-preset="side">Nghiêng</button><button type="button" data-preset="back">Mặt sau</button></div>
-          <button id="depth-download" class="tools-secondary" type="button">Tải depth map ↓</button>
+          <button id="depth-download" class="tools-secondary" type="button" disabled>Tải depth PNG 16 bit <span>↓</span></button>
+          <p class="tools-note">Kết quả là relief hình ảnh, không phải bản quét đo lường hay độ sâu gia công tính bằng mm. Nút Photoshop chỉ để gửi mockup nếu máy có Photoshop.</p>
         </section>
         <section data-controls="scrabble" hidden>
           <div class="control-heading"><span>01 / DANH SÁCH TÊN</span><span>TỐI ĐA 24 TÊN</span></div>

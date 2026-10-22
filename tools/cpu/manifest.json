@@ -1,0 +1,252 @@
+{
+  "schema": 1,
+  "profile": "cpu-standard-fp32-1225",
+  "modelOrigins": [
+    "https://raw.githubusercontent.com"
+  ],
+  "models": {
+    "moge": {
+      "sha256": "dbf975ba6cd84a95b51333fa4cee0f6b80c63306a46df3805937584c653e92ce",
+      "bytes": 1325313091,
+      "side": 490,
+      "tokens": 1225,
+      "license": "MIT / Apache-2.0 upstream notices",
+      "source": "https://huggingface.co/Ruicheng/moge-2-vitl-normal",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/000.bin",
+          "bytes": 50331648,
+          "sha256": "c65444172e7434d7ab5adf6cf27de1d234f8f5a66051911d944c9db3224f94f8"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/001.bin",
+          "bytes": 50331648,
+          "sha256": "1fae60ff1b9402534d41a1dce0baa330db48ae752aad2eb4cf9d1d95d31b7726"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/002.bin",
+          "bytes": 50331648,
+          "sha256": "3028b29638a53acd4e2d6353ae095873cb25a9fab4c156fcc15bdb2aa14870c1"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/003.bin",
+          "bytes": 50331648,
+          "sha256": "74ccfbdf065434b2077e2473f865f33f60ae8c30eb8f097adc81d9f80120702b"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/004.bin",
+          "bytes": 50331648,
+          "sha256": "7af2ac6eab76e0c0140bce6f919ddcd24413a9386d47c640dfb52b26e64823e4"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/005.bin",
+          "bytes": 50331648,
+          "sha256": "ad5bf04f399f5954cd7c1f084d773a6d1bdaafcac19b6b1618e44ca2f4bfa63d"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/006.bin",
+          "bytes": 50331648,
+          "sha256": "1a9892db808e5c03601d5d16d353456c82e5f1a01977e67d4b50bcdeddc2f87d"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/007.bin",
+          "bytes": 50331648,
+          "sha256": "04822a5d6d0d9fb95af85247c7848cc22fa6b11b8ed840a079105148abdb6869"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/008.bin",
+          "bytes": 50331648,
+          "sha256": "e14b5351cba3b4ad25d56cb27961be7f655580c282b3d9c48a5b2419a18aedc8"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/009.bin",
+          "bytes": 50331648,
+          "sha256": "4dedd69f0fd3ddb3ac2c5dc41ff06e2198f29798ee139787c48b107f0ad6eb57"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/010.bin",
+          "bytes": 50331648,
+          "sha256": "2a6f1a64cdfb73754b3996df426a4471596ffca5efc7ca49dd07f37de5ea9fc9"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/011.bin",
+          "bytes": 50331648,
+          "sha256": "facd84039c388520c58bd5dc5424a9f588f82924aebd63765f7fb932744c975a"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/012.bin",
+          "bytes": 50331648,
+          "sha256": "7c919edd2449fbaf47b5a10905984554d973b750a63345055a471137d245faac"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/013.bin",
+          "bytes": 50331648,
+          "sha256": "729928a6d4be8e8ae1144ca101bdfee5a51384c63113c9c415dea9bb7d94c44b"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/014.bin",
+          "bytes": 50331648,
+          "sha256": "b67e60d27f30b8f1a888b718b3861e47bd4a54ccc8676e1e81ae529b3c0df841"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/015.bin",
+          "bytes": 50331648,
+          "sha256": "bacfc12342d6efe18e0819bc0b92c17390192b5a348dca19062fb63747d3fbd9"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/016.bin",
+          "bytes": 50331648,
+          "sha256": "a1a60f23a72384537335befa2bbc9e330b4e230d0318c4509bb7426b70a024cb"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/017.bin",
+          "bytes": 50331648,
+          "sha256": "7d3f29cadab1d51dd7942dcd28f93cbb60da6f70c30b098db0274ce27b4f9e47"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/018.bin",
+          "bytes": 50331648,
+          "sha256": "3a382c2a0dc52b4daf3ddf0eec80b66a49889ccb1d5a079c6e1e6e1b89e718df"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/019.bin",
+          "bytes": 50331648,
+          "sha256": "d6e700bc8fb2a2fa43f1ff8315a857a41d6631d6370bd33257a553b2355ce586"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/020.bin",
+          "bytes": 50331648,
+          "sha256": "4817c7c55fac0a5cd2a31d1baab4cb65b2c429530536220f99489735f513722e"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/021.bin",
+          "bytes": 50331648,
+          "sha256": "3c220de34d09ca2bede80b9f46f51690ffe1188ed337c9d2effd5141cd1dfc32"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/022.bin",
+          "bytes": 50331648,
+          "sha256": "48b745633a6a006153630dc450fb0c5b8885ee4216e9f1b1b86a3c60764e134c"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/023.bin",
+          "bytes": 50331648,
+          "sha256": "d62a866308591d7696ee30df01f2cf475e1acf0d458f7e6427fbe616cf3e2092"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/024.bin",
+          "bytes": 50331648,
+          "sha256": "e2c57c4d7f062ecffe13a963b3910529418ca9b39ad5069de43d30cfb64bee5f"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/025.bin",
+          "bytes": 50331648,
+          "sha256": "f1f4a482e51e3f347a2c1c975b4618e11561901b1673cbf8bdaec76afb49e1ef"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/moge/026.bin",
+          "bytes": 16690243,
+          "sha256": "97139825d1dd8a0c79d72b9216e7e1ba4ceec63e89f4c6ab94e0ae102241c2ff"
+        }
+      ],
+      "dtype": "float32",
+      "queryChunk": 64
+    },
+    "da2": {
+      "sha256": "b4027ef3d5dc332cb2a756ea0f2209e9d20b454f4a794c5cc391a62f09fac961",
+      "bytes": 105249387,
+      "side": 1036,
+      "license": "Apache-2.0",
+      "source": "https://github.com/DepthAnything/Depth-Anything-V2",
+      "parts": [
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/da2/000.bin",
+          "bytes": 50331648,
+          "sha256": "fce5bb39a92f546026b44aed7e24c9b18364898b90bacfe8b72cbbf579195317"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/da2/001.bin",
+          "bytes": 50331648,
+          "sha256": "f43423836a58b795d04f54bf6cf1914dec8b81dd06aaff36a78455e7083db884"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/Mitomyhy/mitom-browser-models/dd0af7edd5744e0ed71f8c64b38d5cad62ce27cb/da2/002.bin",
+          "bytes": 4586091,
+          "sha256": "ac2174002078e3f9e1ee70f91b01f3562e47312e5a6a15d55d9fb369ffaec475"
+        }
+      ],
+      "dtype": "float32"
+    }
+  },
+  "python": {
+    "version": "314.0.7",
+    "modules": [
+      {
+        "name": "da2_backend.py",
+        "url": "./native/da2_backend.py",
+        "bytes": 13668,
+        "sha256": "c4b3648a4777012989d0719cddda776896a74e4a2724e9fe84f10a982c65c64d"
+      },
+      {
+        "name": "depth_math.py",
+        "url": "./native/depth_math.py",
+        "bytes": 5336,
+        "sha256": "13fcbc3a003e678cac2c887c294e75c66b7bd6ae75f5dd51bdb4aa538a1ae618"
+      },
+      {
+        "name": "fullprint_detail.py",
+        "url": "./native/fullprint_detail.py",
+        "bytes": 27307,
+        "sha256": "010a00fa8f6a5e169557416ffa05a616bb2b4f953911bc81062ee781e5a306ea"
+      },
+      {
+        "name": "fullprint_prepare.py",
+        "url": "./native/fullprint_prepare.py",
+        "bytes": 46485,
+        "sha256": "dc09db8f64d872d8968b82d2a94ec56d10c94e063c405581d868b6fd70110d6f"
+      },
+      {
+        "name": "geometry_validity.py",
+        "url": "./native/geometry_validity.py",
+        "bytes": 11528,
+        "sha256": "d471584b96b76213c73e72e14fc4ee7dad8ba12666100ac27bf2b548362299d3"
+      },
+      {
+        "name": "relief_balance.py",
+        "url": "./native/relief_balance.py",
+        "bytes": 4391,
+        "sha256": "f711ca745ba24048d7060c0326202cd12ebcc01897ce11500214662161ae8298"
+      },
+      {
+        "name": "relief_detail.py",
+        "url": "./native/relief_detail.py",
+        "bytes": 16028,
+        "sha256": "ce08e047be174a0f1f0505f71c616489a53cac9c29c2979369ac144ddc13b367"
+      },
+      {
+        "name": "relief_finish.py",
+        "url": "./native/relief_finish.py",
+        "bytes": 10914,
+        "sha256": "52cd86e7fb07b23e428cb9e9a04404a1a57b0394504d4f1cd0d9d9a581bdd329"
+      },
+      {
+        "name": "relief_transition.py",
+        "url": "./native/relief_transition.py",
+        "bytes": 7652,
+        "sha256": "ddd06e66a8c6771b32ed52d45538c2201f47b5cc2e45e9c17de5e5c2184e8205"
+      },
+      {
+        "name": "sculpt_relief.py",
+        "url": "./native/sculpt_relief.py",
+        "bytes": 19219,
+        "sha256": "8c4b5fa0e2809667dbd213dda3d89a32d78c97d1342ac15bcb05418f106998d0"
+      },
+      {
+        "name": "browser_postprocess.py",
+        "url": "./browser_postprocess.py",
+        "bytes": 31618,
+        "sha256": "c86016ff30663013ace2d8c5aa31e3f4808e82eec2d600267ff3b274d14a35f7"
+      }
+    ]
+  }
+}

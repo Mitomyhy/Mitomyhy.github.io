@@ -2,3 +2,4 @@
 tools/assets/** -text
 tools/vendor/** -text
 tools/downloads/*.zip -text
+tools/cpu/** -text
