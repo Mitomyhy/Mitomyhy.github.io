@@ -1,6 +1,6 @@
-import {fetchNativeTemplate,openNativePSD,buildNativePSD,resizeNativeRaster,NATIVE_TEMPLATE_CATALOG} from './depth-psd-template.js?v=20261023-psd-r9';
-import {decodePSDComposite,inspectPSD} from './psd-roundtrip.js?v=20261023-psd-r8';
-import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-psd-r8';
+import {fetchNativeTemplate,openNativePSD,buildNativePSD,resizeNativeRaster,NATIVE_TEMPLATE_CATALOG} from './depth-psd-template.js?v=20261023-workflow-r10';
+import {decodePSDComposite,inspectPSD} from './psd-roundtrip.js?v=20261023-workflow-r10';
+import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-workflow-r10';
 
 async function ceramicShape(family){
   if(family==='acrylic')return undefined;
@@ -16,9 +16,14 @@ async function savedPreview(bytes,native){
   const image=resizeNativeRaster(source,Math.max(1,Math.round(source.width*scale)),Math.max(1,Math.round(source.height*scale)));
   const info=inspectPSD(bytes);
   const item=NATIVE_TEMPLATE_CATALOG.find(item=>item.id===native.family);
-  const roles=native.roles||Object.fromEntries(item.roles.map(([role,name,index])=>{
-    const quad=info.layers[index].placedTransform;
-    return [role,{name,index,width:item.inputWidth,height:item.inputHeight,transform:[quad[0],quad[1],quad[2],quad[5]]}];
+  const roles=native.roles||Object.fromEntries(item.roles.map(([role,name])=>{
+    // A saved Photoshop document can contain extra helper layers or a reordered
+    // stack. Its role geometry follows the same unique layer names as the PSD
+    // adapter, never the blank template's old numeric indices.
+    const matches=info.layers.filter(layer=>layer.name.normalize('NFC').trim().toLowerCase()===name.normalize('NFC').trim().toLowerCase());
+    if(matches.length!==1||!matches[0].placedTransform)throw Error('Bản xem PSD không xác định được role '+name+'.');
+    const layer=matches[0],quad=layer.placedTransform;
+    return [role,{name:layer.name,index:layer.index,width:item.inputWidth,height:item.inputHeight,transform:[quad[0],quad[1],quad[2],quad[5]]}];
   }));
   return {...image,roles,sourceWidth:source.width,sourceHeight:source.height};
 }
@@ -34,14 +39,15 @@ self.onmessage=async({data})=>{
       const bytes=data.family?await fetchNativeTemplate(data.family):data.bytes;
       const native=await openNativePSD(bytes);
       const preview=await savedPreview(bytes,native);
-      const value={family:native.family,title:native.title,width:native.width,height:native.height,artwork:native.artwork,isBundledBlank:native.isBundledBlank,preview,bytes};
+      const value={family:native.family,title:native.title,width:native.width,height:native.height,roles:native.roles,artwork:native.artwork,isBundledBlank:native.isBundledBlank,preview,bytes};
       self.postMessage({id,ok:true,value},[bytes.buffer,value.artwork.rgba.buffer,preview.rgba.buffer]);
     }else if(op==='build'){
       const family=(await openNativePSD(data.bytes)).family;
       if(data.family&&data.family!==family)throw Error('Loại template đã thay đổi; không ghép nhầm shape Ceramic.');
-      const bytes=await buildNativePSD(data.bytes,{artwork:data.artwork,depth:data.depth,ceramicShape:await ceramicShape(family)});
+      const bytes=await buildNativePSD(data.bytes,{artwork:data.artwork,depth:data.depth,cut:data.cut,ceramicShape:await ceramicShape(family)});
       const preview=await savedPreview(bytes,{family});
       self.postMessage({id,ok:true,value:{bytes,preview}},[bytes.buffer,preview.rgba.buffer]);
     }else throw Error('Lệnh PSD không hợp lệ.');
   }catch(error){self.postMessage({id,ok:false,error:String(error?.message||error),code:error?.code});}
 };
+

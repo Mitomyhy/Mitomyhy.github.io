@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {depthFlowCases} from '../../qa/depth-r5mock-flow.mjs';
+import {classifyDepthInput} from '../depth-input.js';
 if(!globalThis.ImageData)globalThis.ImageData=class{constructor(data,width,height){this.data=data;this.width=width;this.height=height;}};
 class MemoryCanvas{
   constructor(ownerDocument){this.ownerDocument=ownerDocument;this.width=0;this.height=0;this.pixels=null;this.context=null;}
@@ -10,6 +11,16 @@ class MemoryCanvas{
 }
 const document={createElement(tag){if(tag!=='canvas')throw Error('Only bounded canvas is allowed');return new MemoryCanvas(document);}};
 for(const[name,work]of depthFlowCases(document))test(name,work);
+function PSDFile({name='saved.psd',type='',version=1,size=26}={}){const b=new Uint8Array(size);b.set([56,66,80,83,0,version]);return new File([b],name,{type});}
+test('PSD classifier prioritizes 8BPS signature over wrong image MIME and extension',async()=>{
+  for(const options of [{type:'image/png',name:'art.png'},{type:'image/vnd.adobe.photoshop'},{type:'application/octet-stream'},{type:'',name:'template'}])assert.equal(await classifyDepthInput(PSDFile(options)),'psd');
+  assert.equal(await classifyDepthInput(new File([Uint8Array.of(137,80,78,71)],'art.png',{type:'image/png'})),'artwork');
+});
+test('PSD classifier rejects PSB, short and renamed fake PSD instead of flattening them',async()=>{
+  await assert.rejects(classifyDepthInput(PSDFile({version:2})),/PSB/);
+  await assert.rejects(classifyDepthInput(PSDFile({size:8})),/PSD không hợp lệ/);
+  for(const options of [{name:'saved.psd',type:'image/png'},{name:'saved.bin',type:'image/vnd.adobe.photoshop'},{name:'saved.psb',type:''}])await assert.rejects(classifyDepthInput(new File(['not a psd'],options.name,{type:options.type})),/chữ ký PSD/);
+});
 const workbench=fs.readFileSync(new URL('../workbench.js',import.meta.url),'utf8');
 for(const id of ['depth-undo','depth-reset-edits'])test(id+' UI awaits 3D refresh before enabling export from the edited result',()=>{
   const line=workbench.split(/\r?\n/).find(value=>value.startsWith(`$('${id}').addEventListener('click'`));assert.ok(line,'handler exists');assert.match(line,/run\(async\(\)=>/);assert.match(line,/if\(depthView==='3d'\)await depth\.show3D\(\);visibleResult\(\)/);

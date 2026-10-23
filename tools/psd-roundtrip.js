@@ -310,8 +310,10 @@ export async function readPSDArtworkLayer(originalBytes,{layerName='layer in',si
     source:'photoshop-saved-embedded-IN-composite'};
 }
 
-function rewriteMask(p,mask,image=p.bytes.subarray(p.imageStart)){
-  return concat([p.bytes.subarray(0,p.layerMask.at),num(mask.length,p.version===2?8:4),mask,image]);
+function rewriteMask(p,mask,image=p.bytes.subarray(p.imageStart),{promoteAlpha=false}={}){
+  let prefix=p.bytes.subarray(0,p.layerMask.at);
+  if(promoteAlpha){prefix=prefix.slice();new DataView(prefix.buffer,prefix.byteOffset,prefix.byteLength).setUint16(12,4);}
+  return concat([prefix,num(mask.length,p.version===2?8:4),mask,image]);
 }
 function replacementComposite(p,composite){
   if(!composite)return p.bytes.subarray(p.imageStart);
@@ -357,9 +359,14 @@ export function replacePSDLayerPixels(originalBytes,replacements,{composite,allo
     });
     records.push(record);abort(signal);
   }
-  let info=concat([num(p.signedCount,2,true),...records,...channels]);if(info.length%2)info=concat([info,new Uint8Array(1)]);
+  // A Photoshop-saved RGB parent may have no merged alpha even when its IN /
+  // DEPTH / CUT layer caches are RGBA. Writing a new transparent layout must
+  // promote BOTH the header and the signed layer count before encoding RGBA.
+  const promoteAlpha=!!composite&&p.channels<=4;
+  const compositeInfo=promoteAlpha?{...p,channels:4,signedCount:-p.layerCount}:p;
+  let info=concat([num(compositeInfo.signedCount,2,true),...records,...channels]);if(info.length%2)info=concat([info,new Uint8Array(1)]);
   const tail=p.bytes.subarray(p.tailStart,p.layerMask.end),mask=concat([num(info.length,p.version===2?8:4),info,tail]);
-  return rewriteMask(p,mask,replacementComposite(p,composite));
+  return rewriteMask(p,mask,replacementComposite(compositeInfo,composite),{promoteAlpha});
 }
 
 /** Changes explicit visibility flags only; no layers are deleted or flattened. */
@@ -400,3 +407,4 @@ export function replaceEmbeddedPSDs(originalBytes,replacements,{signal}={}){
   parts.push(p.bytes.subarray(offset,p.layerMask.end));abort(signal);
   return rewriteMask(p,concat(parts));
 }
+

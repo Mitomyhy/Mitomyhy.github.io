@@ -166,9 +166,10 @@ for(const [name,width,height,inWidth,inHeight] of [['Template acrylic.psd',3543,
   });
 }
 
-const python='D:/Tool for me/PS Panel/depth-runtime/.venv/Scripts/python.exe';
+const python=process.env.MITOM_PSD_TEST_PYTHON||'D:/Tool for me/PS Panel/depth-runtime/.venv/Scripts/python.exe';
 test('independent Pillow parser reads newly generated PSD composite and layers',{skip:!existsSync(python)},()=>{
   const f=source(),rgba=pixels(4,3,31),out=appendPSDLayers(f.bytes,[{name:'MITOM visible render',width:4,height:3,rgba,visible:true}],{composite:{width:4,height:3,rgba},hideOriginalLayers:true});
   const script='import sys,io,json; from PIL import Image; b=sys.stdin.buffer.read(); im=Image.open(io.BytesIO(b)); im.load(); print(json.dumps({"format":im.format,"size":list(im.size),"pixel":list(im.getpixel((1,1))),"layers":len(im.layers)}))';
   const result=spawnSync(python,['-c',script],{input:out,encoding:'utf8'});assert.equal(result.status,0,result.stderr);const data=JSON.parse(result.stdout);assert.equal(data.format,'PSD');assert.deepEqual(data.size,[4,3]);assert.equal(data.layers,2);assert.deepEqual(data.pixel,Array.from(rgba.subarray((4+1)*4,(4+1)*4+4)));
 });
+

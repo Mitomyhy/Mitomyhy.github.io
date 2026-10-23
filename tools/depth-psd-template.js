@@ -8,7 +8,7 @@
  * The separate pipeline PNG retains 16 bits.
  */
 import {inspectPSD, readPSDLinkedFiles, decodePSDComposite, appendPSDLayers,
-  replaceEmbeddedPSDs, replacePSDLayerPixels, setPSDLayerVisibility} from './psd-roundtrip.js?v=20261023-psd-r8';
+  replaceEmbeddedPSDs, replacePSDLayerPixels, setPSDLayerVisibility} from './psd-roundtrip.js?v=20261023-workflow-r10';
 
 const BASE = new URL('./assets/templates/psd/', import.meta.url);
 const PINNED = [
@@ -119,12 +119,16 @@ export function validateNativeRoleTransform(transform,expected) {
 function inspectNative(value) {
   const bytes=bytesOf(value), info=inspectPSD(bytes);
   const item=PINNED.find(c=>c.width===info.width&&c.height===info.height);
-  if(!item||info.version!==1||info.depth!==8||info.colorMode!==3||info.channels!==4||!info.mergedAlpha||info.layerCount!==item.parentLayers)
+  // Photoshop can add helpers, reorder the stack, or save an opaque document
+  // with three merged RGB channels. Those changes do not turn its embedded IN
+  // into a flat artwork image. Identify the native roles by their unique names
+  // and verified embedded geometry, rather than the original record offsets.
+  if(!item||info.version!==1||info.depth!==8||info.colorMode!==3||![3,4].includes(info.channels)||info.layerCount<item.roles.length)
     fail('Web nhận PSD RGB 8-bit của đúng 3 template MITOM, giữ nguyên canvas và bố cục gốc.');
   const linked=readPSDLinkedFiles(bytes), roles={};
   for(const [role,name,index,expected] of item.roles) {
     const matches=info.layers.filter(l=>normalize(l.name)===normalize(name));
-    if(matches.length!==1||matches[0].index!==index)fail(`Không xác định duy nhất Smart Object ${name} trong template gốc.`);
+    if(matches.length!==1)fail(`Không xác định duy nhất Smart Object ${name} trong template gốc.`);
     const layer=matches[0];
     if(!layer.placedID||!layer.keys.includes('PlLd')||!layer.keys.includes('SoLd')||layer.layerMaskBytes||layer.keys.some(k=>FORBIDDEN_ROLE_TAGS.has(k))||layer.blendMode!=='norm'||layer.opacity!==255||layer.clipping||!layer.visible)
       fail(`Smart Object ${name} có mask/effect/blend hoặc cấu trúc chưa được hỗ trợ.`);
@@ -134,7 +138,7 @@ function inspectNative(value) {
     if(contents.length!==1||contents[0].kind!=='liFD'||!contents[0].bytes)fail(`Smart Object ${name} phải được nhúng trong PSD, không phải file liên kết ngoài.`);
     const embedded=contents[0], child=inspectEmbeddedHeader(embedded.bytes);
     if(child.width!==item.inputWidth||child.height!==item.inputHeight)fail(`Canvas trong ${name} đã đổi; giữ đúng kích thước template gốc.`);
-    roles[role]={role,index,name:layer.name,embeddedID:embedded.id,transform,layer,embeddedBytes:embedded.bytes,child};
+    roles[role]={role,index:layer.index,name:layer.name,embeddedID:embedded.id,transform,layer,embeddedBytes:embedded.bytes,child};
   }
   return {bytes,info,item,roles};
 }
@@ -314,3 +318,4 @@ export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signa
   result=replacePSDLayerPixels(result,tiles,{composite,signal});
   abort(signal);return result;
 }
+

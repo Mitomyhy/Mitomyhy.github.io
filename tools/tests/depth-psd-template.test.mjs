@@ -12,6 +12,34 @@ const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
 const fixture=async item=>new Uint8Array(gunzipSync(await readFile(new URL(item.compressedFile,assets))));
 const solid=(width,height,color)=>({width,height,rgba:Uint8ClampedArray.from({length:width*height*4},(_,i)=>color[i%4])});
 
+// Independent Photoshop layer-section rewrite used to exercise ordinary saves
+// whose helper layers / stack order differ from the distributed blank file.
+function parentLayout(value){
+  const bytes=Buffer.from(value);let p=26;const color=bytes.readUInt32BE(p);p+=4+color;const resources=bytes.readUInt32BE(p);p+=4+resources;
+  const maskAt=p,maskLength=bytes.readUInt32BE(p),maskStart=p+4,infoLength=bytes.readUInt32BE(maskStart),infoStart=maskStart+4,tailStart=infoStart+infoLength,maskEnd=maskStart+maskLength;
+  const signedCount=bytes.readInt16BE(infoStart),records=[];p=infoStart+2;
+  for(let i=0;i<Math.abs(signedCount);i++){
+    const start=p,count=bytes.readUInt16BE(p+16);p+=18;let channelBytes=0;
+    for(let c=0;c<count;c++){channelBytes+=bytes.readUInt32BE(p+2);p+=6;}
+    p+=12;const extra=bytes.readUInt32BE(p);p+=4+extra;records.push({start,end:p,channelBytes});
+  }
+  let channelAt=p;for(const record of records){record.channelStart=channelAt;channelAt+=record.channelBytes;}
+  return {bytes,maskAt,maskStart,maskEnd,infoStart,tailStart,signedCount,records};
+}
+function reorderParent(value,order){
+  const l=parentLayout(value),u32=value=>{const b=Buffer.alloc(4);b.writeUInt32BE(value);return b;},count=Buffer.alloc(2);count.writeInt16BE(l.signedCount);
+  let info=Buffer.concat([count,...order.map(i=>l.bytes.subarray(l.records[i].start,l.records[i].end)),...order.map(i=>l.bytes.subarray(l.records[i].channelStart,l.records[i].channelStart+l.records[i].channelBytes))]);
+  if(info.length%2)info=Buffer.concat([info,Buffer.alloc(1)]);
+  const mask=Buffer.concat([u32(info.length),info,l.bytes.subarray(l.tailStart,l.maskEnd)]);
+  return new Uint8Array(Buffer.concat([l.bytes.subarray(0,l.maskAt),u32(mask.length),mask,l.bytes.subarray(l.maskEnd)]));
+}
+async function opaqueRGBSave(value){
+  const l=parentLayout(value),image=await decodePSDComposite(value),n=image.width*image.height,planes=Buffer.alloc(n*3),header=l.bytes.subarray(0,l.maskEnd);
+  header.writeUInt16BE(3,12);header.writeInt16BE(Math.abs(l.signedCount),l.infoStart);
+  for(let c=0;c<3;c++)for(let i=0;i<n;i++)planes[c*n+i]=image.rgba[i*4+c];
+  return new Uint8Array(Buffer.concat([header,Buffer.from([0,0]),planes]));
+}
+
 test('three pinned original PSDs and gzip files match the transport manifest',async()=>{
   const manifest=JSON.parse(await readFile(new URL('manifest.json',assets),'utf8'));
   assert.equal(NATIVE_TEMPLATE_CATALOG.length,3);
@@ -49,6 +77,29 @@ test('three real native PSDs read saved IN contents instead of the parent layout
     assert.equal(opened.isBundledBlank,true);
     assert.notEqual(opened.artwork.width,opened.width);assert.equal(opened.artwork.rgba.length,item.inputWidth*item.inputHeight*4);
     assert.deepEqual(Object.keys(opened.roles),item.roles.map(role=>role[0]));assert.equal(hash(bytes),before);
+  }
+});
+
+test('saved native PSD roles follow their names after helpers are added and the stack is reordered',async()=>{
+  const original=await fixture(NATIVE_TEMPLATE_CATALOG[0]),extra=appendPSDLayers(original,[{name:'Designer note — preserve',...solid(1,1,[20,30,40,255])}]);
+  const saved=reorderParent(extra,[4,3,0,2,1]),before=hash(saved),opened=await openNativePSD(saved);
+  assert.equal(opened.family,'acrylic');assert.equal(opened.roles.input.index,4);assert.equal(opened.roles.depth.index,3);assert.equal(opened.roles.cut.index,1);
+  const input=readPSDLinkedFiles(saved).find(file=>file.id===opened.roles.input.embeddedID).bytes;
+  const output=await buildNativePSD(saved,{depth:solid(1,1,[124,124,124,255])}),info=inspectPSD(output),reopened=await openNativePSD(output);
+  assert.equal(hash(saved),before);assert.equal(info.layerCount,5);assert.equal(info.layers[0].name,'Designer note — preserve');assert.equal(info.layers[0].visible,false);
+  assert.equal(hash(readPSDLinkedFiles(output).find(file=>file.id===opened.roles.input.embeddedID).bytes),hash(input));
+  for(const role of Object.values(reopened.roles))assert.equal(info.layers[role.index].visible,true);
+});
+
+test('opaque Photoshop RGB parent save still reads embedded IN and exports all three RGBA role caches',async()=>{
+  const saved=await opaqueRGBSave(await fixture(NATIVE_TEMPLATE_CATALOG[0])),opened=await openNativePSD(saved);
+  assert.equal(inspectPSD(saved).channels,3);assert.equal(inspectPSD(saved).mergedAlpha,false);
+  const artwork={width:2,height:1,rgba:Uint8ClampedArray.of(17,73,149,0,17,73,149,255)},depth={width:2,height:1,depth:Float32Array.of(.2,.8),alpha:Uint8Array.of(0,255)};
+  const output=await buildNativePSD(saved,{artwork,depth}),info=inspectPSD(output),image=await decodePSDComposite(output),reopened=await openNativePSD(output),links=readPSDLinkedFiles(output);
+  assert.equal(info.channels,4);assert.equal(info.mergedAlpha,true);assert.equal(image.rgba[3],0);assert.equal(reopened.artwork.rgba[3],0);
+  assert.deepEqual(Object.keys(reopened.roles),['input','depth','cut']);
+  for(const role of Object.values(reopened.roles)){
+    const image=await decodePSDComposite(links.find(file=>file.id===role.embeddedID).bytes,{allowEmbeddedPSB:true});assert.equal(image.rgba[3],0);
   }
 });
 
@@ -228,3 +279,4 @@ test('export requires generated depth instead of silently returning the old temp
 test('Ceramic export requires the authoritative substrate instead of inventing a geometric shape',async()=>{
   await assert.rejects(buildNativePSD(await fixture(NATIVE_TEMPLATE_CATALOG[2]),{artwork:solid(1,1,[1,2,3,255]),depth:solid(1,1,[10,10,10,255])}),/Cần shape Ceramic gốc/);
 });
+
