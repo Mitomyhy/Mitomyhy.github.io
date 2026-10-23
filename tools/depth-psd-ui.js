@@ -1,23 +1,10 @@
-import {createPSDJobs} from './depth-psd-jobs.js?v=20261023-psd-r8b';
+import {createPSDJobs} from './depth-psd-jobs.js?v=20261023-psd-r9';
+import {callPSDWorker} from './depth-psd-client.js?v=20261023-psd-r9';
 import {createCPUPipeline} from './cpu/client.mjs?v=20261022-flow-r5';
 import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-psd-r8';
 
 const TITLES={acrylic:'Acrylic',ceramic_circle:'Circle Ceramic',ceramic_heart:'Heart Ceramic'};
 function abortError(){return Object.assign(Error('Đã hủy tác vụ PSD.'),{code:'CANCELLED',name:'AbortError'});}
-function workerCall(op,data,signal){
-  return new Promise((resolve,reject)=>{
-    if(signal?.aborted){reject(abortError());return;}
-    const worker=new Worker(new URL('./depth-psd-worker.js?v=20261023-psd-r8b',import.meta.url),{type:'module',name:'MITOM native PSD'});
-    let settled=false;
-    const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);worker.terminate();error?reject(error):resolve(value);};
-    const cancel=()=>finish(abortError());
-    const timer=setTimeout(()=>finish(Error('Đọc / ghi PSD quá lâu. Nguồn của bạn không bị sửa.')),5*60*1000);
-    signal?.addEventListener('abort',cancel,{once:true});
-    worker.onmessage=({data})=>data?.ok?finish(null,data.value):finish(Error(data?.error||'Không đọc được PSD.'));
-    worker.onerror=event=>finish(Error(event.message||'Engine PSD dừng; có thể thiếu RAM.'));
-    try{worker.postMessage({id:1,op,...data});}catch(error){finish(error);}
-  });
-}
 function download(bytes,name,type){const url=URL.createObjectURL(new Blob([bytes],{type})),a=document.createElement('a');a.href=url;a.download=name;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);}
 function canvasPixels(pixels,document){const c=document.createElement('canvas');c.width=pixels.width;c.height=pixels.height;c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels.rgba),pixels.width,pixels.height),0,0);return c;}
 async function prepareArtwork(file,native,{signal}={}){
@@ -39,16 +26,32 @@ async function prepareArtwork(file,native,{signal}={}){
 }
 
 export function initPSDWorkspace({document=globalThis.document,getOptions=()=>({}),isExternalBusy=()=>false,beforeGenerate=()=>{}}={}){
-  const $=id=>document.getElementById(id),dialog=$('depth-psd-dialog'),cards=[...dialog.querySelectorAll('[data-psd-slot]')];let previousArt=[null,null];
+  const $=id=>document.getElementById(id),dialog=$('depth-psd-dialog'),cards=[...dialog.querySelectorAll('[data-psd-slot]')];
+  const views=['template','template'],previousArt=[null,null],previousPreview=[null,null],previousDisplay=[null,null];
+  function paint(index,job){
+    const query=role=>cards[index].querySelector(`[data-psd-role="${role}"]`),data=views[index]==='template'?job?.preview:job?.artwork;
+    query('canvas').hidden=!data;
+    for(const view of ['template','artwork']){
+      query('view-'+view).disabled=!(view==='template'?job?.preview:job?.artwork);
+      query('view-'+view).setAttribute('aria-pressed',String(views[index]===view));
+    }
+    const roles=job?.preview&&Object.keys(job.preview.roles).map(key=>({input:'IN',depth:'DEPTH',cut:'CUT'}[key])).join(' · ');
+    query('preview-label').textContent=views[index]==='template'?(job?.preview?`${roles} · ${job.preview.sourceWidth} × ${job.preview.sourceHeight} · ${job.previewIsResult?'PSD kết quả':'PSD nguồn đã lưu'}`:'Bố cục PSD gốc'):'Artwork / IN · chỉ phần này được đưa vào AI';
+    if(previousDisplay[index]===data)return;previousDisplay[index]=data||null;
+    const c=query('canvas');if(!data){c.width=c.height=1;return;}
+    const source=canvasPixels(data,document),ratio=Math.min(1,1000/Math.max(source.width,source.height));
+    c.width=Math.max(1,Math.round(source.width*ratio));c.height=Math.max(1,Math.round(source.height*ratio));
+    c.getContext('2d').drawImage(source,0,0,c.width,c.height);source.width=source.height=1;
+  }
   const report=message=>{$('depth-psd-message').textContent=message;};
   const jobs=createPSDJobs({
     isExternalBusy,prepareArtwork,
     async open(input,{signal}){
       if(input.file&&(!/\.psd$/i.test(input.file.name)||input.file.size>256*1024*1024))throw Error('Chọn PSD RGB 8 bit từ ba template MITOM, tối đa 256 MB. PSB / CMYK / 16 bit chưa được hỗ trợ.');
-      return workerCall('open',input.family?{family:input.family}:{bytes:new Uint8Array(await input.file.arrayBuffer())},signal);
+      return callPSDWorker('open',input.family?{family:input.family}:{bytes:new Uint8Array(await input.file.arrayBuffer())},{signal});
     },
     createPipeline(onProgress){return createCPUPipeline({manifestURL:new URL('./cpu/manifest.json',import.meta.url).href,onProgress});},
-    build(native,options){return workerCall('build',{bytes:native.bytes,family:native.family,artwork:options.artwork,depth:options.depth},options.signal);},
+    build(native,options){return callPSDWorker('build',{bytes:native.bytes,family:native.family,artwork:options.artwork,depth:options.depth},{signal:options.signal});},
     onChange(state){
       $('depth-psd-running').textContent=state.running?`${state.running} tác vụ đang chạy · có thể đóng cửa sổ này và làm việc khác.`:'Generate chạy trên máy bạn · không cần Photoshop.';
       $('depth-psd-open').textContent=state.running?`PSD · ${state.running} đang chạy ↗`:'PSD · 2 tác vụ độc lập ↗';
@@ -60,14 +63,16 @@ export function initPSDWorkspace({document=globalThis.document,getOptions=()=>({
         query('art').disabled=!job?.family||!!active;query('generate').disabled=!job?.hasArtwork||!!active;
         query('cancel').disabled=!active;query('download').disabled=!job?.hasPSD;query('map').disabled=!job?.hasMap;query('remove').disabled=!job;
         const progress=query('progress');progress.hidden=!active;if(job?.progress==null)progress.removeAttribute('value');else progress.value=job.progress;
-        query('canvas').hidden=!job?.artwork;
-        if(previousArt[index]!==job?.artwork){previousArt[index]=job?.artwork||null;const c=query('canvas');if(job?.artwork){const source=canvasPixels(job.artwork,document),ratio=Math.min(1,680/Math.max(source.width,source.height));c.width=Math.round(source.width*ratio);c.height=Math.round(source.height*ratio);c.getContext('2d').drawImage(source,0,0,c.width,c.height);source.width=source.height=1;}else c.width=c.height=1;}
+        if(previousPreview[index]!==job?.preview)views[index]='template';
+        else if(previousArt[index]!==job?.artwork)views[index]='artwork';
+        previousPreview[index]=job?.preview;previousArt[index]=job?.artwork;paint(index,job);
       });
     }
   });
   function protect(fn){return async()=>{try{await fn();report('');}catch(error){report(error.message);}};}
   cards.forEach((card,index)=>{
     const query=role=>card.querySelector(`[data-psd-role="${role}"]`);
+    for(const view of ['template','artwork'])query('view-'+view).addEventListener('click',()=>{views[index]=view;paint(index,jobs.snapshot().jobs[index]);});
     query('open').addEventListener('click',protect(()=>jobs.load(index,{family:query('template').value,name:TITLES[query('template').value]+' · template trống'})));
     query('file').addEventListener('change',protect(()=>{const file=query('file').files[0];return file&&jobs.load(index,{file,name:file.name});}));
     query('art').addEventListener('change',protect(()=>{const file=query('art').files[0];return file&&jobs.setArtwork(index,file);}));

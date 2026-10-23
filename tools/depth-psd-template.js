@@ -43,6 +43,15 @@ const FORBIDDEN_ROLE_TAGS = new Set(['lrFX','lfx2','lfxs','vmsk','vsms','LMsk','
 // Exact original IEC 61966-2.1 sRGB profile. Raw RGB from Adobe RGB / Display P3
 // cannot be treated as browser sRGB without a real ICC transform.
 const NATIVE_SRGB_SHA256='2b3aa1645779a9e634744faf9b01e9102b0c9b88fd6deced7934df86b949af7e';
+// Photoshop may save Acrylic's identity 4×4 custom envelope as warpNone after
+// editing IN. These paired fingerprints are derived from that exact no-op
+// rewrite of the PUBLIC original, not from artwork or a whole user PSD.
+// Every other SoLd geometry field, unit, bound, transform and padding stays
+// pinned. A PlLd/SoLd mismatch or any curved/unknown warp still fails closed.
+const ACRYLIC_IDENTITY_NONE=Object.freeze({
+  warpSHA256:'bc377cfaf627d6b4012f394cb2d20cdb328e75422e3aa73649a212fae2d4b6fc',
+  geometrySHA256:Object.freeze(['4049d6d34211b5f09bdd0e41ab088531cd69269ef7a985480c04957e0b87fb71','1eef5c2c60b541e757b426c8daa7ef43b3725eae4f3d14e4cf8144da5b3cd249','a0b1f6bcf63d4c35e039a922241952168e3d7a25fe52629eba127ed1b169bdbf'])
+});
 const normalize = value => String(value).normalize('NFC').trim().toLowerCase().replace(/\s+/g,' ');
 function fail(message,code='NATIVE_PSD_UNSUPPORTED') { throw Object.assign(Error(message),{code}); }
 function abort(signal) { if(signal?.aborted) throw Object.assign(Error('Đã hủy xử lý template PSD.'),{name:'AbortError',code:'CANCELLED'}); }
@@ -168,7 +177,11 @@ async function validateNativeGeometry(native,signal) {
     // Original Circle children are untagged sRGB. A subsequent Photoshop save
     // may tag them with the verified sRGB profile; no other profile is accepted.
     await profile(inspectPSD(role.embeddedBytes,{allowEmbeddedPSB:true}),role.name,native.item.id==='ceramic_circle');
-    if(!(layer.placedWarpBytes instanceof Uint8Array)||await sha256(layer.placedWarpBytes)!==native.item.warpSHA256||await sha256(geometryDescriptorBytes(layer))!==native.item.geometrySHA256[i])
+    if(!(layer.placedWarpBytes instanceof Uint8Array))fail('Thiếu descriptor warp của Smart Object.');
+    const warp=await sha256(layer.placedWarpBytes),geometry=await sha256(geometryDescriptorBytes(layer));
+    const original=warp===native.item.warpSHA256&&geometry===native.item.geometrySHA256[i];
+    const identityNone=native.item.id==='acrylic'&&warp===ACRYLIC_IDENTITY_NONE.warpSHA256&&geometry===ACRYLIC_IDENTITY_NONE.geometrySHA256[i];
+    if(!original&&!identityNone)
       fail('Warp, transform, kích thước hoặc thiết lập Smart Object đã đổi; web không đoán lại hình học template này.');
   }
 }

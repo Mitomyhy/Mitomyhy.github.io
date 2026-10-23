@@ -5,7 +5,7 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
   const emit=()=>onChange(snapshot());
   const check=()=>{if(disposed)throw Error('Đã đóng hàng đợi PSD.');};
   const slot=index=>{check();if(!Number.isInteger(index)||index<0||index>1)throw Error('Chỉ có hai tác vụ PSD.');return jobs[index];};
-  function snapshot(){return {parallel,running:jobs.filter(j=>j?.status==='running').length,jobs:jobs.map(j=>j?{id:j.id,name:j.name,family:j.native?.family||null,title:j.native?.title||'',status:j.status,message:j.message,progress:j.progress,artwork:j.artwork,hasArtwork:j.hasArtwork,hasPSD:!!j.output,hasMap:!!j.map,error:j.error||null}:null)};}
+  function snapshot(){return {parallel,running:jobs.filter(j=>j?.status==='running').length,jobs:jobs.map(j=>j?{id:j.id,name:j.name,family:j.native?.family||null,title:j.native?.title||'',status:j.status,message:j.message,progress:j.progress,artwork:j.artwork,preview:j.preview,previewIsResult:!!j.previewIsResult,hasArtwork:j.hasArtwork,hasPSD:!!j.output,hasMap:!!j.map,error:j.error||null}:null)};}
   const current=(index,job,serial)=>!disposed&&jobs[index]===job&&job.serial===serial;
   const cancelJob=job=>{job.serial++;job.abort?.abort();job.pipeline?.dispose();job.pipeline=null;};
   async function load(index,input){
@@ -15,14 +15,14 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
     try {
       const native=await open(input,{signal:job.abort.signal});
       if(!current(index,job,serial))return;
-      job.native=native;job.artwork=native.artwork;job.artworkReplaced=false;job.hasArtwork=!input.family&&!native.isBundledBlank&&native.artwork.rgba.some((value,index)=>index%4===3&&value>0);
+      job.native=native;job.artwork=native.artwork;job.preview=native.preview;job.previewIsResult=false;job.artworkReplaced=false;job.hasArtwork=!input.family&&!native.isBundledBlank&&native.artwork.rgba.some((value,index)=>index%4===3&&value>0);
       job.status='ready';job.message=job.hasArtwork?'Đã đọc artwork đã lưu trong IN · sẵn sàng Generate.':'Template đã mở · thêm artwork vào IN.';emit();
     } catch(error){if(!current(index,job,serial))return;job.status='error';job.error=error.message;job.message=error.message;emit();}
     finally{if(current(index,job,serial))pump();}
   }
   async function setArtwork(index,file){
     const job=slot(index);if(!job?.native||['running','queued','loading'].includes(job.status))throw Error('Mở template và chờ tác vụ hiện tại trước.');
-    cancelJob(job);const serial=job.serial;job.abort=new AbortController();job.status='loading';job.message='Đang đặt artwork vào IN…';job.error=null;job.output=job.map=null;emit();
+    cancelJob(job);const serial=job.serial;job.abort=new AbortController();job.status='loading';job.message='Đang đặt artwork vào IN…';job.error=null;job.output=job.map=null;job.preview=job.native.preview;job.previewIsResult=false;emit();
     try{
       const artwork=await prepareArtwork(file,job.native,{signal:job.abort.signal});
       if(!current(index,job,serial))return;
@@ -50,10 +50,10 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
       // before allocating full-resolution PSB/channel/composite output buffers.
       job.pipeline.dispose();job.pipeline=null;
       job.message='Đang ghi IN / DEPTH / CUT và ảnh xem trước vào PSD…';job.progress=null;emit();
-      const output=await build(job.native,{artwork:job.artworkReplaced?job.artwork:undefined,depth:{width:result.width,height:result.height,depth:result.depth,alpha:result.alpha},signal:job.abort.signal});
+      const built=await build(job.native,{artwork:job.artworkReplaced?job.artwork:undefined,depth:{width:result.width,height:result.height,depth:result.depth,alpha:result.alpha},signal:job.abort.signal}),output=built instanceof Uint8Array?built:built?.bytes;
       if(!current(index,job,serial))return;
       if(!(output instanceof Uint8Array)||output.length<26)throw Error('Engine chưa trả về PSD hợp lệ.');
-      job.output=output;job.map=result.depth16PNG;job.status='done';job.progress=100;job.message='Hoàn tất · PSD giữ Smart Object IN / DEPTH / CUT. PNG depth riêng giữ 16 bit.';job.error=null;
+      job.output=output;if(built?.preview){job.preview=built.preview;job.previewIsResult=true;}job.map=result.depth16PNG;job.status='done';job.progress=100;job.message='Hoàn tất · PSD giữ Smart Object IN / DEPTH / CUT. PNG depth riêng giữ 16 bit.';job.error=null;
     }catch(error){if(current(index,job,serial)){job.status='error';job.error=error.message;job.message=error.message;}}
     finally{if(current(index,job,serial)){job.pipeline?.dispose();job.pipeline=null;emit();pump();}}
   }

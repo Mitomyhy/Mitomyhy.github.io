@@ -13,8 +13,8 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261023-moon-original-r7">
-  <link rel="stylesheet" href="tools/depth-psd.css?v=20261023-psd-r8a">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261023-psd-r9">
+  <link rel="stylesheet" href="tools/depth-psd.css?v=20261023-psd-r9">
   <link rel="stylesheet" href="video/video.css?v=20261022-local1">
   <link rel="stylesheet" href="video/ai-entry.css?v=20261023-ai1">
   <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
@@ -24,7 +24,7 @@
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261023-psd-r8b"></script>
+  <script type="module" src="tools/workbench.js?v=20261023-psd-r9"></script>
   <script type="module" src="video/video.js?v=20261023-ai1"></script>
   <script type="module" src="video/ai-entry.js?v=20261023-ai1"></script>
 </head>
@@ -184,7 +184,7 @@ OLIVER</textarea></label>
     <div class="tools-workspace">
       <header class="workspace-heading"><div><p class="micro">TOOLS / CREATIVE WORKSPACE</p><h1 id="workspace-title">3D Tool</h1></div><button id="ps-connect" class="tools-connect" type="button"><i></i><span>Kết nối Photoshop</span></button></header>
       <div class="workspace-toolbar"><span id="workspace-caption">Artwork của bạn. Góc nhìn của bạn.</span><div><button id="sky-zoom-reset" type="button" hidden title="Đặt lại mức zoom Starmap">100% · Đặt lại</button><button id="workspace-fit" type="button" title="Phóng lớn vùng làm việc" aria-pressed="false">⛶ <span>Rộng hơn</span></button></div></div>
-      <div id="depth-view-tabs" class="depth-view-tabs" hidden aria-label="Chế độ xem artwork và map"><button type="button" data-depth-view="artwork" aria-pressed="true">Artwork</button><button type="button" data-depth-view="map">Map ghép</button><button type="button" data-depth-view="moge">MoGe</button><button type="button" data-depth-view="da2">DA2</button><button type="button" data-depth-view="3d">Xem 3D</button></div>
+      <div id="depth-view-tabs" class="depth-view-tabs" hidden aria-label="Chế độ xem PSD, artwork và map"><button type="button" data-depth-view="template" aria-pressed="true">Template PSD</button><button type="button" data-depth-view="artwork" aria-pressed="false">Artwork / IN</button><button type="button" data-depth-view="map">Map ghép</button><button type="button" data-depth-view="moge">MoGe</button><button type="button" data-depth-view="da2">DA2</button><button type="button" data-depth-view="3d">Xem 3D</button></div>
       <div id="workspace-stage" class="workspace-stage">
         <div id="tool-empty" class="tool-empty"><div class="empty-orbit" aria-hidden="true"><span>◇</span><i></i><i></i></div><h2 id="empty-title">Bắt đầu bằng artwork.</h2><p id="empty-description" hidden></p><button id="empty-action" type="button">＋ Chọn artwork</button></div>
         <canvas id="depth-canvas" class="tool-canvas depth-canvas" width="1200" height="1200" hidden aria-label="3D preview. Kéo để xoay, cuộn để zoom."></canvas>
@@ -209,14 +209,18 @@ OLIVER</textarea></label>
       <article class="depth-psd-card" data-psd-slot="0">
         <header><div><p class="micro">01 / PSD</p><h3 data-psd-role="name">Tác vụ 1</h3></div><button type="button" data-psd-role="source-download" disabled>Tải PSD nguồn ↓</button><button type="button" data-psd-role="remove" disabled aria-label="Bỏ tác vụ 1">Bỏ ×</button></header>
         <div class="depth-psd-source"><label class="tools-field">Template trống<select data-psd-role="template"><option value="acrylic">Acrylic</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label><button class="tools-secondary" type="button" data-psd-role="open">Mở template ↗</button><label class="tools-upload"><span>Hoặc ＋ PSD đã có IN</span><input type="file" data-psd-role="file" accept=".psd"></label><label class="tools-upload"><span>＋ Thêm / thay artwork trong IN</span><input type="file" data-psd-role="art" accept="image/png,image/jpeg,image/webp" disabled></label></div>
-        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="Artwork trong IN của tác vụ 1"></canvas><span class="depth-psd-watermark">ARTWORK / IN</span></div>
+        <div class="depth-psd-views"><button type="button" data-psd-role="view-template" aria-pressed="true" disabled>Bố cục PSD</button><button type="button" data-psd-role="view-artwork" aria-pressed="false" disabled>Artwork / IN</button></div>
+        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="PSD / artwork IN của tác vụ 1"></canvas><span class="depth-psd-watermark">PSD / IN</span></div>
+        <p data-psd-role="preview-label" class="depth-psd-preview-label">Bố cục PSD gốc</p>
         <p data-psd-role="status" class="depth-psd-status" role="status" aria-live="polite">Chọn template trống hoặc upload PSD đã có artwork trong IN.</p><progress data-psd-role="progress" max="100" hidden aria-label="Tiến trình tác vụ 1"></progress>
         <div class="depth-psd-actions"><button type="button" data-psd-role="generate" class="tools-primary" disabled>Generate ↗</button><button type="button" data-psd-role="cancel" class="tools-secondary" disabled>Hủy</button><button type="button" data-psd-role="download" class="tools-secondary" disabled>Tải PSD ↓</button><button type="button" data-psd-role="map" class="tools-secondary" disabled>PNG map 16 bit ↓</button></div>
       </article>
       <article class="depth-psd-card" data-psd-slot="1">
         <header><div><p class="micro">02 / PSD</p><h3 data-psd-role="name">Tác vụ 2</h3></div><button type="button" data-psd-role="source-download" disabled>Tải PSD nguồn ↓</button><button type="button" data-psd-role="remove" disabled aria-label="Bỏ tác vụ 2">Bỏ ×</button></header>
         <div class="depth-psd-source"><label class="tools-field">Template trống<select data-psd-role="template"><option value="acrylic">Acrylic</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label><button class="tools-secondary" type="button" data-psd-role="open">Mở template ↗</button><label class="tools-upload"><span>Hoặc ＋ PSD đã có IN</span><input type="file" data-psd-role="file" accept=".psd"></label><label class="tools-upload"><span>＋ Thêm / thay artwork trong IN</span><input type="file" data-psd-role="art" accept="image/png,image/jpeg,image/webp" disabled></label></div>
-        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="Artwork trong IN của tác vụ 2"></canvas><span class="depth-psd-watermark">ARTWORK / IN</span></div>
+        <div class="depth-psd-views"><button type="button" data-psd-role="view-template" aria-pressed="true" disabled>Bố cục PSD</button><button type="button" data-psd-role="view-artwork" aria-pressed="false" disabled>Artwork / IN</button></div>
+        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="PSD / artwork IN của tác vụ 2"></canvas><span class="depth-psd-watermark">PSD / IN</span></div>
+        <p data-psd-role="preview-label" class="depth-psd-preview-label">Bố cục PSD gốc</p>
         <p data-psd-role="status" class="depth-psd-status" role="status" aria-live="polite">Chọn template trống hoặc upload PSD đã có artwork trong IN.</p><progress data-psd-role="progress" max="100" hidden aria-label="Tiến trình tác vụ 2"></progress>
         <div class="depth-psd-actions"><button type="button" data-psd-role="generate" class="tools-primary" disabled>Generate ↗</button><button type="button" data-psd-role="cancel" class="tools-secondary" disabled>Hủy</button><button type="button" data-psd-role="download" class="tools-secondary" disabled>Tải PSD ↓</button><button type="button" data-psd-role="map" class="tools-secondary" disabled>PNG map 16 bit ↓</button></div>
       </article>

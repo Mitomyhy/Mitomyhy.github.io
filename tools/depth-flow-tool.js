@@ -36,6 +36,30 @@ async function rendererFactory(canvas, settings) {
   return globalThis.UoyDepthViewer.create(canvas, settings);
 }
 
+async function templatePreviewLoader(family) {
+  const {callPSDWorker}=await import('./depth-psd-client.js?v=20261023-psd-r9');
+  return callPSDWorker('preview',{family});
+}
+
+/** Saved parent composite, never the AI input. Role rects stay in the original
+ * parent coordinates even when the worker returns a downsampled preview. */
+function checkedTemplatePreview(value) {
+  const {width,height,sourceWidth,sourceHeight,rgba,roles}=value||{};
+  if(!Number.isInteger(width)||!Number.isInteger(height)||Math.min(width,height)<1||Math.max(width,height)>1600||
+    !Number.isInteger(sourceWidth)||!Number.isInteger(sourceHeight)||Math.min(sourceWidth,sourceHeight)<1||Math.max(sourceWidth,sourceHeight)>8192||sourceWidth*sourceHeight>16000000||
+    !(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray)||rgba.length!==width*height*4)
+    throw Error('Bản xem PSD gốc không hợp lệ hoặc vượt giới hạn.');
+  const checked={};
+  for(const key of ['input','depth','cut']) {
+    const role=roles?.[key];if(!role){if(key==='input')throw Error('Bản xem PSD thiếu vị trí IN đã xác nhận.');continue;}
+    const rect=role.transform;
+    if(!Array.isArray(rect)||rect.length!==4||!rect.every(Number.isFinite)||rect[0]<-1.25||rect[1]<-1.25||rect[2]>sourceWidth+1.25||rect[3]>sourceHeight+1.25||rect[2]<=rect[0]||rect[3]<=rect[1])
+      throw Error('Vị trí layer trong bản xem PSD không hợp lệ.');
+    checked[key]={transform:rect.slice()};
+  }
+  return {width,height,sourceWidth,sourceHeight,rgba:new Uint8ClampedArray(rgba),roles:checked};
+}
+
 function png16(bytes, width, height) {
   if (!(bytes instanceof Uint8Array) || bytes.length < 33 || bytes[0]!==137 || bytes[1]!==80 || bytes[2]!==78 || bytes[3]!==71 || bytes[24]!==16 || ![0,4].includes(bytes[25]))
     throw Error('CPU chưa trả về PNG depth grayscale 16 bit hợp lệ.');
@@ -49,7 +73,8 @@ export function createDepthTool(canvas, options={}) {
   if (!canvas?.ownerDocument) throw Error('Cần canvas để mở 3D tool.');
   const document=canvas.ownerDocument, onStatus=options.onStatus||(()=>{}), onProgress=options.onProgress||(()=>{});
   const makeRenderer=options.rendererFactory||rendererFactory, readImage=options.readPixels||(file=>decodeImage(file,document));
-  let viewer=null, descriptor=null, productType='acrylic', artwork=null, source=null, result=null, edits=null, resultMode=null;
+  const readTemplatePreview=options.templatePreviewLoader||templatePreviewLoader;
+  let viewer=null, descriptor=null, templatePreview=null, productType='acrylic', artwork=null, source=null, result=null, edits=null, resultMode=null;
   let imageName='', busy=false, disposed=false, version=0, imageSelection=0, queue=Promise.resolve(), templateCatalog=null, shapeBitmap=null;
   let appearance={rimBoost:1.2,reliefBoost:6,gloss:.65};
   const pipeline=(options.pipelineFactory||createCPUPipeline)({manifestURL:MANIFEST_URL,onProgress(value){
@@ -126,10 +151,13 @@ export function createDepthTool(canvas, options={}) {
       bitmap=await createImageBitmap(blob);
       if(bitmap.width!==next.width||bitmap.height!==next.height){bitmap.close();throw Error('Shape gốc sai canvas.');}
     }
+    let preview;
+    try{preview=checkedTemplatePreview(await readTemplatePreview(type));}
+    catch(error){bitmap?.close();throw error;}
     if(version!==token||disposed){bitmap?.close();return api.state();}
-    shapeBitmap?.close();shapeBitmap=bitmap;descriptor=next;productType=type;clearResult();fitArtwork();
+    shapeBitmap?.close();shapeBitmap=bitmap;descriptor=next;templatePreview=preview;productType=type;clearResult();fitArtwork();
     viewer?.dispose();viewer=null;
-    onStatus(`Đã mở template ${type==='acrylic'?'Acrylic':type==='ceramic_circle'?'Circle':'Heart'} · ${next.width} × ${next.height} · 300 DPI. ${artwork?'Artwork được đặt lại; cần Generate mới.':'Chọn artwork tiếp theo.'}`);
+    onStatus(`Đã mở bố cục PSD gốc ${type==='acrylic'?'Acrylic':type==='ceramic_circle'?'Circle':'Heart'} · IN ${next.width} × ${next.height} · 300 DPI. ${artwork?'Artwork được đặt lại vào IN; DEPTH/CUT vẫn là bản gốc, cần Generate mới.':'Chọn artwork tiếp theo.'}`);
     return api.state();
   }
   function ready(){check();if(!result)throw Error('Generate map hoặc nhập PNG depth trước khi xuất.');}
@@ -182,6 +210,21 @@ export function createDepthTool(canvas, options={}) {
     async show3D(){noBusy();ready();await draw();return api.state();},
     render2D(target,view='artwork'){
       check();if(!target?.getContext)throw Error('Thiếu canvas 2D.');
+      if(view==='template'){
+        if(!templatePreview)throw Error('Chưa có bản xem bố cục PSD gốc.');
+        const data=templatePreview,max=Math.min(1200,Math.max(data.width,data.height)),scale=max/Math.max(data.width,data.height);
+        target.width=Math.max(1,Math.round(data.width*scale));target.height=Math.max(1,Math.round(data.height*scale));
+        const context=target.getContext('2d'),image=pixelsCanvas(data);
+        context.drawImage(image,0,0,target.width,target.height);image.width=image.height=1;
+        // Replace only the registered IN tile; never put the parent mosaic in
+        // source or fabricate a DEPTH/CUT result from a merely opened template.
+        if(artwork&&source){
+          const [left,top,right,bottom]=data.roles.input.transform,sx=target.width/data.sourceWidth,sy=target.height/data.sourceHeight;
+          const x=left*sx,y=top*sy,w=(right-left)*sx,h=(bottom-top)*sy,input=pixelsCanvas(source);
+          context.clearRect(x,y,w,h);context.drawImage(input,x,y,w,h);input.width=input.height=1;
+        }
+        return;
+      }
       const data=view==='artwork'?(result?(edits?.current()||result):source):mapData(view);if(!data)return;
       const max=Math.min(1200,Math.max(data.width,data.height)),scale=max/Math.max(data.width,data.height);
       target.width=Math.max(1,Math.round(data.width*scale));target.height=Math.max(1,Math.round(data.height*scale));
@@ -202,9 +245,10 @@ export function createDepthTool(canvas, options={}) {
     getView(){check();if(!viewer)throw Error('Mở 3D trước.');return viewer.getView();},setView(value){check();if(!viewer)throw Error('Mở 3D trước.');viewer.setView(value);},
     exportPNG(size){noBusy();ready();if(!viewer)throw Error('Bấm Xem 3D trước khi xuất mockup.');const png=viewer.exportFullPNG({width:size,height:size,padding:.06});if(typeof png!=='string'||!png.startsWith('data:image/png;base64,'))throw Error('GPU không xuất được mockup PNG.');return png;},
     exportDepthPNG(kind='depth',transparent=false){noBusy();ready();if(kind==='depth'&&!transparent&&!edits?.changed&&resultMode!=='full')return bytesDataURL(result.depth16PNG);const data=mapData(kind);let values=data.depth;if(data.alpha&&!transparent){values=values.slice();for(let i=0;i<values.length;i++)if(data.alpha[i]===0)values[i]=0;}return bytesDataURL(encodeGray16PNG(values,data.width,data.height,transparent?data.alpha:null));},
-    state(){return{hasTemplate:!!descriptor,hasImage:!!artwork,hasDepth:!!result,busy,productType,imageName,template:descriptor&&{width:descriptor.width,height:descriptor.height,dpi:descriptor.dpi},
+    state(){return{hasTemplate:!!descriptor,hasTemplatePreview:!!templatePreview,hasImage:!!artwork,hasDepth:!!result,busy,productType,imageName,template:descriptor&&{width:descriptor.width,height:descriptor.height,dpi:descriptor.dpi},
+      templatePreview:templatePreview&&{width:templatePreview.width,height:templatePreview.height,sourceWidth:templatePreview.sourceWidth,sourceHeight:templatePreview.sourceHeight,source:'photoshop-saved-parent-composite',inputReplaced:!!artwork,depthCut:'saved-original'},
       has3D:!!result&&!!viewer,resultMode,hasMaps:!!result?.mogeDepth&&!!result?.da2Depth,canCompose:!!pipeline.canCompose,canUndo:!!edits?.canUndo,edited:!!edits?.changed,
       width:result?.width||source?.width||0,height:result?.height||source?.height||0,metadata:result?.metadata||null,profile:'cpu-standard-fp32-1225',nativeUHDInference:false,panelEquivalent:false,templateFit:'browser-canvas-contain-not-PSD-warp'};},
-    dispose(){if(disposed)return;disposed=true;version++;pipeline.dispose();viewer?.dispose();shapeBitmap?.close();viewer=null;source=artwork=result=edits=null;}
+    dispose(){if(disposed)return;disposed=true;version++;pipeline.dispose();viewer?.dispose();shapeBitmap?.close();viewer=null;source=artwork=result=edits=templatePreview=null;}
   };return api;
 }

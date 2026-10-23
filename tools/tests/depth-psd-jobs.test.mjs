@@ -65,3 +65,12 @@ test('WASM CPU heap is disposed before allocating native PSD output',async()=>{
 test('prepared PSD generates from saved IN without replacing its native layer stack',async()=>{
   let built;const {jobs,runs}=harness({build:async(native,options)=>{built=options;return new Uint8Array(30);}});await jobs.load(0,{name:'prepared.psd'});jobs.generate(0);assert.equal(runs[0].input.rgba,art.rgba);runs[0].wait.resolve(result());await tick();assert.equal(built.artwork,undefined);assert.equal(jobs.snapshot().jobs[0].status,'done');jobs.dispose();
 });
+
+test('saved parent preview is separate from AI IN; result preview updates only after native build',async()=>{
+  const sourcePreview={width:12,height:4,rgba:new Uint8Array(192)},resultPreview={width:12,height:4,rgba:new Uint8Array(192).fill(90)};
+  const {jobs,runs}=harness({open:async()=>({family:'acrylic',artwork:art,preview:sourcePreview,bytes:new Uint8Array(30)}),build:async()=>({bytes:new Uint8Array(31),preview:resultPreview})});
+  await jobs.load(0,{});assert.equal(jobs.snapshot().jobs[0].preview,sourcePreview);assert.equal(jobs.snapshot().jobs[0].previewIsResult,false);
+  jobs.generate(0);assert.equal(runs[0].input.rgba,art.rgba);assert.notEqual(runs[0].input.rgba,sourcePreview.rgba);
+  runs[0].wait.resolve(result());await tick();assert.equal(jobs.result(0).length,31);assert.equal(jobs.snapshot().jobs[0].preview,resultPreview);assert.equal(jobs.snapshot().jobs[0].previewIsResult,true);
+  await jobs.setArtwork(0,{});assert.equal(jobs.snapshot().jobs[0].preview,sourcePreview);assert.equal(jobs.snapshot().jobs[0].previewIsResult,false);jobs.dispose();
+});
