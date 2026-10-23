@@ -59,6 +59,6 @@ $('video-form').addEventListener('submit',async event=>{
   }catch(error){setStatus(error.name==='AbortError'?'cancelled':'error',error.name!=='AbortError');renderPreview();}
   finally{if(current===operation){exporting=false;controller=null;$('video-progress').hidden=true;update();}}
 });
-function route(){const open=/^#video(?:\/.*)?$/.test(location.hash);app.hidden=!open;document.body.classList.toggle('video-open',open);document.querySelectorAll('.nav-video').forEach(node=>{if(open)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});if(open){$('main').hidden=true;$('tools-app').hidden=true;if(image&&!resultURL)renderPreview();}else{stopPreview();$('video-player').pause();update();}}
+function route(){const open=/^#video\/photo\/?$/.test(location.hash);app.hidden=!open;document.body.classList.toggle('video-open',open);document.querySelectorAll('.nav-video').forEach(node=>{if(open)node.setAttribute('aria-current','page');else node.removeAttribute('aria-current');});if(open){$('main').hidden=true;$('tools-app').hidden=true;if(image&&!resultURL)renderPreview();}else{stopPreview();$('video-player').pause();update();}}
 window.addEventListener('hashchange',route);window.addEventListener('pagehide',event=>{if(!event.persisted){controller?.abort();stopPreview();clearResult();image?.close?.();if(imageURL)URL.revokeObjectURL(imageURL);}});
 new MutationObserver(update).observe(document.documentElement,{attributes:true,attributeFilter:['lang']});update();route();
