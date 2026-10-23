@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mitom-session-token" content="">
+  <meta name="referrer" content="no-referrer">
+  <title>MITOM Video</title>
+  <link rel="icon" href="assets/favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="MITOM Video"><img src="assets/mitom-logo.png" alt=""><span>MITOM</span></a>
+    <span class="product-name">Video</span>
+    <div class="top-actions">
+      <div class="language-switch" role="group" aria-label="Language"><button type="button" data-lang="en" aria-pressed="true">EN</button><button type="button" data-lang="vi" aria-pressed="false">VI</button></div>
+      <button id="connectionButton" class="connection-button" type="button"><span id="connectionDot" class="status-dot"></span><span id="connectionLabel">Connect engine</span><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 3-1 3-3 1-2 3 2 2-1 3 3 2 3-1 2 2 3-1 1-3 3-1 1-3-2-2 1-3-3-2-3 1Z"/><circle cx="11" cy="11" r="3"/></svg></button>
+    </div>
+  </header>
+  <main id="main" class="workspace">
+    <aside class="controls">
+      <div class="panel-heading"><span class="section-index" data-t="sectionVideo">01 / VIDEO</span><h1 data-t="createTitle">Create your next take.</h1></div>
+      <form id="videoForm">
+        <fieldset id="inputFields">
+          <div class="field-heading"><label for="imageInput" data-t="productImage">Product photo</label><button id="removeImage" class="text-button" type="button" hidden data-t="remove">Remove</button></div>
+          <label id="dropzone" class="dropzone" for="imageInput">
+            <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp">
+            <img id="imagePreview" alt="" hidden>
+            <span id="uploadPlaceholder" class="upload-placeholder"><svg aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="1"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 5-5 4 4 4-6 5 7"/></svg><span data-t="choosePhoto">Choose or drop a photo</span><span class="subtle" data-t="imageTypes">PNG, JPG or WebP · up to 15 MB</span></span>
+          </label>
+          <div id="imageName" class="file-name" hidden></div>
+          <div class="field-heading prompt-heading"><label for="prompt" data-t="prompt">Describe the movement</label><span id="characterCount" class="subtle">0 / 4000</span></div>
+          <textarea id="prompt" maxlength="4000" required data-placeholder="promptPlaceholder" placeholder="Describe what moves, the camera angle, and the lighting…"></textarea>
+          <div class="option-grid">
+            <label><span data-t="format">Format</span><select id="resolution"><option value="512x320" selected data-t="landscape">Landscape · 512 × 320</option><option value="320x512" data-t="portrait">Portrait · 320 × 512</option><option value="384x384" data-t="square">Square · 384 × 384</option><option value="704x448" data-t="higherDetail">Higher detail (experimental) · 704 × 448</option><option value="320x192" data-t="fastLandscape">Fast · 320 × 192</option></select></label>
+            <label><span data-t="length">Length</span><select id="frames"><option value="17" data-t="shortLength">2.1 seconds</option><option value="49" selected data-t="longLength">6.1 seconds</option></select></label>
+          </div>
+          <div class="output-spec"><span>MP4</span><span>8 fps</span><span data-t="exportSize">720p short side</span></div>
+        </fieldset>
+        <div class="generate-actions"><button id="generate" class="button primary" type="submit" disabled><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m9 5 10 7-10 7Z"/></svg><span data-t="generate">Generate video</span></button><button id="cancel" class="button secondary" type="button" hidden data-t="cancel">Cancel</button></div>
+      </form>
+      <div id="notice" class="notice" role="status" aria-live="polite"><span id="noticeText">Start MITOM Video on this computer, then connect.</span><button id="noticeAction" class="text-button" type="button" data-t="connect">Connect</button></div>
+    </aside>
+    <section class="output" aria-labelledby="outputTitle">
+      <div class="output-heading"><div><span class="section-index" data-t="sectionOutput">02 / OUTPUT</span><h2 id="outputTitle" data-t="yourVideo">Your video</h2></div><a id="download" class="button secondary" download="MITOM-Video.mp4" hidden><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5"/></svg><span data-t="download">Download MP4</span></a></div>
+      <div id="previewStage" class="preview-stage">
+        <div id="emptyOutput" class="empty-output"><div class="empty-symbol" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="m21 13 29 19-29 19Z"/></svg></div><h3 data-t="emptyTitle">A photo. Your direction.</h3><p data-t="emptyDescription">Choose a product photo and describe the video you want to create.</p></div>
+        <video id="video" controls playsinline preload="metadata" hidden></video>
+      </div>
+      <div id="progressPanel" class="progress-panel" hidden aria-live="polite"><div class="progress-heading"><span id="phaseLabel"></span><span id="stepLabel" class="subtle"></span></div><progress id="progress" max="8"></progress></div>
+      <div class="output-footer"><span id="outputStatus" data-t="noVideo">No video generated yet</span><button id="retryVideo" class="text-button" type="button" hidden data-t="retryDownload">Retry download</button></div>
+    </section>
+  </main>
+  <dialog id="connectionDialog" aria-labelledby="connectionTitle">
+    <div class="dialog-heading"><h2 id="connectionTitle" data-t="connectionTitle">Connect MITOM Video</h2><button id="closeConnection" class="icon-button" type="button" data-aria="close" aria-label="Close"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></svg></button></div>
+    <p class="dialog-description" data-t="connectionDescription">Open MITOM Video on this computer and enter its connection code.</p>
+    <form id="connectionForm"><label class="dialog-field"><span data-t="engineAddress">Engine address</span><input id="endpoint" type="url" value="http://127.0.0.1:4176" required spellcheck="false" autocomplete="off"></label><label class="dialog-field"><span data-t="connectionCode">Connection code</span><input id="pairCode" type="password" maxlength="200" autocomplete="off" spellcheck="false" required></label><p id="connectionError" class="dialog-error" role="alert" hidden></p><button id="connectSubmit" class="button primary" type="submit" data-t="connect">Connect</button></form>
+  </dialog>
+</body>
+</html>
