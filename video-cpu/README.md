@@ -1,19 +1,25 @@
-# MITOM local video worker — unpublished preparation
+# MITOM local video worker — CPU preview 2026.10.23.1
 
-This worker is prepared for a **real image + prompt → video** CPU model. The
-separate CPU probe has generated real model frames at the default profile;
-the worker still requires its own browser-to-MP4 verification before release.
-It is not a released replacement for the current browser photo-video tool.
-There is no pan/zoom fallback, cloud API,
-credit system, background installation, LAN binding, or automatic model download.
+This worker generates **real image + prompt → video** with LTX Video 2B 0.9.6
+distilled and OpenVINO on CPU. The portable app includes its own isolated Python,
+software MP4 encoder and local browser interface. A separate setup command downloads
+the four hash-pinned model parts once; generation then works offline on each PC.
 
-The separate root CPU experiment completed512×320,49frames at12fps in69.53s on
-an i7-14700K, using four CPU threads. Measured aggregate peak RSS was5793.64MiB
-and peak private memory4974.89MiB, under the10GiB cap. This is a development-PC
-measurement, not a performance promise for an i3/16GB machine. Visual quality
-and each deployment configuration still need review. The API stays `model_unverified` until
-this process completes a real CPU model generation with the exact scheduler.
-Completing one development-PC clip does not establish performance on i3/16 GB.
+Actual browser upload, free-text prompt, model generation and MP4 download passed
+with the portable runtime: 512×320 native AI, 49 frames at 8 fps, 6.125 seconds,
+75.6 seconds elapsed and 5.71 GiB peak aggregate RSS on an i7-14700K using four
+CPU threads. The MP4 is upscaled to 1152×720; this does not add native AI detail.
+An independent multipart installation into a path containing spaces also passed,
+followed by actual generation from that installed, sanitized model package.
+
+This is a preview. Motion can be subtle and lettering/product details can change.
+The clean-machine and i3/16 GB configurations have not been tested. Development-PC
+measurements are not performance promises for those computers. The API stays
+`model_unverified` until its own process completes a real CPU generation.
+
+The worker binds loopback only and has no cloud fallback, credit system or
+persistent service. The model's exact license and component notices are included
+in its package; see the release guide for installation and offline transfer.
 
 ## Foreground start after model preparation
 

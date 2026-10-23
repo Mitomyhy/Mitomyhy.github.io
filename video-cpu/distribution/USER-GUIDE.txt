@@ -1,0 +1,58 @@
+MITOM VIDEO CPU 2026.10.23.1
+
+Windows 10/11, 64-bit. 16 GB RAM recommended. No API key or credits.
+Each computer generates locally. Internet is needed only for the first download.
+
+FIRST SETUP
+1. Download the Windows APP ZIP from this release and use Windows "Extract All":
+   https://github.com/Mitomyhy/Mitomyhy.github.io/releases/tag/video-cpu-2026.10.23.1
+   Open the extracted folder containing launch.cmd, install-model.cmd and python.
+2. Double-click install-model.cmd. It downloads and verifies the model files
+   automatically (about 7 GB), then installs them. Keep around 15 GB free after
+   extracting the app. Wait for "Setup complete"; no administrator is required.
+   If interrupted, run install-model.cmd again to resume the download.
+3. Double-click launch.cmd. Keep its window open while using MITOM Video.
+   The local video page opens automatically. If needed, open
+   http://127.0.0.1:4176 in the browser on this computer.
+
+CREATE A VIDEO
+Choose a product photo, describe the desired movement, then select Generate.
+The default is about 6.1 seconds. Use 2.1 seconds for a quick trial.
+512 x 320 is the default AI size; Higher detail is experimental.
+The MP4 is enlarged to a 720-pixel short side. This adds no native AI detail.
+Download the finished MP4. Review product shapes and lettering before use;
+AI generation can alter them. EN/VI changes the interface language.
+Cancel stops the active generation. Close the launch window when finished.
+
+OFFLINE SETUP / ANOTHER COMPUTER
+To install without downloading through the app, obtain ALL four model
+.zip.partNNN files from the SAME release. Keep their original filenames and
+copy them beside install-model.cmd, or into the app's downloads folder.
+Run install-model.cmd. Verified local parts are reused without downloading.
+Do not extract, rename or join individual parts. model-bundle.json and
+install_model.py are already included in the app ZIP.
+
+After installation, close MITOM Video and copy the ENTIRE installed app folder
+to another compatible Windows 64-bit computer. Include models, python, worker,
+web and the launch files. Open launch.cmd there; the installed model moves with
+the folder. Each computer runs its own session and generation.
+
+IF SETUP DOES NOT FINISH
+Interrupted download: run install-model.cmd again; .partial files can resume.
+Checksum mismatch: setup preserves the invalid file and retries a fresh part.
+Repeated failure: download the named part from this release for offline setup.
+Not enough disk space: move the entire app folder to a drive with more room.
+Model unavailable: finish install-model.cmd, then restart launch.cmd.
+Connection unavailable: keep launch.cmd running and use the local page above.
+Memory / time limit: close other large apps and try 2.1 seconds or Fast format.
+Stop MITOM Video before updating its model. Read the included model/component
+licenses and MODEL-NOTICES.txt in models/ltx-video-cpu.
+
+CÀI ĐẶT NHANH (TIẾNG VIỆT)
+Chỉ cần tải ZIP ỨNG DỤNG rồi giải nén toàn bộ. Mở install-model.cmd để tự tải,
+kiểm tra và cài model. Cần mạng ở lần tải đầu, khoảng 7 GB dữ liệu và 15 GB ổ
+trống sau khi giải nén app. Nếu gián đoạn, mở lại để tải tiếp.
+Khi báo "Setup complete", mở launch.cmd; giữ cửa sổ này khi dùng ứng dụng.
+Chọn VI, nạp ảnh, nhập prompt và bấm Tạo video. Sau khi cài xong có thể dùng
+offline. Có thể đóng app rồi chép TOÀN BỘ thư mục đã cài sang máy Windows
+64-bit tương thích khác, bao gồm thư mục models, để không phải tải model lại.

@@ -1,0 +1,122 @@
+{
+  "archive": {
+    "format": "zip-stored-multipart",
+    "parts": [
+      {
+        "name": "MITOM-Video-CPU-Model-2026.10.23.1.zip.part001",
+        "sha256": "9765928aa13bf5ae74f3dc70a3adf2d072abf8137e5409df93638ed62f610881",
+        "size": 1800000000
+      },
+      {
+        "name": "MITOM-Video-CPU-Model-2026.10.23.1.zip.part002",
+        "sha256": "218aae950e1cab5c20392ca012c300883a5a8a7ce45abbc083585a1116113ff7",
+        "size": 1800000000
+      },
+      {
+        "name": "MITOM-Video-CPU-Model-2026.10.23.1.zip.part003",
+        "sha256": "157525ede1ad33e6d8e6681faa7c6ec25195cba62197640b5535b70dab514c94",
+        "size": 1800000000
+      },
+      {
+        "name": "MITOM-Video-CPU-Model-2026.10.23.1.zip.part004",
+        "sha256": "89c5573bbdbe48b860b67fd9fa77d98149491afd3650eee1fa264f25f0471958",
+        "size": 1589696412
+      }
+    ],
+    "sha256": "488a5038d377109fd215d827cd517e8e31946f6a8a971d8ab45cfc73cee80da0",
+    "size": 6989696412
+  },
+  "bundle_name": "MITOM-Video-CPU-Model-2026.10.23.1",
+  "files": {
+    "MODEL-NOTICES.txt": {
+      "sha256": "95e9eb2144fb69d58b349e6e1fbb90be617f59df1a4a81426f48b10c9bd67aca",
+      "size": 1539
+    },
+    "licenses/LTX-Video-2B-0.9.6-distilled-LICENSE.txt": {
+      "sha256": "7cbd654fa79a98f0d2588fb5ac1d7ff459010b085c2bd6c572f800ac026d7bfe",
+      "size": 16854
+    },
+    "licenses/T5-Apache-2.0.txt": {
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+      "size": 11358
+    },
+    "mitom-model.json": {
+      "sha256": "27ae942f596e7a17abad0373dc44ebcad33b066495011c06f96306e45c0902b5",
+      "size": 917
+    },
+    "model_index.json": {
+      "sha256": "fce9df2fc45652041e4b380ede5d64b559b7add48001070ada95d4eaa7431d5f",
+      "size": 443
+    },
+    "openvino_config.json": {
+      "sha256": "ce2fa71fab2c53aeafdc6633462afce2386c6dae1e08a57915d072de5ce7f165",
+      "size": 1691
+    },
+    "scheduler/scheduler_config.json": {
+      "sha256": "4195b842b06673683b04dbc8fc632f8d09d91eaabda04f061bd98d657e3cd38a",
+      "size": 500
+    },
+    "text_encoder/config.json": {
+      "sha256": "92aeb581c8c514aee79b8aeacc9860ea0825b9128b58c1c39562ff5056de6fd9",
+      "size": 825
+    },
+    "text_encoder/openvino_model.bin": {
+      "sha256": "7b844f8b5744a11cdb7f49a5c6272b5cf55db11ba45f541e61d1f8c7e9e54ae9",
+      "size": 2557956624
+    },
+    "text_encoder/openvino_model.xml": {
+      "sha256": "b2df6ca0e83d5205420ab74cb06a61c18bba672ee19274e7a1c9da06659ba48b",
+      "size": 1694816
+    },
+    "tokenizer/tokenizer.json": {
+      "sha256": "05662d19d08fd523371e8b6a8d0ab9ee7ae57a10502e9f6ba95fd1d21875a1df",
+      "size": 2423869
+    },
+    "tokenizer/tokenizer_config.json": {
+      "sha256": "4a13e776e930ee032f41cf71a26a852e662f7847ac1effa215d6df3374216359",
+      "size": 2626
+    },
+    "transformer/config.json": {
+      "sha256": "eab9dd034e53895867e2492a0106b93afbab8f722f13da90a45c4faf029cc07d",
+      "size": 514
+    },
+    "transformer/openvino_model.bin": {
+      "sha256": "f9c8b981f4a622702089936c6938f600829cc27be76ecc51b50553c79697b263",
+      "size": 1927038952
+    },
+    "transformer/openvino_model.xml": {
+      "sha256": "697c75e070682ec8cccaeeb5784b091325dcca6d66ed6918235e645c850b5f13",
+      "size": 4421568
+    },
+    "vae_decoder/config.json": {
+      "sha256": "adfa97dcf3021f1a5d958cd1d1f0e7ed0f49a4044cad58acfcb54c9b953b787c",
+      "size": 6485
+    },
+    "vae_decoder/openvino_model.bin": {
+      "sha256": "aad0bd906fbd1b7aaabc14ee5140175aa5634578669a5527ba6c4947d87d3dad",
+      "size": 1105630248
+    },
+    "vae_decoder/openvino_model.xml": {
+      "sha256": "a6a07b4bbde9680cfae3149c7491ea11c3db91e734c7618fb727d3cad1c40632",
+      "size": 1299814
+    },
+    "vae_encoder/config.json": {
+      "sha256": "4018bd135062be3c2a60b9f298d26b01e5760d6f5cb86e42dea67684721eb2e7",
+      "size": 1326
+    },
+    "vae_encoder/openvino_model.bin": {
+      "sha256": "c143c8eb4e37ce0315681a04b73e5167e3e86ab35fb22ee88c3ef95f57d5a5d6",
+      "size": 1388198488
+    },
+    "vae_encoder/openvino_model.xml": {
+      "sha256": "4efe4fa060186e7d414ae6970cf6ab13183c69fcd8a805e8ddd68021d261d546",
+      "size": 982721
+    }
+  },
+  "license_notice": "Read MODEL-NOTICES.txt and the included component licenses before use or redistribution.",
+  "model_subdir": "models/ltx-video-cpu",
+  "profile": "ltxv-2b-0.9.6-distilled",
+  "schema_version": 1,
+  "source_revision": "8984fa25007f376c1a299016d0957a37a2f797bb",
+  "total_uncompressed_bytes": 6989692178
+}

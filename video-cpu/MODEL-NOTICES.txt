@@ -1,0 +1,16 @@
+MITOM CPU video model - component notices
+
+LTX-Video-2B-0.9.6-Distilled-04-25 by Lightricks Ltd.
+Pinned source: https://huggingface.co/Lightricks/LTX-Video/tree/8984fa25007f376c1a299016d0957a37a2f797bb
+Applicable license: licenses/LTX-Video-2B-0.9.6-distilled-LICENSE.txt
+License source: https://huggingface.co/Lightricks/LTX-Video-2B-0.9.6-Distilled-04-25/blob/416c86a16b0186b4fde93fbf57070fe0b7139716/LICENSE
+This model and derivatives remain subject to the complete included license, including its use restrictions and commercial-entity terms.
+
+T5XXL encoder from comfyanonymous/flux_text_encoders
+Pinned source: https://huggingface.co/comfyanonymous/flux_text_encoders/tree/6af2a98e3f615bdfa612fbd85da93d1ed5f69ef5
+The pinned maintainer model card identifies Apache2.0. Included text: licenses/T5-Apache-2.0.txt
+T5 model architecture by Google Research.
+
+Modification notice: MITOM converted the original checkpoint components to OpenVINO IR using FP32 tracing/FP16 weight storage, compressed the T5 encoder to asymmetric INT4(group128,ratio1), and the transformer to asymmetric INT8. VAE weights retain FP16 storage and the original timestep-conditioned behavior. No training or model finetuning was performed.
+
+This package contains runtime model assets only. It includes no reference images, user prompts, generated videos, credentials, machine paths or diagnostic logs. Model outputs require visual review; package presence is not proof of exact product text/design preservation or universal CPU/RAM compatibility.
