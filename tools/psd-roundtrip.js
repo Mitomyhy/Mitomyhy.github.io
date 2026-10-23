@@ -2,7 +2,7 @@
  * Bounded, additive PSD transport for the browser 3D workspace.
  *
  * This is NOT a Photoshop renderer or an ag-psd read/write round trip. It reads
- * the saved RGB8 composite and adds raster layers without interpreting or
+ * the saved RGB8 composite / rendered layer caches and adds raster layers without interpreting or
  * rewriting existing layer/effect/text/smart-object bytes. Unsupported files
  * fail explicitly. Original Photoshop effects are not rerendered in the web.
  * Format: https://www.adobe.com/devnet-apps/photoshop/fileformatashtml/
@@ -166,6 +166,43 @@ export async function decodePSDComposite(value,{signal,allowEmbeddedPSB=false}={
   // partial merged transparency. Undo it before Canvas/AI consumes straight RGBA.
   if(hasAlpha)for(let i=0;i<n;i++){const alpha=rgba[i*4+3];if(alpha>0&&alpha<255)for(let c=0;c<3;c++)rgba[i*4+c]=(rgba[i*4+c]-(255-alpha))*255/alpha;}
   return {width,height,rgba,depth:8,source:'photoshop-saved-composite',hasTransparency:hasAlpha};
+}
+
+/**
+ * Reads one Photoshop-rendered layer cache. These are straight RGB/alpha
+ * channels, unlike the white-matted document composite. This is deliberately
+ * not a layer/effect renderer: Photoshop has already rendered this cache.
+ */
+export async function decodePSDLayerPixels(value,{index,signal,allowEmbeddedPSB=false}={}) {
+  abort(signal);const p=parse(value,{allowPSB:allowEmbeddedPSB}),layer=p.layers[index];
+  if(!layer||!Number.isInteger(index))fail('Không xác định được layer PSD cần đọc.');
+  const {width,height,left,top}=layer;shape(width,height);
+  if(layer.layerMaskBytes||layer.channelInfo.some(channel=>channel.id<-1))fail('Layer cache có mask chưa được hỗ trợ.');
+  let offset=p.channelStart;
+  for(let i=0;i<index;i++)for(const channel of p.layers[i].channelInfo)offset+=channel.length;
+  const planes=new Map(),n=width*height;
+  for(const channel of layer.channelInfo) {
+    const r=reader(p.bytes,offset,offset+channel.length);offset+=channel.length;
+    if(![0,1,2,-1].includes(channel.id))continue;
+    if(planes.has(channel.id))fail('Layer PSD có kênh màu trùng.');
+    const compression=r.u16();let plane;
+    if(compression===0){plane=r.take(n);if(r.pos!==offset)fail('Raw layer PSD có dữ liệu thừa.');}
+    else if(compression===1) {
+      const lengths=new Uint32Array(height);let total=0;
+      for(let y=0;y<height;y++){lengths[y]=p.version===2?r.u32():r.u16();total+=lengths[y];}
+      if(total!==offset-r.pos)fail('RLE layer PSD có dữ liệu thiếu / thừa.');
+      plane=new Uint8Array(n);
+      for(let y=0;y<height;y++){if(y%64===0)abort(signal);unpackRow(r.take(lengths[y]),plane,y*width,width);}
+    } else if(compression===2||compression===3) {
+      plane=await boundedInflate(p.bytes.subarray(r.pos,offset),n,signal);
+      if(compression===3)for(let y=0;y<height;y++)for(let x=1;x<width;x++){const at=y*width+x;plane[at]=(plane[at]+plane[at-1])&255;}
+    } else fail('PSD dùng kiểu nén layer chưa hỗ trợ.');
+    planes.set(channel.id,plane);abort(signal);
+  }
+  if(![0,1,2].every(id=>planes.has(id)))fail('Layer PSD thiếu kênh RGB đã render.');
+  const rgba=new Uint8ClampedArray(n*4),alpha=planes.get(-1);
+  for(let i=0;i<n;i++){rgba[i*4]=planes.get(0)[i];rgba[i*4+1]=planes.get(1)[i];rgba[i*4+2]=planes.get(2)[i];rgba[i*4+3]=alpha?alpha[i]:255;}
+  return {index,left,top,width,height,rgba,depth:8,source:'photoshop-saved-layer-cache',hasTransparency:!!alpha};
 }
 
 function concat(parts,max=PSD_LIMITS.outputBytes){

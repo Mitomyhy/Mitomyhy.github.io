@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {NATIVE_TEMPLATE_CATALOG,fetchNativeTemplate,openNativePSD,buildNativePSD,
   resizeNativeRaster,validateNativeRoleTransform,composeNativeSubstrate} from '../depth-psd-template.js';
-import {inspectPSD,readPSDLinkedFiles,decodePSDComposite,replaceEmbeddedPSDs,appendPSDLayers} from '../psd-roundtrip.js';
+import {inspectPSD,readPSDLinkedFiles,decodePSDComposite,decodePSDLayerPixels,replaceEmbeddedPSDs,replacePSDLayerPixels,appendPSDLayers} from '../psd-roundtrip.js';
 
 const assets=new URL('../assets/templates/psd/',import.meta.url);
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -78,6 +78,28 @@ test('three real native PSDs read saved IN contents instead of the parent layout
     assert.notEqual(opened.artwork.width,opened.width);assert.equal(opened.artwork.rgba.length,item.inputWidth*item.inputHeight*4);
     assert.deepEqual(Object.keys(opened.roles),item.roles.map(role=>role[0]));assert.equal(hash(bytes),before);
   }
+});
+
+test('opaque white embedded PSB placeholder uses saved rendered IN cache and keeps editable IN/cache exact on export',async()=>{
+  const item=NATIVE_TEMPLATE_CATALOG[0],original=await fixture(item),opened=await openNativePSD(original);
+  const child=readPSDLinkedFiles(original).find(file=>file.id===opened.roles.input.embeddedID).bytes;
+  const white=solid(item.inputWidth,item.inputHeight,[255,255,255,255]);
+  const editable=appendPSDLayers(child,[{name:'Synthetic editable artwork',...solid(2,2,[220,40,15,255]),visible:true}],{allowEmbeddedPSB:true,hideOriginalLayers:true,composite:white});
+  let saved=replaceEmbeddedPSDs(original,[{id:opened.roles.input.embeddedID,bytes:editable}]);
+  const cache=solid(12,12,[200,30,80,255]);cache.rgba.set([255,255,255,128],(6*12+6)*4);cache.rgba.set([0,0,0,0],0);
+  saved=replacePSDLayerPixels(saved,[{index:opened.roles.input.index,left:100,top:200,...cache}]);
+  const beforeCache=await decodePSDLayerPixels(saved,{index:opened.roles.input.index}),recovered=await openNativePSD(saved);
+  assert.equal(recovered.artworkSource,'photoshop-saved-IN-layer-cache');
+  assert.equal(recovered.artwork.rgba[3],0,'outside the cropped saved IN cache stays transparent');
+  const [x0,y0,x1,y1]=recovered.roles.input.transform;
+  const at=(Math.floor((205-y0)*item.inputHeight/(y1-y0))*item.inputWidth+Math.floor((105-x0)*item.inputWidth/(x1-x0)))*4;
+  assert.deepEqual([...recovered.artwork.rgba.subarray(at,at+4)],[200,30,80,255],'real artwork rather than opaque white is sent to AI');
+  const output=await buildNativePSD(saved,{depth:solid(2,2,[120,120,120,255])});
+  const keptInput=readPSDLinkedFiles(output).find(file=>file.id===opened.roles.input.embeddedID).bytes;
+  assert.equal(hash(keptInput),hash(editable),'editable IN PSB bytes are preserved exactly, including its own compatibility placeholder');
+  const afterCache=await decodePSDLayerPixels(output,{index:opened.roles.input.index});
+  assert.deepEqual(afterCache,beforeCache,'good Photoshop-rendered IN cache is neither overwritten with white nor resized');
+  assert.equal((await openNativePSD(output)).artworkSource,'photoshop-saved-IN-layer-cache');
 });
 
 test('saved native PSD roles follow their names after helpers are added and the stack is reordered',async()=>{

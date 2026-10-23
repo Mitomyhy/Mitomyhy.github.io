@@ -1,6 +1,7 @@
 import {ORT_VERSION,PYODIDE_VERSION,PROFILE,check,size,validateManifest} from './contracts.mjs';
 import {loadPinnedModel,loadPinnedText} from './model-cache.mjs';
 import {BRIDGE_PYTHON} from './bridge-python.mjs?v=20261022-flow-r5';
+import {executionDevice,runtimeURL,requestGPUAdapter,configureONNXRuntime,inferenceSessionOptions} from './execution-device.mjs';
 
 let used=false, running=false, composeCached=null;
 self.onmessage=async({data})=>{
@@ -12,9 +13,9 @@ self.onmessage=async({data})=>{
     return;
   }
   if(used)return;used=true;running=true;
-  const {id,manifestURL,rgba,width,height,productType,options,threads,outputMode='full'}=data||{};
+  const {id,manifestURL,rgba,width,height,productType,options,threads,outputMode='full',device='cpu'}=data||{};
   const send=(type,values={})=>self.postMessage({id,type,...values});
-  const timings={}, modelReports={};let pyodide=null,session=null;
+  const timings={}, modelReports={};let pyodide=null,session=null,gpu=null;
   async function stage(phase,run){send('phase',{phase});const start=performance.now();const result=await run();timings[phase]=performance.now()-start;send('timing',{timings:{...timings}});return result;}
   function finite(value,name){check(value.every(Number.isFinite),`${name} có NaN/Infinity.`);return value;}
   function readBytes(name){return pyodide.FS.readFile('/mitom_work/'+name);}
@@ -26,9 +27,13 @@ self.onmessage=async({data})=>{
   async function infer(ort,kind,inputFile,spec,base,origins){
     let loaded=await stage(kind+'-download-verify',()=>loadPinnedModel(spec,{base,origins,progress:value=>send('download',{kind,...value})}));
     const cache=loaded.cache;
-    session=await stage(kind+'-session',()=>ort.InferenceSession.create(loaded.bytes,{
-      executionProviders:['wasm'],graphOptimizationLevel:'basic',enableCpuMemArena:false,enableMemPattern:false
-    }));
+    session=await stage(kind+'-session',()=>ort.InferenceSession.create(loaded.bytes,inferenceSessionOptions(device)));
+    if(device==='gpu'){
+      const actual=await ort.env.webgpu.device;
+      check(actual&&typeof actual.queue?.onSubmittedWorkDone==='function','The ONNX session did not initialize a real WebGPU device.');
+      gpu.report.deviceInitialized=true;
+      gpu.report.deviceLimits={maxStorageBufferBindingSize:Number(actual.limits.maxStorageBufferBindingSize),maxBufferSize:Number(actual.limits.maxBufferSize)};
+    }
     loaded.bytes=null;loaded=null;
     const values=readFloat(inputFile),side=spec.side;
     check(values.length===3*side*side,`${kind}: tensor input sai kích thước.`);
@@ -45,14 +50,17 @@ self.onmessage=async({data})=>{
       t.dispose?.();
     }
     await session.release();session=null;
-    modelReports[kind]={sha256:spec.sha256,bytes:spec.bytes,cache,provider:'wasm',dtype:'float32',side,tokens:kind==='moge'?1225:null};
+    modelReports[kind]={sha256:spec.sha256,bytes:spec.bytes,cache,provider:device==='gpu'?'webgpu':'wasm',requestedDevice:device,actualDevice:device,cpuFallback:false,...(device==='gpu'?{cpuFallbackDisabled:true}:{}),dtype:'float32',side,tokens:kind==='moge'?1225:null};
   }
   try{
+    executionDevice(device);
     size(width,height);check(rgba instanceof ArrayBuffer&&rgba.byteLength===width*height*4,'Nguồn RGBA không hợp lệ.');
     check(['acrylic','ceramic_circle','ceramic_heart'].includes(productType),'Loại sản phẩm không hợp lệ.');
     check(['maps','full'].includes(outputMode),'Output mode không hợp lệ.');
     check([1,2,4].includes(threads)&&(threads===1||self.crossOriginIsolated),'Nhiều luồng cần crossOriginIsolated.');
     check(options&&typeof options==='object'&&!Array.isArray(options)&&JSON.stringify(options).length<100_000,'Tùy chọn xử lý không hợp lệ.');
+    if(device==='gpu')gpu=await stage('gpu-capability',()=>requestGPUAdapter());
+    send('device',{requestedDevice:device,actualDevice:device,provider:device==='gpu'?'webgpu':'wasm',...(gpu?{adapter:gpu.report}:{})});
     const base=new URL(manifestURL,self.location.href).href;
     const manifest=await stage('manifest',async()=>{const response=await fetch(base,{cache:'no-store',credentials:'omit'});check(response.ok,'Chưa tải được manifest CPU.');return validateManifest(await response.json(),base);});
     const pyIndex=`https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
@@ -72,9 +80,8 @@ self.onmessage=async({data})=>{
     // Source may be bounded by native premultiplied PIL Lanczos; keep it as
     // the authoritative output-grid texture, never mix the old UI pixel grid.
     pyodide.FS.unlink('/mitom_work/source.rgba');
-    const ort=await stage('onnx-runtime',()=>import(`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/ort.min.mjs`));
-    ort.env.wasm.numThreads=threads;ort.env.wasm.proxy=false;
-    ort.env.wasm.wasmPaths=`https://cdn.jsdelivr.net/npm/onnxruntime-web@${ORT_VERSION}/dist/`;
+    const ort=await stage('onnx-runtime',()=>import(runtimeURL(device)));
+    configureONNXRuntime(ort,{device,threads,gpu});
     await infer(ort,'moge','prep-moge_f32',manifest.models.moge,base,manifest.modelOrigins||[]);
     const camera=await stage('native-scipy-camera-recovery',()=>pyCall('mitom_recover',{width:490,height:490}));
     for(const name of ['points','normal','mask','metric_scale'])pyodide.FS.unlink(`/mitom_work/raw-${name}.f32`);
@@ -83,6 +90,10 @@ self.onmessage=async({data})=>{
       check(['maps','full'].includes(mode)&&['acrylic','ceramic_circle','ceramic_heart'].includes(type),'Chế độ hoặc sản phẩm không hợp lệ.');
       check(settings&&typeof settings==='object'&&!Array.isArray(settings)&&JSON.stringify(settings).length<100_000,'Tùy chọn xử lý không hợp lệ.');
       const metadata=await stage(mode==='maps'?'native-depth-map-export':'native-relief-composition',()=>pyCall('mitom_compose',{options:settings,product_type:type,output_mode:mode}));
+      // Inference moves to WebGPU; the unchanged native Python preparation,
+      // geometry recovery, relief composition and PNG export still use CPU.
+      if(metadata.model_budget)metadata.model_budget={...metadata.model_budget,
+        label:`Browser ${device.toUpperCase()} Standard FP32 1225; native composition on CPU; NOT 14400-token UHD inference`};
       const w=preparation.width,h=preparation.height,n=w*h;
       const result={width:w,height:h,depth:readFloat('final-height_f32'),baseline:readFloat('final-baseline_f32'),
       depth16:new Uint16Array(readBytes('final-depth16_u16').buffer),alpha:readBytes('final-alpha_u8'),
@@ -93,7 +104,7 @@ self.onmessage=async({data})=>{
       mapAlpha:readBytes('final-map-alpha_u8'),mogeAlpha:readBytes('final-moge-alpha_u8'),da2Alpha:readBytes('final-da2-alpha_u8'),
       mapDepth16PNG:readBytes('final-map_depth_png'),mogeDepth16PNG:readBytes('final-moge_depth_png'),da2Depth16PNG:readBytes('final-da2_depth_png'),
       metadata:{...metadata,profile:PROFILE,models:modelReports,preparation,camera,timings,threads,
-        runtime:{onnx:ORT_VERSION,python:PYODIDE_VERSION,provider:'wasm-cpu'},
+        requestedDevice:device,actualDevice:device,runtime:{onnx:ORT_VERSION,python:PYODIDE_VERSION,provider:device==='gpu'?'webgpu':'wasm-cpu',inferenceDevice:device,preparationDevice:'cpu',compositionDevice:'cpu',cpuFallback:false,...(gpu?{adapter:gpu.report}:{})},
         outputMode:mode,inferenceReused,fullNativeComposition:mode==='full',nativeDepthComposition:true,nativeUHDInference:false,photoshopRequired:false,artworkUploaded:false}};
       check(result.depth.length===n&&result.alpha.length===n&&result.rgba.length===n*4&&result.support.length===n&&result.depth16.length===n&&result.normal.length===n*3,'Kích thước kết quả không khớp ảnh nguồn đã xử lý.');
       check(result.depth.every(v=>v>=0&&v<=1),'Height cuối ngoài0..1.');
@@ -112,6 +123,6 @@ self.onmessage=async({data})=>{
     // in this worker; there is no second model inference or artwork upload.
     composeCached=async command=>publish(await produce('full',command.options,command.productType||productType,true),command.id);
     publish(await produce(outputMode,options,productType),id);
-  }catch(error){send('error',{message:String(error?.message||error),code:'CPU_FULL_FLOW_FAILED'});}
+  }catch(error){send('error',{message:device==='gpu'?`Generate GPU failed: ${String(error?.message||error)}. Your previous result is preserved. Choose Generate CPU to run on CPU.`:String(error?.message||error),code:device==='gpu'?'GPU_FULL_FLOW_FAILED':'CPU_FULL_FLOW_FAILED'});}
   finally{running=false;if(session)try{await session.release();}catch{}}
 };

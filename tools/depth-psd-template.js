@@ -8,7 +8,7 @@
  * The separate pipeline PNG retains 16 bits.
  */
 import {inspectPSD, readPSDLinkedFiles, decodePSDComposite, appendPSDLayers,
-  replaceEmbeddedPSDs, replacePSDLayerPixels, setPSDLayerVisibility} from './psd-roundtrip.js?v=20261023-workflow-r10';
+  decodePSDLayerPixels, replaceEmbeddedPSDs, replacePSDLayerPixels, setPSDLayerVisibility} from './psd-roundtrip.js?v=20261023-psd-gpu-r11';
 
 const BASE = new URL('./assets/templates/psd/', import.meta.url);
 const PINNED = [
@@ -190,15 +190,39 @@ async function validateNativeGeometry(native,signal) {
   }
 }
 
-/** Reads the saved IN Smart Object composite, never the whole layout as artwork. */
+function opaqueWhiteComposite(image) {
+  for(let i=0;i<image.rgba.length;i+=4)if(image.rgba[i]!==255||image.rgba[i+1]!==255||image.rgba[i+2]!==255||image.rgba[i+3]!==255)return false;
+  return true;
+}
+
+async function nativeArtwork(native,signal) {
+  const role=native.roles.input,embedded=await decodePSDComposite(role.embeddedBytes,{allowEmbeddedPSB:true,signal});
+  // With compatibility compositing disabled, Photoshop can save an embedded
+  // PSB's merged image as an opaque white placeholder while its editable
+  // layers and the parent's rendered Smart Object cache are fully current.
+  // Reading that placeholder erased real uploaded artwork and sent white to
+  // AI. Recover the exact Photoshop-rendered IN cache, including its alpha,
+  // through the already-validated, axis-aligned native transform instead.
+  if(!opaqueWhiteComposite(embedded))return {artwork:embedded};
+  const cache=await decodePSDLayerPixels(native.bytes,{index:role.index,signal});
+  const [x0,y0,x1,y1]=role.transform,width=role.child.width,height=role.child.height;
+  const rgba=new Uint8ClampedArray(width*height*4);
+  for(let y=0;y<height;y++) {
+    if(y%32===0)abort(signal);
+    for(let x=0;x<width;x++)sample(cache,x0+(x+.5)*(x1-x0)/width-.5-cache.left,y0+(y+.5)*(y1-y0)/height-.5-cache.top,rgba,(y*width+x)*4);
+  }
+  return {artwork:{width,height,rgba,source:'photoshop-saved-IN-layer-cache'},cache};
+}
+
+/** Reads saved IN artwork, never the complete IN / DEPTH / CUT mosaic. */
 export async function openNativePSD(bytes,{signal}={}) {
   abort(signal);const native=inspectNative(bytes);
   await validateNativeGeometry(native,signal);
-  const artwork=await decodePSDComposite(native.roles.input.embeddedBytes,{allowEmbeddedPSB:true,signal});
+  const {artwork}=await nativeArtwork(native,signal);
   const isBundledBlank=await sha256(native.bytes)===native.item.sha256;
   abort(signal);
   return {family:native.item.id,title:native.item.title,width:native.info.width,height:native.info.height,
-    artwork:{width:artwork.width,height:artwork.height,rgba:artwork.rgba},isBundledBlank,bytes:native.bytes,info:native.info,
+    artwork:{width:artwork.width,height:artwork.height,rgba:artwork.rgba},artworkSource:artwork.source,isBundledBlank,bytes:native.bytes,info:native.info,
     roles:Object.fromEntries(Object.entries(native.roles).map(([key,r])=>[key,{index:r.index,name:r.name,embeddedID:r.embeddedID,width:r.child.width,height:r.child.height,transform:r.transform}]))};
 }
 
@@ -274,8 +298,9 @@ export function composeNativeSubstrate(foreground,substrate,{signal}={}) {
  * Returns a native family PSD with role contents and cached tiles updated.
  * No source file is written. Different map resolutions are resized by registered
  * full-canvas coordinates, retaining alignment with the original IN canvas.
- * Omit artwork to keep the uploaded IN PSB bytes, layers and visibility exact;
- * only its saved composite is read to refresh the parent's cached IN tile.
+ * Omit artwork to keep the uploaded IN PSB bytes, layers and visibility exact.
+ * A real embedded composite refreshes the parent IN tile. A Photoshop white
+ * compatibility placeholder uses and preserves the already-rendered IN cache.
  */
 export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signal}={}) {
   abort(signal);const native=inspectNative(bytes),{item,info,roles}=native;
@@ -283,7 +308,8 @@ export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signa
   if(!depth)fail('Chưa có depth đã Generate để tạo PSD kết quả.','NO_DEPTH_RESULT');
   if(item.id!=='acrylic'&&!ceramicShape)fail('Cần shape Ceramic gốc đã xác minh để giữ nền IN và nền đen Depth.','CERAMIC_SHAPE_REQUIRED');
   const preserveInput=artwork===undefined;
-  if(preserveInput)artwork=await decodePSDComposite(roles.input.embeddedBytes,{allowEmbeddedPSB:true,signal});
+  const savedInput=preserveInput?await nativeArtwork(native,signal):null;
+  if(preserveInput)artwork=savedInput.artwork;
   const input=resizeNativeRaster(artwork,item.inputWidth,item.inputHeight,{signal});
   const depthImage=resizeNativeRaster(depth,item.inputWidth,item.inputHeight,{signal});
   const images={input,depth:depthImage},contents={
@@ -310,7 +336,12 @@ export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signa
       const generated=appendPSDLayers(role.embeddedBytes,contents[key],{allowEmbeddedPSB:true,hideOriginalLayers:true,composite:image,signal});
       embedded.push({id:role.embeddedID,bytes:generated});
     }
-    const tile=parentTile(image,role,info,{signal});tiles.push(tile);sourceOver(composite.rgba,info.width,tile);
+    // A placeholder PSB must not overwrite its good rendered parent cache.
+    // Preserve those original cache channels byte-for-byte as well as the
+    // editable IN PSB. Use the same original cache in the output composite.
+    const tile=key==='input'&&savedInput?.cache?savedInput.cache:parentTile(image,role,info,{signal});
+    if(!(key==='input'&&savedInput?.cache))tiles.push(tile);
+    sourceOver(composite.rgba,info.width,tile);
   }
   let result=replaceEmbeddedPSDs(native.bytes,embedded,{signal});
   const roleIndices=new Set(Object.values(roles).map(role=>role.index));

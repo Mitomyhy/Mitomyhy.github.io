@@ -1,5 +1,5 @@
-import { createDepthTool } from './depth-flow-tool.js?v=20261023-workflow-r10';
-import { classifyDepthInput } from './depth-input.js?v=20261023-workflow-r10';
+import { createDepthTool } from './depth-flow-tool.js?v=20261023-psd-gpu-r11';
+import { classifyDepthInput } from './depth-input.js?v=20261023-psd-gpu-r11';
 import { searchPlace } from './sky-moon.js?v=20261022-sky-moon-r6';
 import { renderSourceMoons } from './moon-source-renderer.js?v=20261023-moon-original-r7';
 import { renderPanelSky } from './sky-panel-renderer.js?v=20261022-sky-moon-r6';
@@ -67,8 +67,12 @@ async function acceptDepthFile(file){if(!file)return;ready.depth=false;brushMode
 $('depth-psd-file').addEventListener('change',()=>run(()=>acceptDepthFile($('depth-psd-file').files[0])));
 $('depth-open-template').addEventListener('click',()=>run(async()=>{ready.depth=false;depthView='template';await ensureDepth().openTemplate($('depth-product').value);visibleResult();}));
 $('depth-art').addEventListener('change',()=>run(()=>acceptDepthFile($('depth-art').files[0])));
-async function generateDepth(auto3D=false){const engine=ensureDepth();if(!engine.state().hasImage)throw Error('Chọn PSD đã có IN hoặc thêm artwork trước.');const settings=cpuOptions();depthView='artwork';$('depth-progress').hidden=false;$('depth-progress').removeAttribute('value');await engine.generate(settings,'maps');ready.depth=true;await engine.exportPSD(settings);depthView='template';if(auto3D){await engine.show3D();depthView='3d';}visibleResult();status('Hoàn tất · PSD có IN / DEPTH / CUT. PNG depth 16 bit tải riêng được.');}
-$('depth-generate').addEventListener('click',()=>run(()=>generateDepth(false),true));
+function depthDevice(value){if(value!==undefined){if(!['cpu','gpu'].includes(value))throw Error('Chọn CPU hoặc GPU.');$('depth-device').value=value;try{localStorage.setItem('mitom-depth-device',value);}catch{}}return $('depth-device').value;}
+try{const value=localStorage.getItem('mitom-depth-device');if(['cpu','gpu'].includes(value))$('depth-device').value=value;}catch{}
+$('depth-device').addEventListener('change',()=>depthDevice($('depth-device').value));
+async function generateDepth(auto3D=false,device=depthDevice()){const engine=ensureDepth();if(!engine.state().hasImage)throw Error('Chọn PSD đã có IN hoặc thêm artwork trước.');const settings=cpuOptions();depthView='artwork';$('depth-progress').hidden=false;$('depth-progress').removeAttribute('value');status(device==='gpu'?'Đang chuẩn bị GPU / WebGPU…':'Đang chuẩn bị CPU…');await engine.generate(settings,'maps',device);ready.depth=true;await engine.exportPSD(settings);depthView='template';if(auto3D){await engine.show3D();depthView='3d';}visibleResult();status(`Hoàn tất · AI ${device==='gpu'?'GPU / WebGPU':'CPU'} · PSD có IN / DEPTH / CUT.`);}
+$('depth-generate').addEventListener('click',()=>{depthDevice('cpu');run(()=>generateDepth(false,'cpu'),true);});
+$('depth-generate-gpu').addEventListener('click',()=>{depthDevice('gpu');run(()=>generateDepth(false,'gpu'),true);});
 $('depth-cancel').addEventListener('click',()=>{depth?.cancel();ready.depth=!!depth?.state().hasDepth;depthView=ready.depth?'map':'artwork';visibleResult();$('depth-progress').hidden=true;$('depth-progress-label').textContent='Đã hủy · nguồn và kết quả trước vẫn giữ nguyên.';});
 async function depthPSDBlob(){return new Blob([await ensureDepth().exportPSD(cpuOptions())],{type:'image/vnd.adobe.photoshop'});}
 $('depth-download-psd').addEventListener('click',()=>run(async()=>{await downloadBlob(await depthPSDBlob(),'MITOM-IN-DEPTH-CUT.psd');visibleResult();}));

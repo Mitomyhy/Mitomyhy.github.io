@@ -1,5 +1,6 @@
 import {check,size} from './contracts.mjs';
-export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new URL('./pipeline-worker.mjs?v=20261022-flow-r5',import.meta.url),timeoutMs=20*60*1000,downloadIdleMs=90*1000}={}){
+import {executionDevice} from './execution-device.mjs';
+export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new URL('./pipeline-worker.mjs?v=20261023-device-r11',import.meta.url),timeoutMs=20*60*1000,downloadIdleMs=90*1000}={}){
   check(typeof manifestURL==='string','Cần URL manifest CPU đã phát hành.');let active=null,cached=null,serial=0,disposed=false;
   function cancel(reason='Bạn đã hủy; mọi tính toán của lượt này đã dừng.'){
     serial++;const job=active,cache=cached;active=cached=null;
@@ -11,7 +12,7 @@ export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new U
       const job={worker,reject,timer:null};active=job;
       const finish=keep=>{if(active===job)active=null;clearTimeout(job.timer);if(keep)cached={worker,id};else{if(cached?.worker===worker)cached=null;worker.terminate();}};
       const arm=(delay,message)=>{clearTimeout(job.timer);job.timer=setTimeout(()=>cancel(message),delay);};
-      arm(timeoutMs,'Đã dừng do bước CPU vượt thời gian; file cũ không bị thay.');
+      arm(timeoutMs,'Generate timed out. Your previous result has been preserved.');
       worker.onmessage=({data})=>{if(active!==job||data?.id!==id)return;
         if(data.type==='result'){finish(data.cacheReady===true);resolve(data.result);}else if(data.type==='error'){finish(false);reject(Object.assign(new Error(data.message),{code:data.code||'CPU_FLOW_ERROR'}));}
         else {
@@ -20,21 +21,21 @@ export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new U
           onProgress(data);
         }
       };
-      worker.onerror=event=>{if(cached?.worker===worker)cached=null;if(active!==job){worker.terminate();return;}finish(false);reject(new Error(event.message||'CPU worker dừng, có thể thiếu RAM. Không tự dùng model khác.'));};
+      worker.onerror=event=>{if(cached?.worker===worker)cached=null;if(active!==job){worker.terminate();return;}finish(false);reject(new Error(event.message||'The AI worker stopped, possibly because memory was exhausted. The previous result is preserved.'));};
       try{worker.postMessage(message,transfer);}catch(error){finish(false);reject(error);}
     });
   }
   return {
-    run({rgba,width,height,productType='acrylic',options={},threads=1,outputMode='full'}={}){
-      check(!disposed&&!active,'CPU đang bận hoặc đã đóng.');size(width,height);
+    run({rgba,width,height,productType='acrylic',options={},threads=1,outputMode='full',device='cpu'}={}){
+      check(!disposed&&!active,'The AI worker is busy or closed.');size(width,height);executionDevice(device);
       check(rgba instanceof Uint8Array||rgba instanceof Uint8ClampedArray,'Ảnh cần RGBA uint8.');check(rgba.byteLength===width*height*4,'RGBA không khớp kích thước.');
       check(['acrylic','ceramic_circle','ceramic_heart'].includes(productType),'Loại sản phẩm không hợp lệ.');
       check(['maps','full'].includes(outputMode),'Chọn xuất map hoặc workflow 3D đầy đủ.');
       check([1,2,4].includes(threads)&&(threads===1||globalThis.crossOriginIsolated),'Nhiều luồng cần crossOriginIsolated; chọn 1 luồng.');
       if(cached){cached.worker.terminate();cached=null;}
-      const id=`cpu4-${++serial}`,input=Uint8Array.from(rgba);
-      const worker=new Worker(workerURL,{type:'module',name:'MITOM CPU depth workflow'});
-      return dispatch(worker,id,{id,manifestURL:new URL(manifestURL,location.href).href,rgba:input.buffer,width,height,productType,options,threads,outputMode},[input.buffer]);
+      const id=`depth-${device}-${++serial}`,input=Uint8Array.from(rgba);
+      const worker=new Worker(workerURL,{type:'module',name:`MITOM ${device.toUpperCase()} depth workflow`});
+      return dispatch(worker,id,{id,manifestURL:new URL(manifestURL,location.href).href,rgba:input.buffer,width,height,productType,options,threads,outputMode,device},[input.buffer]);
     },
     compose({options={},productType='acrylic'}={}){
       check(!disposed&&!active&&cached,'Tạo map trước khi dựng 3D; dữ liệu AI phải còn trong tab này.');

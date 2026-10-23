@@ -1,6 +1,6 @@
-import {fetchNativeTemplate,openNativePSD,buildNativePSD,resizeNativeRaster,NATIVE_TEMPLATE_CATALOG} from './depth-psd-template.js?v=20261023-workflow-r10';
-import {decodePSDComposite,inspectPSD} from './psd-roundtrip.js?v=20261023-workflow-r10';
-import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-workflow-r10';
+import {fetchNativeTemplate,openNativePSD,buildNativePSD,resizeNativeRaster,NATIVE_TEMPLATE_CATALOG} from './depth-psd-template.js?v=20261023-psd-gpu-r11';
+import {decodePSDComposite,inspectPSD} from './psd-roundtrip.js?v=20261023-psd-gpu-r11';
+import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-psd-gpu-r11';
 
 async function ceramicShape(family){
   if(family==='acrylic')return undefined;
@@ -39,7 +39,7 @@ self.onmessage=async({data})=>{
       const bytes=data.family?await fetchNativeTemplate(data.family):data.bytes;
       const native=await openNativePSD(bytes);
       const preview=await savedPreview(bytes,native);
-      const value={family:native.family,title:native.title,width:native.width,height:native.height,roles:native.roles,artwork:native.artwork,isBundledBlank:native.isBundledBlank,preview,bytes};
+      const value={family:native.family,title:native.title,width:native.width,height:native.height,roles:native.roles,artwork:native.artwork,artworkSource:native.artworkSource,isBundledBlank:native.isBundledBlank,preview,bytes};
       self.postMessage({id,ok:true,value},[bytes.buffer,value.artwork.rgba.buffer,preview.rgba.buffer]);
     }else if(op==='build'){
       const family=(await openNativePSD(data.bytes)).family;

@@ -1,7 +1,7 @@
 import { checkSize, bytesDataURL, encodeGray16PNG } from './depth-pixels.js?v=20261022-flow-r5';
-import { createCPUPipeline } from './cpu/client.mjs?v=20261022-flow-r5';
+import { createCPUPipeline } from './cpu/client.mjs?v=20261023-psd-gpu-r11';
 import { createLocalDepthEdits } from './depth-local-edit.js?v=20261022-flow-r5';
-import { classifyDepthInput } from './depth-input.js?v=20261023-workflow-r10';
+import { classifyDepthInput } from './depth-input.js?v=20261023-psd-gpu-r11';
 
 const TYPES = new Set(['acrylic', 'ceramic_circle', 'ceramic_heart']);
 const TEMPLATE_URL = new URL('./assets/templates/template-descriptors.json', import.meta.url);
@@ -9,10 +9,10 @@ const MANIFEST_URL = new URL('./cpu/manifest.json', import.meta.url).href;
 const PHASES = {
   manifest: 'Kiểm tra phiên bản AI', 'python-runtime': 'Tải bộ xử lý Python trên trình duyệt',
   'python-packages': 'Tải thư viện xử lý ảnh', 'native-module-integrity': 'Xác minh thuật toán gốc',
-  'native-preparation': 'Chuẩn bị ảnh theo pipeline gốc', 'onnx-runtime': 'Khởi động CPU WASM',
-  'moge-download-verify': 'Tải / kiểm tra MoGe', 'moge-session': 'Nạp MoGe vào RAM',
+  'native-preparation': 'Chuẩn bị ảnh theo pipeline gốc', 'onnx-runtime': 'Khởi động ONNX CPU / GPU',
+  'moge-download-verify': 'Tải / kiểm tra MoGe', 'moge-session': 'Nạp MoGe',
   'moge-inference': 'MoGe đang tính hình học và normal', 'native-scipy-camera-recovery': 'Khôi phục camera / depth',
-  'da2-download-verify': 'Tải / kiểm tra DA2', 'da2-session': 'Nạp DA2 vào RAM',
+  'da2-download-verify': 'Tải / kiểm tra DA2', 'da2-session': 'Nạp DA2',
   'da2-inference': 'DA2 đang tính chi tiết', 'native-relief-composition': 'Ghép depth, chi tiết và support', complete: 'Hoàn tất'
 };
 
@@ -38,7 +38,7 @@ async function rendererFactory(canvas, settings) {
 }
 
 async function templatePreviewLoader(family) {
-  const {callPSDWorker}=await import('./depth-psd-client.js?v=20261023-workflow-r10');
+  const {callPSDWorker}=await import('./depth-psd-client.js?v=20261023-psd-gpu-r11');
   return callPSDWorker('preview',{family});
 }
 
@@ -75,7 +75,7 @@ export function createDepthTool(canvas, options={}) {
   const document=canvas.ownerDocument, onStatus=options.onStatus||(()=>{}), onProgress=options.onProgress||(()=>{});
   const makeRenderer=options.rendererFactory||rendererFactory, readImage=options.readPixels||(file=>decodeImage(file,document));
   const readTemplatePreview=options.templatePreviewLoader||templatePreviewLoader;
-  const nativeWork=options.nativePSDWorker|| (async(op,data,settings)=>{const {callPSDWorker}=await import('./depth-psd-client.js?v=20261023-workflow-r10');return callPSDWorker(op,data,settings);});
+  const nativeWork=options.nativePSDWorker|| (async(op,data,settings)=>{const {callPSDWorker}=await import('./depth-psd-client.js?v=20261023-psd-gpu-r11');return callPSDWorker(op,data,settings);});
   let nativeSource=null,artworkReplaced=false,psdCache=null,psdAbort=null,previewIsResult=false;
   let viewer=null, descriptor=null, templatePreview=null, productType='acrylic', artwork=null, source=null, result=null, edits=null, resultMode=null;
   let imageName='', busy=false, disposed=false, version=0, imageSelection=0, queue=Promise.resolve(), templateCatalog=null, shapeBitmap=null;
@@ -208,11 +208,12 @@ export function createDepthTool(canvas, options={}) {
       if(!data.rgba||data.rgba.length!==data.width*data.height*4||!data.rgba.some((v,i)=>i%4===3&&v>0))throw Error('Artwork rỗng hoặc không hợp lệ.');
       artwork={width:data.width,height:data.height,rgba:new Uint8ClampedArray(data.rgba)};artworkReplaced=true;imageName=String(file.name||'artwork');clearResult();fitArtwork();
       onStatus('Artwork đã hiện trên canvas. Tạo PNG map trước; xem / xuất 3D là bước riêng.');return api.state();},
-    async generate(settings={},mode='full'){noBusy();if(!artwork||!source)throw Error('Mở template và chọn artwork trước.');
+    async generate(settings={},mode='full',device='cpu'){noBusy();if(!artwork||!source)throw Error('Mở template và chọn artwork trước.');
       if(!['maps','full'].includes(mode))throw Error('Chọn map hoặc workflow 3D.');
+      if(!['cpu','gpu'].includes(device))throw Error('Chọn CPU hoặc GPU.');
       busy=true;const token=++version;
       try {
-        const value=await pipeline.run({rgba:source.rgba,width:source.width,height:source.height,productType,options:settings,threads:1,outputMode:mode});check();
+        const value=await pipeline.run({rgba:source.rgba,width:source.width,height:source.height,productType,options:settings,threads:1,outputMode:mode,device});check();
         if(version!==token)throw Object.assign(Error('Đã hủy hoặc đổi nguồn; không áp dụng kết quả cũ.'),{code:'CANCELLED'});
         adopt(value,mode);if(mode==='full')await draw();
         onStatus(mode==='maps'?`Đã có PNG map ${result.width} × ${result.height} · tải map ngay, không cần dựng 3D.`:`Đã ghép MoGe + DA2 + thuật toán gốc · ${result.width} × ${result.height} · Standard, không phải UHD.`);return api.state();
@@ -278,7 +279,7 @@ export function createDepthTool(canvas, options={}) {
       }finally{busy=false;psdAbort=null;}
     },
     state(){return{hasTemplate:!!descriptor,hasTemplatePreview:!!templatePreview,hasImage:!!artwork,hasDepth:!!result,busy,productType,imageName,template:descriptor&&{width:descriptor.width,height:descriptor.height,dpi:descriptor.dpi},
-      nativePSD:!!nativeSource,hasPSD:!!psdCache,templatePreview:templatePreview&&{width:templatePreview.width,height:templatePreview.height,sourceWidth:templatePreview.sourceWidth,sourceHeight:templatePreview.sourceHeight,source:previewIsResult?'generated-native-PSD':'photoshop-saved-parent-composite',inputReplaced:artworkReplaced,depthCut:previewIsResult?'generated':'saved-original'},
+      nativePSD:!!nativeSource,nativeArtworkSource:nativeSource?.artworkSource||null,hasPSD:!!psdCache,templatePreview:templatePreview&&{width:templatePreview.width,height:templatePreview.height,sourceWidth:templatePreview.sourceWidth,sourceHeight:templatePreview.sourceHeight,source:previewIsResult?'generated-native-PSD':'photoshop-saved-parent-composite',inputReplaced:artworkReplaced,depthCut:previewIsResult?'generated':'saved-original'},
       has3D:!!result&&!!viewer,resultMode,hasMaps:!!result?.mogeDepth&&!!result?.da2Depth,canCompose:!!pipeline.canCompose,canUndo:!!edits?.canUndo,edited:!!edits?.changed,
       width:result?.width||source?.width||0,height:result?.height||source?.height||0,metadata:result?.metadata||null,profile:'cpu-standard-fp32-1225',nativeUHDInference:false,panelEquivalent:false,templateFit:'browser-canvas-contain-not-PSD-warp'};},
     dispose(){if(disposed)return;disposed=true;version++;psdAbort?.abort();pipeline.dispose();viewer?.dispose();shapeBitmap?.close();viewer=null;source=artwork=result=edits=templatePreview=nativeSource=psdCache=null;}

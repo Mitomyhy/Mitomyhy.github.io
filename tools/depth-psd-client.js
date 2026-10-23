@@ -3,7 +3,7 @@ export function callPSDWorker(op,data,{signal,timeout=5*60*1000}={}) {
   const cancelled=()=>Object.assign(Error('Đã hủy tác vụ PSD.'),{code:'CANCELLED',name:'AbortError'});
   return new Promise((resolve,reject)=>{
     if(signal?.aborted){reject(cancelled());return;}
-    const worker=new Worker(new URL('./depth-psd-worker.js?v=20261023-workflow-r10',import.meta.url),{type:'module',name:'MITOM native PSD'});
+    const worker=new Worker(new URL('./depth-psd-worker.js?v=20261023-psd-gpu-r11',import.meta.url),{type:'module',name:'MITOM native PSD'});
     let settled=false;
     const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);worker.terminate();error?reject(error):resolve(value);};
     const cancel=()=>finish(cancelled());

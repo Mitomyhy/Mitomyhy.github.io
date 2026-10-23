@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {deflateSync} from 'node:zlib';
 import {readFileSync,existsSync} from 'node:fs';
 import {spawnSync} from 'node:child_process';
-import {inspectPSD,decodePSDComposite,appendPSDLayers,readPSDLinkedFiles,readPSDArtworkLayer,
+import {inspectPSD,decodePSDComposite,decodePSDLayerPixels,appendPSDLayers,readPSDLinkedFiles,readPSDArtworkLayer,
   replacePSDComposite,replacePSDLayerPixels,replaceEmbeddedPSDs,setPSDLayerVisibility,readPSDFile} from '../psd-roundtrip.js';
 
 const cat=(...parts)=>Buffer.concat(parts.map(p=>Buffer.from(p)));
@@ -81,6 +81,39 @@ test('raw, RLE, ZIP and ZIP prediction composites decode same pixels',async()=>{
     assert.ok(actual.rgba.filter((_,i)=>i%4===3).every(v=>v===255));
   }
   const short=flat({compression:1}).subarray(0,-1);await assert.rejects(decodePSDComposite(short),/thiếu|độ dài/);
+});
+
+function layerCompressionFixture(version,compression) {
+  const width=4,height=3,rgba=pixels(width,height);rgba[3]=0;rgba[7]=128;
+  const f=source({version}),l=layout(f.bytes),record=Buffer.from(l.b.subarray(l.records[0].at,l.records[0].end)),channels=[];
+  for(let c=0;c<4;c++) {
+    const plane=Uint8Array.from({length:width*height},(_,i)=>rgba[i*4+c]);let encoded;
+    if(compression===0)encoded=cat(n(0,2),plane);
+    else if(compression===1) {
+      const rows=Array.from({length:height},(_,y)=>cat(Uint8Array.of(width-1),plane.subarray(y*width,(y+1)*width)));
+      encoded=cat(n(1,2),...rows.map(row=>n(row.length,version===2?4:2)),...rows);
+    } else {
+      const data=Buffer.from(plane);
+      if(compression===3)for(let y=0;y<height;y++)for(let x=width-1;x>0;x--)data[y*width+x]=(data[y*width+x]-data[y*width+x-1])&255;
+      encoded=cat(n(compression,2),deflateSync(data));
+    }
+    const at=18+c*(l.size+2)+2;
+    if(version===2)record.writeBigUInt64BE(BigInt(encoded.length),at);else record.writeUInt32BE(encoded.length,at);
+    channels.push(encoded);
+  }
+  let info=cat(n(l.count,2,true),record,...channels);if(info.length%2)info=cat(info,Buffer.alloc(1));
+  const mask=cat(n(info.length,l.size),info,l.b.subarray(l.tailStart,l.maskEnd));
+  return {rgba,bytes:cat(l.b.subarray(0,l.maskAt),n(mask.length,l.size),mask,l.b.subarray(l.imageStart))};
+}
+
+test('Photoshop layer caches decode raw/RLE/ZIP/prediction with straight partial alpha in PSD and embedded PSB',async()=>{
+  for(const version of [1,2])for(const compression of [0,1,2,3]) {
+    const f=layerCompressionFixture(version,compression),image=await decodePSDLayerPixels(f.bytes,{index:0,allowEmbeddedPSB:version===2});
+    assert.deepEqual(image.rgba,new Uint8ClampedArray(f.rgba));
+    assert.equal(image.source,'photoshop-saved-layer-cache');assert.equal(image.hasTransparency,true);
+  }
+  await assert.rejects(decodePSDLayerPixels(source().bytes,{index:1}),/Không xác định/);
+  await assert.rejects(decodePSDLayerPixels(source().bytes,{index:0,signal:{aborted:true}}),{name:'AbortError'});
 });
 
 test('add hidden map preserves every original record, channel, metadata, and original composite byte',async()=>{
