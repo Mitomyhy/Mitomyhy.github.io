@@ -1,0 +1,15 @@
+Base: tự động đọc dữ liệu đơn cách nhau ít nhất 1 phút sau lượt trước; gom sự kiện, không quét dồn. Nạp và Đối chiếu thủ công vẫn chạy ngay.
+
+Giữ reader Order gốc chạy ẩn và cơ chế tự mở/kết nối của Companion; không cần giữ giao diện Phần mở rộng mở để mỗi lần nạp. Tab Base phải còn mở và đăng nhập.
+
+Gộp Base R61, tối ưu reader/bridge R62 và lịch quét R63. Sự kiện vẫn làm dữ liệu cũ mất hiệu lực ngay; không bỏ qua kiểm tra nguồn, quyền hay Working Status.
+
+Gộp Save Task mockup Save for Web, sửa đường dẫn xuất/upload và Generate Ceramic; giữ các công cụ, template, runtime và model đầy đủ của bộ cài.
+
+Bổ sung cầu nối từ công cụ web MITOM vào Photoshop. Các flow web và PSD độc lập vẫn dùng tại https://mitomyhy.github.io/#tools/depth.
+
+Cập nhật khi đã lưu công việc và đóng Photoshop theo hướng dẫn Launcher. Mỗi máy giữ cấu hình, đăng nhập và ghép nối riêng; không kèm dữ liệu máy phát hành.
+
+Chrome đã nạp Companion thủ công ở thư mục cũ có thể cần chuyển một lần sang thư mục Launcher quản lý; không Xóa/Quên ghép nối. Sau cập nhật mã Companion đang chạy có thể cần Tải lại tiện ích và tab Base.
+
+Giới hạn đã biết: khung Nhận xét trống của Base chưa được vá trong bản này; lịch quét mới đã qua kiểm thử tổng hợp nhưng chưa được xác nhận lại trực tiếp trên máy người dùng sau khi mở lại panel.
