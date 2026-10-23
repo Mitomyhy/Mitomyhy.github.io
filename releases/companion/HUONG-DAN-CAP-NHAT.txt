@@ -1,0 +1,30 @@
+MITOM BASE COMPANION 1.0.24 / 20261023-R55
+Gói này chỉ cập nhật Chrome Base Companion, không thay Photoshop Panel.
+Panel tương ứng phải là bản 2026.10.23.2 / bridge R55.
+
+NẾU CHROME ĐÃ CÀI BASE COMPANION:
+1. Mở chrome://extensions, tìm UOY Base Companion có ID:
+   nbmhofblkjlmlijiokgdeojjomjcphhj
+2. Bật Developer mode nếu cần; mở Details và tìm thư mục nguồn đang nạp.
+   Phải dùng ĐÚNG THƯ MỤC ĐÃ LOAD trước đây, có thể nằm trong Downloads.
+   Thư mục launcher quản lý là %LOCALAPPDATA%\UOY\Companion;
+   Chrome có thể đang nạp một thư mục cũ khác.
+3. Đóng popup Companion. Sao chép TOÀN BỘ 8 file bên trong thư mục
+   Chrome-Base-Companion của gói này vào ĐÚNG thư mục nguồn ở bước 2.
+   Đồng ý thay thế các file cùng tên. Không đổi đường dẫn thư mục đang nạp.
+4. Quay lại chrome://extensions, bấm Reload của chính Base Companion.
+   Kiểm tra phiên bản hiển thị là 1.0.24; popup có build 20261023-R55.
+5. Refresh chỉ tab Base đang dùng một lần. Mở lại panel Photoshop đã cập nhật,
+   giữ Base đã đăng nhập, rồi thử Nạp từ Base.
+
+KHÔNG bấm Remove, Forget/Quên; KHÔNG xoá Chrome storage hay ghép lại tùy tiện.
+Giữ nguyên extension ID và thư mục nguồn để giữ quyền, pairing, cấu hình.
+
+NẾU MÁY CHƯA CÀI COMPANION:
+Chọn Load unpacked tại chrome://extensions và chọn Chrome-Base-Companion.
+Ghép Base trên chính máy này một lần; không sao chép pairing từ máy khác.
+
+Tám file gốc được giữ nguyên byte từ payload 2026.10.23.2 và kiểm tra SHA-256.
+README.txt gốc trong thư mục Chrome còn ghi 1.0.19 ở dòng đầu;
+manifest.json mới là phiên bản thực 1.0.24, core.js là build 20261023-R55.
+Gói không chứa tài khoản, cookie, token hay pairing của máy phát hành.
