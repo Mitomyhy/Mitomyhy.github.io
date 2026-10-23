@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "provider": "MoonPhases.co.uk",
+  "retrievedOn": "2026-10-23",
+  "description": "Unmodified original phase PNG bytes fetched directly from their public source URLs.",
+  "images": [
+    { "phaseImage": "0.png", "file": "0.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/0.png", "bytes": 396481, "sha256": "e53b587696d182cae4f0fa70677ae00d1646e9ddda7544d8a582745c2ada9374", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "1.png", "file": "1.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/1.png", "bytes": 173307, "sha256": "373107c2f00b956e2af946ff7b5bf3095fb59cf2bd8651374b47dd851de9d80f", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "2.png", "file": "2.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/2.png", "bytes": 291250, "sha256": "04837056b1836644ae41a2b0e84d8b1a071563c238b25006db54b407dd3292f7", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "3.png", "file": "3.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/3.png", "bytes": 442966, "sha256": "e4284805c86882734f1a11e7664f393ef91044fef33ea201b6e5bdb3ef8ef4c8", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "4.png", "file": "4.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/4.png", "bytes": 621069, "sha256": "dfa6d4d21da9fe3ee64bcc2aa0e146bcf8745c9623f5e94307a0bcecdab3ae24", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "5.png", "file": "5.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/5.png", "bytes": 777134, "sha256": "d1119d132b34576faabe7fb38fd7fbc7bc20af7201cdac0dc5f85a2edb7696ef", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "6.png", "file": "6.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/6.png", "bytes": 887347, "sha256": "a1ea333f421a1bd474df277348f98fba6f7f478394774086c2f24a92d5ea33de", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "7.png", "file": "7.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/7.png", "bytes": 953960, "sha256": "e07cd30b0c0cef81c3833e64e526e581d795988b6443eee42d2ae7a4c0092a39", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "8.png", "file": "8.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/8.png", "bytes": 951187, "sha256": "25a5602cf40b60f7d3a6378d05569dbaab728312d35ddfc6a593afba1190eb9d", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "9.png", "file": "9.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/9.png", "bytes": 927230, "sha256": "f395408a06685f3162312a9ba4ceca7851ae8fe3539a26333fc3e88df0034baa", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "10.png", "file": "10.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/10.png", "bytes": 863725, "sha256": "60b9aa6825c6e8d7151e77a71dffbe577bd29475d100b43bbc574f9f745af14a", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "11.png", "file": "11.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/11.png", "bytes": 772990, "sha256": "db51f83b2dd99a9bcf4139cd87e46250b0e00b293e01322349583166aedcac2f", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "12.png", "file": "12.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/12.png", "bytes": 664012, "sha256": "1c98122333b58b66769a4ff279cf3614ad48d8b233ca814f223739c0f14b0697", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "13.png", "file": "13.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/13.png", "bytes": 519418, "sha256": "3f72c8c4b1cdd545d397d983bc47a72fba4eabcf204d34b436af500a6fe49546", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "14.png", "file": "14.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/14.png", "bytes": 348902, "sha256": "0af35311d72b901f00acf8e93e5aaa7b5896835a02bbdabb280270f5c5e5f676", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 },
+    { "phaseImage": "15.png", "file": "15.png", "sourceURL": "https://moonphases.co.uk/images/moons/big/15.png", "bytes": 203353, "sha256": "681059c31893e06410cb352a28116696978a5fa9b097fbd56df9357264d3dba7", "width": 1000, "height": 1000, "bitDepth": 8, "colorType": 6 }
+  ]
+}

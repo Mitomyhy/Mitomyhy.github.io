@@ -1,6 +1,6 @@
 # Sky Star and Moon Phase sources
 
-## Current production flow — 2026-10-22 R6
+## Current production flow — 2026-10-23 R7
 
 Sky location queries and artwork stay on-device. Moon selected civil dates are
 sent directly to MoonPhases.co.uk to match the panel's date-only source protocol.
@@ -19,19 +19,35 @@ sent directly to MoonPhases.co.uk to match the panel's date-only source protocol
   `len=1`, `tz=0`; returned `date_serial` must match the requested date exactly.
 - Illumination, phase name and clockwise disk tilt come from the provider. The
   API has no hour parameter: do not call its daily result an exact noon instant.
-- Downloadable Moon PNGs remain a NASA reconstruction, not the provider photo.
-  The whole disk/texture rotates by provider tilt. Provider PNG bytes are not
-  proxied or redistributed; missing image CORS headers still prevent their
-  cross-origin canvas export in a browser-only app.
+- Moon rendering now selects the exact original 1000 × 1000 RGBA PNG identified
+  by the provider's `phase_img`, and rotates the whole original image clockwise
+  by `tilt`. The default keeps the original color, terrain detail and baked-in
+  shadow boundary. There is no NASA texture reconstruction, synthetic hemisphere
+  cutoff, shadow repainting, or blur applied to imitate the original artwork.
+- The 16 original PNGs are bundled unchanged in `moonphases-original/`, with
+  individual source URLs, byte lengths and SHA-256 digests in that directory's
+  `manifest.json`. They were retrieved by direct anonymous HTTPS GET on
+  2026-10-23: 9,794,331 bytes total; each is 1000 × 1000, 8-bit RGBA.
+  Their same-origin served copies can be read by canvas without a proxy or
+  attempting to disable or bypass the source server's CORS protection.
+- Source-file byte identity does not imply byte-identical browser exports:
+  rotation, resampling, compositing, labels and user color changes transform the
+  output. Scaling beyond the source's 1000-pixel dimension adds no source detail.
+  These are the provider's fixed phase artwork, not a new per-date terrain or
+  eclipse simulation. See `moonphases-original/SOURCES.md` for image attribution
+  and the reviewed usage/permission status; no open license is asserted.
 - Official reference: https://moonphases.co.uk/js/widget.js chooses `phase_img`
   and rotates with `tilt`. No different date or computed metadata is silently
   substituted when the source API fails.
 
-## Historical R1/R2 implementation notes
+## Historical NASA renderer — R1/R2 through R6
 
-The notes below document the former local renderer. The R6 production behavior
-above supersedes conflicting descriptions; SunCalc remains available as a
-standalone library/test path, not a fallback in the production Moon workflow.
+R6 had already switched Moon date/illumination/tilt metadata to the provider but
+still reconstructed its PNG surface using NASA imagery. R7 supersedes that
+renderer with the original provider PNG assets described above. The notes below
+document the former local renderer and its historical limits, not the current
+production Moon artwork. SunCalc and the NASA texture remain available as
+standalone library/test assets, not a fallback in the production Moon workflow.
 
 ## Moon calculation
 

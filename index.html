@@ -13,7 +13,7 @@
   <link rel="preload" href="akzidenz-grotesk-bold.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
-  <link rel="stylesheet" href="tools/workbench.css?v=20261022-repair1">
+  <link rel="stylesheet" href="tools/workbench.css?v=20261023-moon-original-r7">
   <link rel="stylesheet" href="video/video.css?v=20261022-local1">
   <link rel="stylesheet" href="video/ai-entry.css?v=20261023-ai1">
   <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
@@ -23,7 +23,7 @@
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261022-repair1"></script>
+  <script type="module" src="tools/workbench.js?v=20261023-moon-original-r7"></script>
   <script type="module" src="video/video.js?v=20261023-ai1"></script>
   <script type="module" src="video/ai-entry.js?v=20261023-ai1"></script>
 </head>
@@ -163,10 +163,11 @@ OLIVER</textarea></label>
 08/10/2024</textarea></label>
           <div class="control-heading"><span>02 / BỐ CỤC</span><span>PNG TRONG SUỐT</span></div>
           <div class="tools-field-pair"><label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="12" value="5" required></label><label class="tools-field">Size mỗi moon<input id="moon-size" type="number" min="100" max="1200" value="400" step="50" required></label></div>
-          <label class="tools-field">Màu Mặt Trăng<select id="moon-appearance"><option value="warm">Vàng ấm — gần màu panel</option><option value="natural">Màu texture NASA tự nhiên</option><option value="grayscale">Trắng đen</option></select></label>
+          <p class="tools-note">Ảnh gốc MoonPhases · giữ nguyên màu và chi tiết vùng sáng/tối. Không tô màu hoặc dựng lại bề mặt.</p>
           <label class="tools-check"><input id="moon-labels" type="checkbox" checked> Hiện ngày và độ chiếu sáng</label>
           <label class="tools-check"><input id="moon-transparent" type="checkbox" checked> Nền trong suốt</label>
           <div class="tools-field-pair"><label class="tools-field">Màu nhãn<input id="moon-label-color" type="color" value="#39465e"></label><label class="tools-field">Màu nền<input id="moon-bg" type="color" value="#f2f1ed"></label></div>
+          <p class="tools-note">PNG nguồn 1000 × 1000; chỉ xoay/đổi size. Ngày được gửi tới MoonPhases để lấy đúng pha và góc như panel (1950–2050).</p>
           <button id="moon-generate" class="tools-primary" type="button">Tạo Moon Phase <span>↗</span></button>
           <button id="moon-cancel" class="tools-secondary" type="button" hidden disabled>Hủy tạo Moon Phase</button>
           <div id="moon-results" class="tools-moon-results" aria-live="polite"></div>

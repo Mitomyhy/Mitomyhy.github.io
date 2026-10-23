@@ -1,7 +1,8 @@
 /* Exact date-only protocol used by the installed panel. Metadata only: this
  * module never downloads, proxies, rehosts or reads back provider image bytes.
  * The API receives the chosen civil date; it does not accept an hour argument.
- * The caller must disclose that request and label local NASA PNGs separately. */
+ * The caller discloses that request and uses the matching original PNG snapshot
+ * shipped as same-origin static assets; this module handles metadata only. */
 const API_ORIGIN='https://moonphases.co.uk';
 const MAX_JSON_BYTES=2*1024*1024;
 const REQUEST_TIMEOUT_MS=30000;

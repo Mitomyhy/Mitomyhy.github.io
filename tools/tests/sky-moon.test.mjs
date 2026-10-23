@@ -88,7 +88,11 @@ test('sky renderer uses real catalog and exported panel effect is non-compoundin
 test('UI supports pasted dates and per-moon PNG with strict Moon MDY, automatic Sky timezone and no manual coordinate controls',async()=>{
   const html=await readFile(new URL('../../index.html',import.meta.url),'utf8'),controller=await readFile(new URL('../workbench.js',import.meta.url),'utf8');
   assert.match(html,/id="sky-date" type="text"/);assert.doesNotMatch(html,/id="sky-date" type="date"/);
-  for(const id of ['moon-size','moon-appearance','moon-results','sky-reapply'])assert.match(html,new RegExp(`id="${id}"`));
+  for(const id of ['moon-size','moon-results','sky-reapply'])assert.match(html,new RegExp(`id="${id}"`));
+  assert.doesNotMatch(html,/id="moon-appearance"/,'original source colors are not tinted');
+  assert.match(controller,/import \{ renderSourceMoons \} from '\.\/moon-source-renderer\.js/);
+  assert.match(controller,/await renderSourceMoons\(\$\('moon-canvas'\)/);
+  assert.doesNotMatch(controller,/\brenderMoons\b|\$\('moon-appearance'\)/,'production Moon does not reconstruct a NASA sphere');
   assert.match(controller,/Tải PNG riêng/);assert.match(controller,/api\.zonedDateTime/);
   assert.match(controller,/place\.timeZone/);assert.match(controller,/moonAbort\.signal/);assert.match(html,/id="moon-cancel"/);
   const sky=html.match(/<section data-controls="sky"[^>]*>([\s\S]*?)<\/section>/)?.[1],moon=html.match(/<section data-controls="moon"[^>]*>([\s\S]*?)<\/section>/)?.[1];assert.ok(sky);assert.ok(moon);
@@ -142,6 +146,7 @@ test('provider tilt rotates the complete texture and alpha disk, not only the te
   for(const[x,y]of [[22,17],[56,24],[31,61],[58,53]])for(let channel=0;channel<4;channel++){const expected=zero[((size-1-x)*size+y)*4+channel],actual=turned[(y*size+x)*4+channel];assert.ok(Math.abs(expected-actual)<=1,`rotated texture sample ${x},${y},${channel}`);}
 });
 test('Sky/Moon manifest lists all current asset hashes including timezone supplement and sources',async()=>{
-  const manifest=JSON.parse(await readFile(new URL('../assets/sky-moon/asset-manifest.json',import.meta.url),'utf8'));assert.equal(manifest.files.length,11);
+  const manifest=JSON.parse(await readFile(new URL('../assets/sky-moon/asset-manifest.json',import.meta.url),'utf8'));assert.equal(manifest.files.length,12);
+  assert.ok(manifest.files.some(item=>item.name==='moonphases-original/manifest.json'));
   for(const item of manifest.files){const bytes=await readFile(new URL('../assets/sky-moon/'+item.name,import.meta.url));assert.equal(bytes.length,item.bytes,item.name);assert.equal(createHash('sha256').update(bytes).digest('hex'),item.sha256,item.name);}
 });

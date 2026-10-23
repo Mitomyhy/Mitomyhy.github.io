@@ -1,5 +1,5 @@
 {
-  "scope": "mitom-browser-sky-moon-20261022-R2",
+  "scope": "mitom-browser-sky-moon-20261023-R7",
   "files": [
     {"name":"cities500.json.gz","bytes":13038594,"sha256":"4cfe4a0f7e888f0e609ce27aa64c86af1ed189a0aff6d8a4c48128feabafa503"},
     {"name":"city-timezones.json.gz","bytes":714617,"sha256":"a631c4473d9e5b13bf21513b5294f574c374dfea3fbbace3e80ac9e32b1ffcf3"},
@@ -7,8 +7,9 @@
     {"name":"D3_CELESTIAL_LICENSE.txt","bytes":1491,"sha256":"95e8d6c281db702112e3f990c9c2958a4b412e2cfc09d419ec33f1227aa8dce4"},
     {"name":"GEONAMES-README.txt","bytes":1592,"sha256":"d96652f206a66792fd87092814bfe042f4d330a3a200cef574971256366c77f8"},
     {"name":"nasa-lroc-color-2k.jpg","bytes":457942,"sha256":"f7130a1822681fa7512d7dcfd40db8c10b9ba4f06777910348698260ed7a2170"},
+    {"name":"moonphases-original/manifest.json","bytes":4528,"sha256":"8fdb0b3a3ba84fc9676dde5461d34f6580f4ca71c56439cf7974693f317f6b30"},
     {"name":"skymoon-offline-geocoder.js","bytes":10091,"sha256":"1d10ca6924ae421e1d8b67ad04593b06288274c07c3dc272dadad83d6bcff9c3"},
-    {"name":"SOURCES.md","bytes":7612,"sha256":"75e2f724c3d978e53d0ba77e570cf531f09079d7ce9866ac5a90a044221d6769"},
+    {"name":"SOURCES.md","bytes":8887,"sha256":"2335adfb157f5aafc62b38ebcc5d2ec1e30f3cda8109383c724e0e00de50b66e"},
     {"name":"stars.6.json","bytes":656721,"sha256":"0297b8fa3adfbce1dc26566f61c4abcc1df4f29c6a28729ca06b56d1c6d25602"},
     {"name":"suncalc-2.1.1.js","bytes":22904,"sha256":"f5e86948d59268d23496fa919a4a32ed99e1e25c465c7b978a1bd5945e4a197f"},
     {"name":"SUNCALC-LICENSE.txt","bytes":1322,"sha256":"e8881f5d09f1f3c5e0e6ad4c2120521bad1079246a2af84d756af8ab1a53da3c"}
