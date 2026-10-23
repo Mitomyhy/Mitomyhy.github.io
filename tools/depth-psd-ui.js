@@ -1,4 +1,4 @@
-import {createPSDJobs} from './depth-psd-jobs.js?v=20261023-psd-r8';
+import {createPSDJobs} from './depth-psd-jobs.js?v=20261023-psd-r8b';
 import {createCPUPipeline} from './cpu/client.mjs?v=20261022-flow-r5';
 import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-psd-r8';
 
@@ -7,7 +7,7 @@ function abortError(){return Object.assign(Error('Đã hủy tác vụ PSD.'),{c
 function workerCall(op,data,signal){
   return new Promise((resolve,reject)=>{
     if(signal?.aborted){reject(abortError());return;}
-    const worker=new Worker(new URL('./depth-psd-worker.js?v=20261023-psd-r8',import.meta.url),{type:'module',name:'MITOM native PSD'});
+    const worker=new Worker(new URL('./depth-psd-worker.js?v=20261023-psd-r8b',import.meta.url),{type:'module',name:'MITOM native PSD'});
     let settled=false;
     const finish=(error,value)=>{if(settled)return;settled=true;clearTimeout(timer);signal?.removeEventListener('abort',cancel);worker.terminate();error?reject(error):resolve(value);};
     const cancel=()=>finish(abortError());

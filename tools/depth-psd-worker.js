@@ -1,4 +1,4 @@
-import {fetchNativeTemplate,openNativePSD,buildNativePSD} from './depth-psd-template.js?v=20261023-psd-r8';
+import {fetchNativeTemplate,openNativePSD,buildNativePSD} from './depth-psd-template.js?v=20261023-psd-r8b';
 import {fetchNativeShape} from './depth-native-shapes.js?v=20261023-psd-r8';
 
 async function ceramicShape(family){

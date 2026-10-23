@@ -39,7 +39,7 @@ test('generate reads exact IN pixels and snapshots options',async()=>{
   const {jobs,runs}=harness();await jobs.load(0,{});const settings={fullprint:{support_enabled:true}};jobs.generate(0,settings);settings.fullprint.support_enabled=false;assert.equal(runs[0].input.rgba,art.rgba);assert.equal(runs[0].input.options.fullprint.support_enabled,true);jobs.dispose();
 });
 test('build receives full composition depth and original IN; 16 bit PNG kept separately',async()=>{
-  let built;const {jobs,runs}=harness({build:async(native,options)=>{built=options;return new Uint8Array(30);}});await jobs.load(0,{});jobs.generate(0);const r=result();runs[0].wait.resolve(r);await tick();assert.equal(built.artwork,art);assert.equal(built.depth.depth,r.depth);assert.equal(built.depth.alpha,r.alpha);assert.equal(jobs.result(0,'map'),r.depth16PNG);jobs.dispose();
+  let built;const {jobs,runs}=harness({build:async(native,options)=>{built=options;return new Uint8Array(30);}});await jobs.load(0,{family:'acrylic'});await jobs.setArtwork(0,{});jobs.generate(0);const r=result();runs[0].wait.resolve(r);await tick();assert.equal(built.artwork,art);assert.equal(built.depth.depth,r.depth);assert.equal(built.depth.alpha,r.alpha);assert.equal(jobs.result(0,'map'),r.depth16PNG);jobs.dispose();
 });
 test('failed native build never offers a flattened or stale PSD',async()=>{
   const {jobs,runs}=harness({build:async()=>{throw Error('unsupported warp');}});await jobs.load(0,{});jobs.generate(0);runs[0].wait.resolve(result());await tick();assert.equal(jobs.snapshot().jobs[0].status,'error');assert.throws(()=>jobs.result(0),/hoàn tất/);jobs.dispose();
@@ -61,4 +61,7 @@ test('replacing an active source lets the other queued job continue',async()=>{
 });
 test('WASM CPU heap is disposed before allocating native PSD output',async()=>{
   const h=harness({build:async()=>{assert.deepEqual(h.disposed,[0]);return new Uint8Array(30);}});await h.jobs.load(0,{});h.jobs.generate(0);h.runs[0].wait.resolve(result());await tick();assert.equal(h.jobs.snapshot().jobs[0].status,'done');assert.deepEqual(h.disposed,[0]);h.jobs.dispose();
+});
+test('prepared PSD generates from saved IN without replacing its native layer stack',async()=>{
+  let built;const {jobs,runs}=harness({build:async(native,options)=>{built=options;return new Uint8Array(30);}});await jobs.load(0,{name:'prepared.psd'});jobs.generate(0);assert.equal(runs[0].input.rgba,art.rgba);runs[0].wait.resolve(result());await tick();assert.equal(built.artwork,undefined);assert.equal(jobs.snapshot().jobs[0].status,'done');jobs.dispose();
 });

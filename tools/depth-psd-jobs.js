@@ -15,7 +15,7 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
     try {
       const native=await open(input,{signal:job.abort.signal});
       if(!current(index,job,serial))return;
-      job.native=native;job.artwork=native.artwork;job.hasArtwork=!input.family&&!native.isBundledBlank&&native.artwork.rgba.some((value,index)=>index%4===3&&value>0);
+      job.native=native;job.artwork=native.artwork;job.artworkReplaced=false;job.hasArtwork=!input.family&&!native.isBundledBlank&&native.artwork.rgba.some((value,index)=>index%4===3&&value>0);
       job.status='ready';job.message=job.hasArtwork?'Đã đọc artwork đã lưu trong IN · sẵn sàng Generate.':'Template đã mở · thêm artwork vào IN.';emit();
     } catch(error){if(!current(index,job,serial))return;job.status='error';job.error=error.message;job.message=error.message;emit();}
     finally{if(current(index,job,serial))pump();}
@@ -27,7 +27,7 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
       const artwork=await prepareArtwork(file,job.native,{signal:job.abort.signal});
       if(!current(index,job,serial))return;
       if(!artwork?.rgba?.some((value,index)=>index%4===3&&value>0))throw Error('Artwork trong suốt hoàn toàn. Chọn ảnh khác trước khi chạy AI.');
-      job.artwork=artwork;job.hasArtwork=true;job.status='ready';job.message='Artwork đã đặt vào IN · sẵn sàng Generate.';emit();
+      job.artwork=artwork;job.artworkReplaced=true;job.hasArtwork=true;job.status='ready';job.message='Artwork đã đặt vào IN · sẵn sàng Generate.';emit();
     }catch(error){if(!current(index,job,serial))return;job.status='error';job.error=error.message;job.message=error.message;emit();}
   }
   function pump(){
@@ -50,7 +50,7 @@ export function createPSDJobs({open,prepareArtwork,createPipeline,build,onChange
       // before allocating full-resolution PSB/channel/composite output buffers.
       job.pipeline.dispose();job.pipeline=null;
       job.message='Đang ghi IN / DEPTH / CUT và ảnh xem trước vào PSD…';job.progress=null;emit();
-      const output=await build(job.native,{artwork:job.artwork,depth:{width:result.width,height:result.height,depth:result.depth,alpha:result.alpha},signal:job.abort.signal});
+      const output=await build(job.native,{artwork:job.artworkReplaced?job.artwork:undefined,depth:{width:result.width,height:result.height,depth:result.depth,alpha:result.alpha},signal:job.abort.signal});
       if(!current(index,job,serial))return;
       if(!(output instanceof Uint8Array)||output.length<26)throw Error('Engine chưa trả về PSD hợp lệ.');
       job.output=output;job.map=result.depth16PNG;job.status='done';job.progress=100;job.message='Hoàn tất · PSD giữ Smart Object IN / DEPTH / CUT. PNG depth riêng giữ 16 bit.';job.error=null;

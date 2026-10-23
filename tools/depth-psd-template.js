@@ -2,9 +2,10 @@
  * Adapter for the three bundled 2D Photoshop 3D-production map templates.
  * This is not a generic Photoshop renderer or a PSD 3D-mesh exporter.
  *
- * IN / DEPTH / CUT remain embedded, editable Smart Objects. Original child
- * layers remain in the output, hidden; new RGB8 generated layers and their
- * cached composites are explicit. The separate pipeline PNG retains 16 bits.
+ * IN / DEPTH / CUT remain embedded, editable Smart Objects. An uploaded IN is
+ * preserved byte-for-byte unless replacement artwork is explicitly supplied.
+ * Replaced child layers remain stored, hidden, below generated RGB8 layers.
+ * The separate pipeline PNG retains 16 bits.
  */
 import {inspectPSD, readPSDLinkedFiles, decodePSDComposite, appendPSDLayers,
   replaceEmbeddedPSDs, replacePSDLayerPixels, setPSDLayerVisibility} from './psd-roundtrip.js?v=20261023-psd-r8';
@@ -256,13 +257,16 @@ export function composeNativeSubstrate(foreground,substrate,{signal}={}) {
  * Returns a native family PSD with role contents and cached tiles updated.
  * No source file is written. Different map resolutions are resized by registered
  * full-canvas coordinates, retaining alignment with the original IN canvas.
+ * Omit artwork to keep the uploaded IN PSB bytes, layers and visibility exact;
+ * only its saved composite is read to refresh the parent's cached IN tile.
  */
 export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signal}={}) {
   abort(signal);const native=inspectNative(bytes),{item,info,roles}=native;
   await validateNativeGeometry(native,signal);
   if(!depth)fail('Chưa có depth đã Generate để tạo PSD kết quả.','NO_DEPTH_RESULT');
   if(item.id!=='acrylic'&&!ceramicShape)fail('Cần shape Ceramic gốc đã xác minh để giữ nền IN và nền đen Depth.','CERAMIC_SHAPE_REQUIRED');
-  if(!artwork)artwork=await decodePSDComposite(roles.input.embeddedBytes,{allowEmbeddedPSB:true,signal});
+  const preserveInput=artwork===undefined;
+  if(preserveInput)artwork=await decodePSDComposite(roles.input.embeddedBytes,{allowEmbeddedPSB:true,signal});
   const input=resizeNativeRaster(artwork,item.inputWidth,item.inputHeight,{signal});
   const depthImage=resizeNativeRaster(depth,item.inputWidth,item.inputHeight,{signal});
   const images={input,depth:depthImage},contents={
@@ -271,10 +275,11 @@ export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signa
   };
   if(item.id!=='acrylic') {
     const shape=resizeNativeRaster(ceramicShape,item.inputWidth,item.inputHeight,{signal}),black=blackAlpha(shape);
-    images.input=composeNativeSubstrate(input,shape,{signal});images.depth=composeNativeSubstrate(depthImage,black,{signal});
+    if(!preserveInput)images.input=composeNativeSubstrate(input,shape,{signal});
+    images.depth=composeNativeSubstrate(depthImage,black,{signal});
     // Keep the base and the generated content as separate visible layers.
     // Original editable template helpers remain stored, hidden, below them.
-    contents.input.unshift({name:'MITOM Ceramic Body — web',...shape,visible:true});
+    if(!preserveInput)contents.input.unshift({name:'MITOM Ceramic Body — web',...shape,visible:true});
     contents.depth.unshift({name:'MITOM Ceramic Black Base — web',...black,visible:true});
   }
   if(roles.cut) {
@@ -284,8 +289,10 @@ export async function buildNativePSD(bytes,{artwork,depth,cut,ceramicShape,signa
   const embedded=[],tiles=[],composite={width:info.width,height:info.height,rgba:new Uint8ClampedArray(info.width*info.height*4)};
   for(const [key,role] of Object.entries(roles)) {
     abort(signal);const image=images[key];
-    const generated=appendPSDLayers(role.embeddedBytes,contents[key],{allowEmbeddedPSB:true,hideOriginalLayers:true,composite:image,signal});
-    embedded.push({id:role.embeddedID,bytes:generated});
+    if(key!=='input'||!preserveInput) {
+      const generated=appendPSDLayers(role.embeddedBytes,contents[key],{allowEmbeddedPSB:true,hideOriginalLayers:true,composite:image,signal});
+      embedded.push({id:role.embeddedID,bytes:generated});
+    }
     const tile=parentTile(image,role,info,{signal});tiles.push(tile);sourceOver(composite.rgba,info.width,tile);
   }
   let result=replaceEmbeddedPSDs(native.bytes,embedded,{signal});

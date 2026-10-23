@@ -1,5 +1,5 @@
 import { createDepthTool } from './depth-flow-tool.js?v=20261023-psd-r8';
-import { initPSDWorkspace } from './depth-psd-ui.js?v=20261023-psd-r8';
+import { initPSDWorkspace } from './depth-psd-ui.js?v=20261023-psd-r8b';
 import { searchPlace } from './sky-moon.js?v=20261022-sky-moon-r6';
 import { renderSourceMoons } from './moon-source-renderer.js?v=20261023-moon-original-r7';
 import { renderPanelSky } from './sky-panel-renderer.js?v=20261022-sky-moon-r6';

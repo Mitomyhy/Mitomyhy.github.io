@@ -5,7 +5,7 @@ import {gunzipSync} from 'node:zlib';
 import {createHash} from 'node:crypto';
 import {NATIVE_TEMPLATE_CATALOG,fetchNativeTemplate,openNativePSD,buildNativePSD,
   resizeNativeRaster,validateNativeRoleTransform,composeNativeSubstrate} from '../depth-psd-template.js';
-import {inspectPSD,readPSDLinkedFiles,decodePSDComposite,replaceEmbeddedPSDs} from '../psd-roundtrip.js';
+import {inspectPSD,readPSDLinkedFiles,decodePSDComposite,replaceEmbeddedPSDs,appendPSDLayers} from '../psd-roundtrip.js';
 
 const assets=new URL('../assets/templates/psd/',import.meta.url);
 const hash=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -187,6 +187,38 @@ test('all three real templates export native RGB8 role PSBs with editable origin
     for(const link of originalLinks)if(!ids.has(link.id)&&link.bytes)assert.equal(hash(outLinks.find(f=>f.id===link.id).bytes),hash(link.bytes));
   }
   console.log(JSON.stringify({nativePSDTemplates:3,elapsedMs:Date.now()-started,sourcePSDOverwritten:false,PhotoshopCommands:0}));
+});
+
+test('Case 2 preserves uploaded IN embedded bytes, editable layers and visibility exactly for all three families', {timeout:180000},async()=>{
+  for(const item of NATIVE_TEMPLATE_CATALOG){
+    const original=await fixture(item),opened=await openNativePSD(original),inputID=opened.roles.input.embeddedID;
+    const originalInput=readPSDLinkedFiles(original).find(file=>file.id===inputID).bytes;
+    const art=solid(item.inputWidth,item.inputHeight,[31,99,173,255]);
+    for(let y=0;y<art.height;y++)art.rgba[(y*art.width)*4+3]=0;
+    const preparedInput=appendPSDLayers(originalInput,[{name:'Editable uploaded IN — preserve exactly',...art,visible:true}],{allowEmbeddedPSB:true,hideOriginalLayers:true,composite:art});
+    const prepared=replaceEmbeddedPSDs(original,[{id:inputID,bytes:preparedInput}]),preparedHash=hash(prepared),inputHash=hash(preparedInput);
+    const preparedInfo=inspectPSD(preparedInput,{allowEmbeddedPSB:true});
+    assert.ok(preparedInfo.layers.some(layer=>layer.name==='Editable uploaded IN — preserve exactly'&&layer.visible));
+    assert.ok(preparedInfo.layers.some(layer=>!layer.visible),'existing editable layers have distinctive saved visibility');
+    const depth={width:2,height:2,depth:Float32Array.of(.1,.6,.1,.6),alpha:Uint8Array.of(0,255,0,255)};
+    const ceramicShape=solid(2,2,[255,255,255,255]);
+    // No artwork argument: update only DEPTH/CUT, never flatten or add a body to IN.
+    const result=await buildNativePSD(prepared,{depth,ceramicShape}),links=readPSDLinkedFiles(result),savedInput=links.find(file=>file.id===inputID).bytes;
+    assert.equal(hash(prepared),preparedHash,'uploaded source remains unchanged');
+    assert.equal(hash(savedInput),inputHash,'entire original IN PSB is preserved byte-for-byte');
+    assert.deepEqual(savedInput,preparedInput);
+    const resultInfo=inspectPSD(savedInput,{allowEmbeddedPSB:true});
+    assert.deepEqual(resultInfo.layers.map(layer=>({name:layer.name,visible:layer.visible})),preparedInfo.layers.map(layer=>({name:layer.name,visible:layer.visible})));
+    assert.ok(!resultInfo.layers.some(layer=>layer.name==='MITOM Ceramic Body — web'),'no extra ceramic body is injected into untouched IN');
+    const saved=await decodePSDComposite(savedInput,{allowEmbeddedPSB:true});
+    assert.equal(saved.rgba[3],0,'saved transparent IN stays transparent even with an opaque Ceramic substrate supplied for DEPTH');
+    for(const role of Object.values(opened.roles))if(role.embeddedID!==inputID){
+      const old=readPSDLinkedFiles(prepared).find(file=>file.id===role.embeddedID).bytes,newBytes=links.find(file=>file.id===role.embeddedID).bytes;
+      assert.notEqual(hash(newBytes),hash(old),'generated DEPTH/CUT still updates');
+    }
+    const parent=inspectPSD(result),tile=parent.layers.find(layer=>layer.name==='layer in');
+    assert.ok(tile.width>0&&tile.height>0,'parent IN cache remains present');
+  }
 });
 
 test('export requires generated depth instead of silently returning the old template',async()=>{
