@@ -1,0 +1,59 @@
+{
+  "schema": "mitom.original-3d-templates.v1",
+  "date": "2026-10-23",
+  "source": "Existing bundled Photoshop Panel template PSD files, read-only.",
+  "compression": "gzip, level 9, mtime 0, OS header 255; original PSD bytes unchanged",
+  "templates": [
+    {
+      "id": "acrylic",
+      "title": "Acrylic",
+      "file": "Template acrylic.psd",
+      "sourceFile": "Template acrylic.psd",
+      "compressedFile": "template-acrylic.psd.gz",
+      "compressedBytes": 3751998,
+      "compressedSHA256": "4d77f1a9dac9ea4ce0b4055de99d3f1a35e763acd48d59ade99329b4fa6f8496",
+      "bytes": 14782298,
+      "sha256": "6161e431321c4925dfa3f2c3d7d536febb225c426a961a8181214187fd70d2b8",
+      "width": 3543,
+      "height": 1181,
+      "bits": 8,
+      "mode": 3,
+      "version": 1,
+      "channels": 4
+    },
+    {
+      "id": "ceramic_circle",
+      "title": "Circle Ceramic",
+      "file": "Circleceramic-Template.psd",
+      "sourceFile": "Circleceramic-Template.psd",
+      "compressedFile": "template-circle-ceramic.psd.gz",
+      "compressedBytes": 6032855,
+      "compressedSHA256": "73f49696670e43dd2d3f7b437164940ea246952fa99abb8ca8829a24f6822505",
+      "bytes": 14311793,
+      "sha256": "79b758e54cc3abf3b7675f8385e3b8fd9212237989767760be7bcdc292386976",
+      "width": 1866,
+      "height": 933,
+      "bits": 8,
+      "mode": 3,
+      "version": 1,
+      "channels": 4
+    },
+    {
+      "id": "ceramic_heart",
+      "title": "Heart Ceramic",
+      "file": "Heartceramic-Template.psd",
+      "sourceFile": "Heartceramic-Template.psd",
+      "compressedFile": "template-heart-ceramic.psd.gz",
+      "compressedBytes": 4645918,
+      "compressedSHA256": "a7fac4667634a0cbf6dd6b047a89daef2e1d1fc8e3ff4017ea4efa9ad5d14240",
+      "bytes": 11307375,
+      "sha256": "768102a90a3f0a2701239b4dc6bf1d8bdf61e9399ca5bb6b0ea22caffaac5e16",
+      "width": 1866,
+      "height": 856,
+      "bits": 8,
+      "mode": 3,
+      "version": 1,
+      "channels": 4
+    }
+  ]
+}

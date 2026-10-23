@@ -195,6 +195,7 @@ export function createDepthTool(canvas, options={}) {
     undo(){noBusy();ready();return edits.undo();},resetEdits(){noBusy();ready();edits.reset();return api.state();},
     setProductType:loadTemplate,
     invalidate(){noBusy();clearResult();return api.state();},
+    releaseCPUCache(){noBusy();pipeline.cancel();return api.state();},
     cancel(){version++;pipeline.cancel();result=null;edits=null;resultMode=null;viewer?.dispose();viewer=null;onStatus('Đã hủy Generate · artwork và template vẫn được giữ.');},
     async setAppearance(value){check();appearance={...appearance,...value};await queue;if(viewer)viewer.setAppearance(appearance);return api.state();},
     preset(value){check();viewer?.preset(value);},render(){check();viewer?.render();},

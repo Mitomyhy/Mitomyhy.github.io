@@ -14,6 +14,7 @@
   <link rel="preload" href="svn-helvetica-neue-regular.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="styles.css?v=20261021-helvetica-normal">
   <link rel="stylesheet" href="tools/workbench.css?v=20261023-moon-original-r7">
+  <link rel="stylesheet" href="tools/depth-psd.css?v=20261023-psd-r8">
   <link rel="stylesheet" href="video/video.css?v=20261022-local1">
   <link rel="stylesheet" href="video/ai-entry.css?v=20261023-ai1">
   <link rel="stylesheet" href="tools/scrabble-browser.css?v=20261022-flow-r5">
@@ -23,7 +24,7 @@
   <script defer src="app.js?v=20261021-helvetica-normal"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261022-1"></script>
-  <script type="module" src="tools/workbench.js?v=20261023-moon-original-r7"></script>
+  <script type="module" src="tools/workbench.js?v=20261023-psd-r8"></script>
   <script type="module" src="video/video.js?v=20261023-ai1"></script>
   <script type="module" src="video/ai-entry.js?v=20261023-ai1"></script>
 </head>
@@ -61,6 +62,9 @@
       </nav>
       <form id="tool-form" class="tools-controls">
         <section data-controls="depth">
+          <div class="control-heading"><span>PSD / WORKFLOW ĐỘC LẬP</span><span>2 TÁC VỤ</span></div>
+          <button id="depth-psd-open" class="tools-primary" type="button">PSD · 2 tác vụ độc lập ↗</button>
+          <p class="tools-note">Ba template PSD gốc. Thêm artwork vào IN, hoặc upload PSD đã có IN → Generate → tải PSD. Không cần mở Photoshop.</p>
           <div class="control-heading"><span>01 / MỞ TEMPLATE</span><span>IN · DEPTH · CUT</span></div>
           <label class="tools-field">Template gốc<select id="depth-product"><option value="acrylic">Acrylic — theo viền artwork</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label>
           <button id="depth-open-template" class="tools-secondary" type="button">Mở template <span>↗</span></button>
@@ -195,6 +199,30 @@ OLIVER</textarea></label>
   </main>
 
   <dialog id="ps-dialog" class="ps-dialog" aria-labelledby="ps-dialog-title"><button id="ps-close" class="ps-dialog-close" type="button" aria-label="Đóng">×</button><p class="micro">MITOM / PHOTOSHOP BRIDGE</p><h2 id="ps-dialog-title">Từ web.<br>Vào Photoshop.</h2><p>Mở panel trong Photoshop → <strong>MITOM Web · kết nối Photoshop</strong> → sao chép mã và dán dưới đây. Chỉ ghép nối máy bạn đang sử dụng.</p><form id="ps-form"><label class="tools-field">Mã kết nối phiên hiện tại<input id="ps-token" type="password" autocomplete="off" spellcheck="false" required></label><button class="tools-primary" type="submit">Kết nối <span>↗</span></button></form><p id="ps-message" role="status" aria-live="polite">Mã chỉ giữ trong bộ nhớ trang, không lưu lên web. Chrome có thể hỏi quyền truy cập mạng cục bộ.</p><p class="tools-note">Chưa có nút MITOM Web trong panel? <a href="tools/downloads/MITOM-Web-Photoshop-Bridge-20261022.zip" download>Tải gói cầu nối nhỏ</a>, giải nén và chạy Install.cmd rồi mở lại Photoshop. Không cần gỡ panel cũ. Bạn vẫn có thể tải PNG và kéo vào Photoshop.</p><button id="ps-forget" class="tools-secondary" type="button">Ngắt kết nối</button></dialog>
+
+  <dialog id="depth-psd-dialog" class="depth-psd-dialog" aria-labelledby="depth-psd-title">
+    <header class="depth-psd-heading"><div><p class="micro">MITOM / NATIVE PSD WORKSPACE</p><h2 id="depth-psd-title">Hai tác vụ. Không chiếm Photoshop.</h2></div><button id="depth-psd-close" type="button" aria-label="Thu gọn, tiếp tục chạy">Thu gọn ×</button></header>
+    <div class="depth-psd-intro"><p>Chọn template trống → thêm artwork vào <strong>IN</strong>. Hoặc upload PSD đã có artwork trong IN → Generate. Đọc và ghi ngay trong trình duyệt, không upload artwork.</p><label>CPU <select id="depth-psd-parallel"><option value="1">1 tác vụ mỗi lượt · phù hợp 16 GB RAM</option><option value="2">2 tác vụ song song · nên có 32 GB RAM</option></select></label></div>
+    <details class="tools-note depth-psd-disclosure"><summary>Engine, định dạng PSD và giới hạn</summary><p>Lần đầu tải model khoảng 1,43 GB, lưu cache trình duyệt. CPU yếu có thể chạy nhiều phút. Hỗ trợ PSD RGB 8 bit thuộc ba template MITOM, tối đa 256 MB; giữ Smart Object, layer gốc ẩn và thêm nội dung đã tạo. PSD giữ 8 bit theo template; PNG depth riêng là 16 bit. Chưa diễn giải lại hiệu ứng, warp hoặc layer chữ đã sửa nhưng chưa được Photoshop lưu cập nhật vào IN. Thiết lập AI lấy từ bảng công cụ bên trái lúc bấm Generate. Bắt đầu PSD sẽ nhả cache AI của lượt PNG cũ để dành RAM; PNG/Fix đã tạo vẫn giữ.</p></details>
+    <label class="tools-check depth-psd-disclosure"><input id="depth-psd-consent" type="checkbox"> Cho phép tải model AI và dùng CPU / RAM của máy này.</label>
+    <div class="depth-psd-grid">
+      <article class="depth-psd-card" data-psd-slot="0">
+        <header><div><p class="micro">01 / PSD</p><h3 data-psd-role="name">Tác vụ 1</h3></div><button type="button" data-psd-role="source-download" disabled>Tải PSD nguồn ↓</button><button type="button" data-psd-role="remove" disabled aria-label="Bỏ tác vụ 1">Bỏ ×</button></header>
+        <div class="depth-psd-source"><label class="tools-field">Template trống<select data-psd-role="template"><option value="acrylic">Acrylic</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label><button class="tools-secondary" type="button" data-psd-role="open">Mở template ↗</button><label class="tools-upload"><span>Hoặc ＋ PSD đã có IN</span><input type="file" data-psd-role="file" accept=".psd"></label><label class="tools-upload"><span>＋ Thêm / thay artwork trong IN</span><input type="file" data-psd-role="art" accept="image/png,image/jpeg,image/webp" disabled></label></div>
+        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="Artwork trong IN của tác vụ 1"></canvas><span class="depth-psd-watermark">ARTWORK / IN</span></div>
+        <p data-psd-role="status" class="depth-psd-status" role="status" aria-live="polite">Chọn template trống hoặc upload PSD đã có artwork trong IN.</p><progress data-psd-role="progress" max="100" hidden aria-label="Tiến trình tác vụ 1"></progress>
+        <div class="depth-psd-actions"><button type="button" data-psd-role="generate" class="tools-primary" disabled>Generate ↗</button><button type="button" data-psd-role="cancel" class="tools-secondary" disabled>Hủy</button><button type="button" data-psd-role="download" class="tools-secondary" disabled>Tải PSD ↓</button><button type="button" data-psd-role="map" class="tools-secondary" disabled>PNG map 16 bit ↓</button></div>
+      </article>
+      <article class="depth-psd-card" data-psd-slot="1">
+        <header><div><p class="micro">02 / PSD</p><h3 data-psd-role="name">Tác vụ 2</h3></div><button type="button" data-psd-role="source-download" disabled>Tải PSD nguồn ↓</button><button type="button" data-psd-role="remove" disabled aria-label="Bỏ tác vụ 2">Bỏ ×</button></header>
+        <div class="depth-psd-source"><label class="tools-field">Template trống<select data-psd-role="template"><option value="acrylic">Acrylic</option><option value="ceramic_circle">Circle Ceramic</option><option value="ceramic_heart">Heart Ceramic</option></select></label><button class="tools-secondary" type="button" data-psd-role="open">Mở template ↗</button><label class="tools-upload"><span>Hoặc ＋ PSD đã có IN</span><input type="file" data-psd-role="file" accept=".psd"></label><label class="tools-upload"><span>＋ Thêm / thay artwork trong IN</span><input type="file" data-psd-role="art" accept="image/png,image/jpeg,image/webp" disabled></label></div>
+        <div class="depth-psd-preview"><canvas data-psd-role="canvas" hidden aria-label="Artwork trong IN của tác vụ 2"></canvas><span class="depth-psd-watermark">ARTWORK / IN</span></div>
+        <p data-psd-role="status" class="depth-psd-status" role="status" aria-live="polite">Chọn template trống hoặc upload PSD đã có artwork trong IN.</p><progress data-psd-role="progress" max="100" hidden aria-label="Tiến trình tác vụ 2"></progress>
+        <div class="depth-psd-actions"><button type="button" data-psd-role="generate" class="tools-primary" disabled>Generate ↗</button><button type="button" data-psd-role="cancel" class="tools-secondary" disabled>Hủy</button><button type="button" data-psd-role="download" class="tools-secondary" disabled>Tải PSD ↓</button><button type="button" data-psd-role="map" class="tools-secondary" disabled>PNG map 16 bit ↓</button></div>
+      </article>
+    </div>
+    <footer class="depth-psd-footer"><span id="depth-psd-running" role="status">Generate chạy trên máy bạn · không cần Photoshop.</span><span id="depth-psd-message" role="alert"></span></footer>
+  </dialog>
 
   <main id="main" class="page-frame">
     <section id="home" class="hero">
