@@ -113,6 +113,63 @@ class FidelityTests(unittest.TestCase):
         self.assertEqual(options['colors'],4)
         self.assertLessEqual(len(prepared.getcolors(256)),4)
 
+    def _edge_fragment_fixture(self,foreground,background,shadow):
+        image=Image.new('RGBA',(180,140),(*background,255))
+        draw=ImageDraw.Draw(image)
+        draw.rectangle((30,20,90,120),fill=(*foreground,255))
+        draw.rectangle((50,50,51,51),fill=(*background,255))
+        draw.rectangle((145,25,146,26),fill=(*background,0))
+        blend=tuple(round(a*.9+b*.1) for a,b in zip(background,foreground))
+        draw.line((91,40,91,45),fill=(*shadow,255))
+        draw.line((91,60,91,65),fill=(*blend,255))
+        draw.line((91,85,91,93),fill=(*shadow,255))
+        draw.line((91,72,96,77),fill=(*shadow,255))
+        draw.point((93,100),fill=(*shadow,255))
+        draw.line((91,106,91,111),fill=(63,63,63,255))
+        source=image.copy()
+        for y in range(40,46):
+            source.putpixel((91,y),(shadow[0],shadow[1]+(y%2)*6,shadow[2],255))
+        for y in range(60,66):
+            source.putpixel((91,y),(blend[0],blend[1]+(y%2)*6,blend[2],255))
+        return image,source,blend
+
+    def test_chromatic_edge_fragments_clean_locally_for_colored_and_black_glyphs(self):
+        cases=[((60,220,240),(180,30,40),(150,20,20)),
+               ((0,0,0),(40,110,190),(15,100,205))]
+        for foreground,background,shadow in cases:
+            with self.subTest(foreground=foreground):
+                image,source,blend=self._edge_fragment_fixture(foreground,background,shadow)
+                cleaned=engine._cleanup_edge_fragments(image,source,1)
+                for y in range(40,46):
+                    self.assertEqual(cleaned.getpixel((91,y)),(*background,255))
+                for y in range(60,66):
+                    self.assertEqual(cleaned.getpixel((91,y)),(*blend,255),'Valid antialias coverage was erased.')
+                for y in range(85,94):
+                    self.assertEqual(cleaned.getpixel((91,y)),(*shadow,255),'Authored one-pixel mark was erased.')
+                for offset in range(6):
+                    self.assertEqual(cleaned.getpixel((91+offset,72+offset)),(*shadow,255))
+                self.assertEqual(cleaned.getpixel((93,100)),(*shadow,255))
+                self.assertEqual(cleaned.getpixel((91,108)),(63,63,63,255))
+                self.assertEqual(cleaned.getpixel((50,50)),(*background,255))
+                self.assertEqual(cleaned.getchannel('A').tobytes(),image.getchannel('A').tobytes())
+                for before,after in zip(image.get_flattened_data(),cleaned.get_flattened_data()):
+                    if before[:3]==foreground:self.assertEqual(before,after)
+
+    def test_fragment_cleanup_scales_without_erasing_native_thin_marks(self):
+        image,source,_blend=self._edge_fragment_fixture((60,220,240),(180,30,40),(150,20,20))
+        native=engine._cleanup_edge_fragments(image,source,1)
+        doubled=image.resize((image.width*2,image.height*2),Image.Resampling.NEAREST)
+        scaled=engine._cleanup_edge_fragments(doubled,source,2)
+        self.assertEqual(scaled.tobytes(),native.resize(scaled.size,Image.Resampling.NEAREST).tobytes())
+
+    def test_explicit_pixel_polygon_and_zero_cleanup_choices_are_respected(self):
+        image,source,_blend=self._edge_fragment_fixture((60,220,240),(180,30,40),(150,20,20))
+        with mock.patch.object(engine,'_cleanup_edge_fragments',side_effect=AssertionError('Unexpected smoothing cleanup.')):
+            for options in ({'mode':'none'},{'mode':'polygon'},{'speckle':0},{'smoothing':0},
+                            {'preset':'photo'},{'preset':'illustration'}):
+                with self.subTest(options=options):
+                    engine._prepare(source.copy(),engine.normalize_options(options),[])
+
     def test_precision_backend_strict_palette_and_compound_holes(self):
         image=Image.new('RGBA',(180,140),(0,0,0,0))
         draw=ImageDraw.Draw(image)

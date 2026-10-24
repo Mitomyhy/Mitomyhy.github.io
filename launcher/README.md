@@ -1,6 +1,6 @@
 # MITOM Launcher
 
-Launcher **2026.10.24.7** includes **Vector Migic 1.0.3** as a separate, local application.
+Launcher **2026.10.24.8** includes **Vector Migic 1.0.4** as a separate, local application.
 Its grid card and table row share independent install state, search, filters
 and counts. The Photoshop Panel's install/update/repair/rollback and account
 flows remain unchanged. English is the default; Settings offers Tiếng Việt and
@@ -79,7 +79,7 @@ the pinned application ZIP when Install is clicked. Use `-VectorPayload Bundled`
 for an offline installer containing that ZIP.
 
 The default Python path uses the existing local `prompt-studio/.venv`. Output is
-written to `releases/mitom-launcher/2026.10.24.7/` with SHA-256 and packaged runtime,
+written to `releases/mitom-launcher/2026.10.24.8/` with SHA-256 and packaged runtime,
 UI and HTTPS smoke reports. Runtime/UI smoke tests do not use the network.
 `--network-smoke` fetches and verifies signed release metadata and checks the
 launcher URL using HEAD; it downloads no installer artifact and installs nothing.

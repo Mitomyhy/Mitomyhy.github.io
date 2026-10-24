@@ -469,6 +469,103 @@ def _local_ink_assignment(rgb, alpha, palette, working_scale, source_rgb=None, s
         best=Image.composite(candidate,best,choose);best_dist=Image.composite(dist,best_dist,choose)
     return best
 
+def _cleanup_edge_fragments(image, source, working_scale):
+    """Merge unsupported low-contrast edge fragments into a local region.
+
+    Main regions, valid two-ink coverage blends, alpha and source-authored
+    flat thin marks are preserved. No palette color or artwork name is special.
+    Component IDs and pixel labels use compact arrays; large components retain
+    counts/bounds only. Excessively fragmented inputs conservatively bypass it.
+    """
+    from array import array
+    width,height=image.size;n=width*height
+    entries=image.getcolors(257)
+    if entries is None:return image
+    palette=list(dict.fromkeys(color[:3] for count,color in sorted(entries,reverse=True) if color[3]>=128))
+    if not 3<=len(palette)<=32:return image
+    alpha=image.getchannel('A');rgb=image.convert('RGB')
+    fixed=Image.new('P',(1,1));fixed.putpalette([v for c in palette+[palette[-1]]*(256-len(palette)) for v in c])
+    labels=rgb.quantize(palette=fixed,dither=Image.Dither.NONE)
+    labels=Image.composite(labels,Image.new('P',image.size,255),alpha.point(lambda a:255 if a>=128 else 0))
+    pixels=labels.tobytes()
+    radius=max(1,round(working_scale));kernel=radius*2+1
+    span=ImageChops.subtract(rgb.filter(ImageFilter.MaxFilter(kernel)),rgb.filter(ImageFilter.MinFilter(kernel)))
+    r,g,b=span.split();same=ImageChops.lighter(ImageChops.lighter(r,g),b).point(lambda v:255 if v==0 else 0)
+    core=ImageChops.multiply(same,alpha.filter(ImageFilter.MinFilter(kernel))).tobytes()
+    ids=array('i',[-1])*n;components=[]
+    area_limit=max(1,round(64*working_scale**2));span_limit=max(2,round(32*working_scale))
+    reach=max(1,round(2*working_scale))
+    for start,color in enumerate(pixels):
+        if color==255 or ids[start]>=0:continue
+        identity=len(components)
+        if identity>=65536:return image
+        ids[start]=identity;todo=array('I',[start]);points=array('I')
+        area=0;x0=width;y0=height;x1=y1=0;has_core=False
+        while todo:
+            p=todo.pop();x,y=p%width,p//width;area+=1
+            if area<=area_limit:points.append(p)
+            elif area==area_limit+1:points=array('I')
+            x0=min(x0,x);y0=min(y0,y);x1=max(x1,x);y1=max(y1,y);has_core=has_core or bool(core[p])
+            for yy in range(max(0,y-1),min(height,y+2)):
+                base=yy*width
+                for xx in range(max(0,x-1),min(width,x+2)):
+                    q=base+xx
+                    if ids[q]<0 and pixels[q]==color:ids[q]=identity;todo.append(q)
+        components.append((color,area,x0,y0,x1,y1,has_core,points))
+    source=source if source is not None else image
+    original=source.tobytes();sw,sh=source.size
+    output=None;candidate_work=0
+    for identity,(color,area,x0,y0,x1,y1,has_core,points) in enumerate(components):
+        if area>area_limit or max(x1-x0+1,y1-y0+1)>span_limit or has_core:continue
+        ink=palette[color]
+        # Neutral marks and gray coverage bands are ambiguous: preserving them
+        # avoids thickening lettering or deleting authored gray/black details.
+        if max(ink)-min(ink)<=12:continue
+        candidate_work+=area*((2*reach+1)**2+4)
+        if candidate_work>8_000_000:return image
+        # An exact or gently varying authored one-pixel mark is not noise.
+        lo=[255,255,255];hi=[0,0,0];authored=True
+        for p in points:
+            x,y=p%width,p//width;sx=min(sw-1,int((x+.5)*sw/width));sy=min(sh-1,int((y+.5)*sh/height));q=(sy*sw+sx)*4
+            values=original[q:q+3]
+            if original[q+3]<128 or _color_distance(values,ink)>12**2:authored=False;break
+            for channel,value in enumerate(values):lo[channel]=min(lo[channel],value);hi[channel]=max(hi[channel],value)
+        if authored and max(b-a for a,b in zip(lo,hi))<=4:continue
+        neighbors=Counter();near=set()
+        for p in points:
+            x,y=p%width,p//width
+            for xx,yy in ((x-1,y),(x+1,y),(x,y-1),(x,y+1)):
+                if 0<=xx<width and 0<=yy<height:
+                    neighbor=ids[yy*width+xx]
+                    if neighbor>=0 and neighbor!=identity:neighbors[neighbor]+=1
+            for yy in range(max(0,y-reach),min(height,y+reach+1)):
+                for xx in range(max(0,x-reach),min(width,x+reach+1)):
+                    other=ids[yy*width+xx]
+                    if other>=0 and other!=identity and components[other][6]:near.add(other)
+        choices=[]
+        for neighbor,contacts in neighbors.items():
+            candidate,count,*_=components[neighbor];target=palette[candidate]
+            if not components[neighbor][6] or count<max(round(20*working_scale**2),3*area):continue
+            distance=_color_distance(ink,target)
+            if distance>64**2:continue
+            contrasting=[palette[components[other][0]] for other in near
+                         if other!=neighbor and components[other][1]>=max(round(20*working_scale**2),3*area)
+                         and _color_distance(target,palette[components[other][0]])>=128**2]
+            if not contrasting:continue
+            blended=False
+            for foreground in contrasting:
+                length=_color_distance(target,foreground)
+                t=sum((c-a)*(b-a) for c,a,b in zip(ink,target,foreground))/length
+                error=sum((c-(a+t*(b-a)))**2 for c,a,b in zip(ink,target,foreground))
+                if 0<=t<=1 and error<=12**2:blended=True;break
+            if not blended:choices.append((distance,-contacts,candidate))
+        if not choices:continue
+        replacement=bytes(palette[min(choices)[2]])
+        if output is None:output=bytearray(image.tobytes())
+        for p in points:output[p*4:p*4+3]=replacement
+    return Image.frombytes('RGBA',image.size,bytes(output)) if output is not None else image
+
+
 def _prepare(image, options, notes):
     input_width=image.width
     image.thumbnail((options["max_dimension"], options["max_dimension"]),
@@ -542,6 +639,9 @@ def _prepare(image, options, notes):
                                    dither=Image.Dither.NONE).convert("RGB")
         image = rgb.convert("RGBA")
         image.putalpha(alpha)
+    if (options['preset']=='logo' and options['mode']=='spline' and options['smoothing']>0
+            and options['speckle']>0 and logo_palette and ink_source is not None):
+        image = _cleanup_edge_fragments(image, ink_source, image.width/input_width)
     if image.getchannel("A").getbbox() is None:
         raise VectorizationError("No visible foreground remains. Change transparency or B/W threshold.")
     return image

@@ -211,7 +211,7 @@ class VectorFixture(unittest.TestCase):
         self.assertEqual(ui._vector_key(), "install_vector")
 
     def test_verified_1_0_2_offers_1_0_3_update_and_preserves_previous_runtime(self):
-        pinned = vector_app.TRUSTED_PREVIOUS_RELEASES[0]
+        pinned = next(row for row in vector_app.TRUSTED_PREVIOUS_RELEASES if row['version']=='1.0.2')
         self.assertEqual(pinned["version"], "1.0.2")
         self.assertEqual(pinned["manifest_sha256"],
                          "abe3f2a20a15b8b5481e6aaea52bd8194fbd9d4201a9d5e900bbddca284872ac")
@@ -238,6 +238,38 @@ class VectorFixture(unittest.TestCase):
             self.assertTrue(current["vector_current_verified"])
             self.assertFalse(current["vector_update_available"])
             self.assertEqual(current["vector_version"], "1.0.3")
+            vector_app.verify_install(Path(installed["path"]), previous)
+            self.assertEqual((Path(installed["path"]) / "VectorMigic.exe").read_bytes(), original)
+            self.assertEqual(self.panel.read_bytes(), b"do-not-change-panel-or-private-state")
+
+    def test_verified_1_0_3_offers_1_0_4_update_and_preserves_previous_runtime(self):
+        pinned = vector_app.TRUSTED_PREVIOUS_RELEASES[0]
+        self.assertEqual(pinned["version"], "1.0.3")
+        self.assertEqual(pinned["manifest_sha256"],
+                         "c53b390ec119ff9c26fe4d2e58b02fe987fb843cc902f37daedc7f8f77af734e")
+        previous = dict(self.next_release("1.0.3"))
+        installed = vector_app.install_app(self.machine, previous, bundle_root=self.bundle)
+        original = (Path(installed["path"]) / "VectorMigic.exe").read_bytes()
+        release = self.next_release("1.0.4")
+        with mock.patch.object(vector_app, "TRUSTED_PREVIOUS_RELEASES", (previous,)):
+            state = vector_app.installed_state(self.machine, release)
+            self.assertEqual(state["vector_version"], "1.0.3")
+            self.assertEqual(state["vector_latest_version"], "1.0.4")
+            self.assertTrue(state["vector_update_available"])
+            self.assertFalse(state["vector_current_verified"])
+            self.assertEqual([app["id"] for app in catalogue_selection(state, "updates")[1]], ["vector"])
+            ui = object.__new__(MITOMLauncherUI)
+            ui.state = state
+            self.assertEqual(ui._vector_key(), "install_vector")
+            with mock.patch("subprocess.Popen") as launch:
+                with self.assertRaises(vector_app.VectorAppError):
+                    vector_app.open_app(self.machine, release)
+                launch.assert_not_called()
+            vector_app.install_app(self.machine, release, bundle_root=self.bundle)
+            current = vector_app.installed_state(self.machine, release)
+            self.assertTrue(current["vector_current_verified"])
+            self.assertFalse(current["vector_update_available"])
+            self.assertEqual(current["vector_version"], "1.0.4")
             vector_app.verify_install(Path(installed["path"]), previous)
             self.assertEqual((Path(installed["path"]) / "VectorMigic.exe").read_bytes(), original)
             self.assertEqual(self.panel.read_bytes(), b"do-not-change-panel-or-private-state")

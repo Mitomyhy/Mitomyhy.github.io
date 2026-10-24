@@ -14,6 +14,8 @@ The small-region control displays an area in square pixels: increasing it can re
 
 ## Engine and preview
 
+Version 1.0.4 cleans short, low-contrast edge fragments before fitting curves. A small region can merge into a larger adjacent ink when the local colors indicate a quantized shadow or blend beside a contrasting shape. The cleanup protects stable interiors, flat source-authored thin marks and the alpha mask. It does not blur the whole image or increase the processing size. This reduces hardened shadow specks around lettering while retaining the existing curve and export controls.
+
 Version 1.0.3 fixes high-color Logo Auto inputs that previously bypassed palette reduction and fell back to thousands of fragmented color regions. A bounded adaptive palette keeps the precision curve backend available for blended lettering and artwork with color bands. Spatial ink assignment prevents a distant green or red fill from becoming a false fringe around white letters. Gradient artwork becomes bands of solid vector color; it is not reconstructed as live gradient meshes.
 
 The earlier precision improvements remain: antialiased edges choose between nearby trusted inks; opaque regions paint from border colors toward inner regions; hard-edged artwork can use its native pixel grid for simpler contours. Narrow strokes and tiny counter holes retain the antialias-aware path. These rules use image content rather than sample names or fixed customer palettes.

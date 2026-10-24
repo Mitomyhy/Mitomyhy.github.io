@@ -4,8 +4,8 @@ window.MITOM_CONFIG = {
   canonicalUrl: 'https://mitomyhy.github.io/',
   githubUrl: 'https://github.com/Mitomyhy',
   repositoryUrl: 'https://github.com/Mitomyhy/uoy-photoshop-panel',
-  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.24.7',
-  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.24.7/MITOM-Launcher-Setup-2026.10.24.7.exe',
+  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.24.8',
+  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.24.8/MITOM-Launcher-Setup-2026.10.24.8.exe',
   launcherProtocol: 'uoy://',
   apps: [{
     id: 'photoshop-panel',
@@ -30,14 +30,14 @@ window.MITOM_CONFIG = {
     category: { en: 'Raster to vector', vi: 'Chuyển ảnh thành vector' },
     platform: 'WINDOWS · OFFLINE CPU',
     icon: 'vector-migic.png',
-    githubUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/vector-migic/1.0.3',
+    githubUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/vector-migic/1.0.4',
     status: 'available',
     statusLabel: { en: 'AVAILABLE VIA LAUNCHER', vi: 'SẴN SÀNG QUA LAUNCHER' },
     summary: {
       en: 'Trace PNG, JPG, WebP, BMP and TIFF into editable AI, SVG, PDF and EPS vector paths on your computer.',
       vi: 'Chuyển PNG, JPG, WebP, BMP và TIFF thành đường vector AI, SVG, PDF và EPS ngay trên máy của bạn.'
     },
-    version: '1.0.3',
+    version: '1.0.4',
     detail: {
       en: 'Convert raster images into vector paths with color or black-and-white tracing, logo, illustration and photo presets, transparency controls and batch export. Runs locally on CPU with no cloud account or credits.',
       vi: 'Chuyển ảnh thành đường vector bằng chế độ màu hoặc đen trắng, preset logo, minh họa và ảnh chụp, tùy chọn nền trong suốt và xuất hàng loạt. Chạy local bằng CPU, không cần tài khoản đám mây hay credit.'
