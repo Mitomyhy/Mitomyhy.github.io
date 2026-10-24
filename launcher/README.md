@@ -1,6 +1,6 @@
 # MITOM Launcher
 
-Launcher **2026.10.24.3** includes **Vector Migic** as a separate, local application.
+Launcher **2026.10.24.6** includes **Vector Migic 1.0.2** as a separate, local application.
 Its grid card and table row share independent install state, search, filters
 and counts. The Photoshop Panel's install/update/repair/rollback and account
 flows remain unchanged. English is the default; Settings offers Tiếng Việt and
@@ -35,7 +35,30 @@ repairs and the MITOM desktop catalogue. The existing signed Photoshop Panel cor
 feed is `https://mitomyhy.github.io/releases/stable.json`, currently publishing
 panel 2026.10.21.2. Account data and machine settings are kept by the original
 transactional installer. Metadata-only update checks run after startup and every
-five idle minutes; they never install software or close applications.
+five idle minutes. The launcher checks the independent signed
+`releases/launcher-stable.json` channel as well as the original panel feed.
+Manual **Check for updates** checks both channels and reports partial failures
+rather than claiming everything is current when one check failed.
+
+**Update & restart** downloads and verifies the advertised launcher, keeps it in
+a versioned local folder, and starts it withdrawn. The current launcher stays
+open until the new process has built its interface and acknowledged readiness.
+It then hands over the window, refreshes the Start menu/protocol registration,
+and closes only its own UI. Failure keeps the old UI open for retry. Previous
+program versions, open Vector Migic work and Photoshop data are not deleted.
+
+Versions through 2026.10.24.5 only consult the original panel feed, which still
+advertises launcher 2026.10.22.1. They need one upgrade to this corrected release
+to use the independent launcher channel; subsequent releases update in-app.
+The panel feed/key remain unchanged. The new channel exposes only a launcher
+artifact even though its signed envelope uses the existing verifier format.
+
+Every launcher publication must update the executable, signed launcher channel,
+website catalogue and latest-download index together. Sign the final payload
+with `publishing/sign-launcher-channel.ps1`; its private key is Windows DPAPI
+protected outside the project under the current user's MITOM/Publishing folder.
+Only `launcher-update-public-key.json` is bundled or published. A missing key
+fails signing instead of silently generating a new publisher identity.
 
 Run from source with Python 3.12:
 
@@ -56,7 +79,7 @@ the pinned application ZIP when Install is clicked. Use `-VectorPayload Bundled`
 for an offline installer containing that ZIP.
 
 The default Python path uses the existing local `prompt-studio/.venv`. Output is
-written to `releases/mitom-launcher/2026.10.24.3/` with SHA-256 and packaged runtime,
+written to `releases/mitom-launcher/2026.10.24.6/` with SHA-256 and packaged runtime,
 UI and HTTPS smoke reports. Runtime/UI smoke tests do not use the network.
 `--network-smoke` fetches and verifies signed release metadata and checks the
 launcher URL using HEAD; it downloads no installer artifact and installs nothing.

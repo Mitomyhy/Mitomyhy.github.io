@@ -1,7 +1,7 @@
 param(
     [string]$Python = "",
     [string]$OutputDirectory = "",
-    [string]$Version = "2026.10.24.5",
+    [string]$Version = "2026.10.24.6",
     [ValidateSet("Online", "Bundled")]
     [string]$VectorPayload = "Online",
     [string]$CertificateThumbprint = $env:MITOM_SIGN_CERT_SHA1,
@@ -31,7 +31,8 @@ $arguments = @(
     "--add-data", ((Join-Path $sourceRoot "vector-release.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "recovery-manifest.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "launcher-release.json") + ";."),
-    "--add-data", ((Join-Path $sourceRoot "release-public-key.json") + ";.")
+    "--add-data", ((Join-Path $sourceRoot "release-public-key.json") + ";."),
+    "--add-data", ((Join-Path $sourceRoot "launcher-update-public-key.json") + ";.")
 )
 if ($VectorPayload -eq "Bundled") {
     $arguments += @("--add-data", ((Join-Path $sourceRoot "apps") + ";apps"))

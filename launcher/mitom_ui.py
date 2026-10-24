@@ -88,6 +88,7 @@ _VI = {
     "Try another search or show all apps.": "Thử tìm kiếm khác hoặc hiện tất cả ứng dụng.",
     "SHOW ALL APPS": "HIỆN TẤT CẢ ỨNG DỤNG", "READY": "SẴN SÀNG", "UPDATE": "CẬP NHẬT",
     "CHECK FOR UPDATES": "KIỂM TRA CẬP NHẬT", "UPDATE LAUNCHER": "CẬP NHẬT LAUNCHER",
+    "UPDATE & RESTART": "CẬP NHẬT & KHỞI ĐỘNG LẠI",
     "Settings & installation": "Cài đặt & vị trí cài", "LANGUAGE": "NGÔN NGỮ",
     "Not installed": "Chưa cài", "Available after installation": "Có sau khi cài đặt",
     "INSTALL LOCATION": "VỊ TRÍ CÀI ĐẶT", "DOWNLOAD CACHE": "BỘ NHỚ TẢI XUỐNG",
@@ -632,7 +633,7 @@ class MITOMLauncherUI:
             badge = "UPDATE"
             banner = f"MITOM Launcher {self.state.get('launcher_latest_version', '')} is available."
             self._banner_key = "update_launcher" if callable(self.actions.get("update_launcher")) else "install_update"
-            banner_action = "UPDATE LAUNCHER"
+            banner_action = "UPDATE & RESTART"
         elif update:
             badge, banner = "UPDATE", f"Photoshop Panel {latest} is available."
             self._banner_key = self._primary_key()
