@@ -29,6 +29,8 @@ _DEFAULT_RELEASE = object()
 # Keep newest first so an older side-by-side installation cannot mask it.
 # Never trust arbitrary folders or a manifest supplied from the user's machine.
 TRUSTED_PREVIOUS_RELEASES = (
+    {"schema": 1, "app_id": APP_ID, "version": "1.0.2", "entry": "VectorMigic.exe",
+     "manifest_sha256": "abe3f2a20a15b8b5481e6aaea52bd8194fbd9d4201a9d5e900bbddca284872ac"},
     {"schema": 1, "app_id": APP_ID, "version": "1.0.1", "entry": "VectorMigic.exe",
      "manifest_sha256": "d0b6152cac4a1311c4cecc55999c340bc600ece69bfde3dee19cf5cb2c10be95"},
     {"schema": 1, "app_id": APP_ID, "version": "1.0.0", "entry": "VectorMigic.exe",

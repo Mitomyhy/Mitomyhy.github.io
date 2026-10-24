@@ -1,13 +1,13 @@
 {
   "schema": 1,
   "app_id": "vector-migic",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "entry": "VectorMigic.exe",
-  "manifest_sha256": "abe3f2a20a15b8b5481e6aaea52bd8194fbd9d4201a9d5e900bbddca284872ac",
+  "manifest_sha256": "c53b390ec119ff9c26fe4d2e58b02fe987fb843cc902f37daedc7f8f77af734e",
   "archive": {
-    "url": "https://mitomyhy.github.io/releases/vector-migic/1.0.2/VectorMigic-1.0.2.zip",
-    "size": 32803255,
-    "sha256": "98781bcab8165395e2ccc5c88eb930e196845b5f761bda8e11cf6dd6767844e5",
-    "bundled": "apps/VectorMigic-1.0.2.zip"
+    "url": "https://mitomyhy.github.io/releases/vector-migic/1.0.3/VectorMigic-1.0.3.zip",
+    "size": 32823116,
+    "sha256": "b34ee396b690b2770e9a8e0632488aa808842f547be478a853ef12d0f678fb4c",
+    "bundled": "apps/VectorMigic-1.0.3.zip"
   }
 }

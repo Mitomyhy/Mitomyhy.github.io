@@ -51,6 +51,68 @@ class FidelityTests(unittest.TestCase):
         image=Image.frombytes('RGBA',(64,64),bytes(channel for _ in range(4096) for channel in (*[generator.randrange(256) for _ in range(3)],255)))
         self.assertIsNone(engine._logo_palette(image,8))
 
+    def test_high_color_antialiased_logo_auto_is_bounded_and_keeps_letter_hole(self):
+        import random
+        generator=random.Random(133)
+        width,height=512,384
+        pixels=bytes(channel for y in range(height) for x in range(width)
+                     for channel in (x//2,30+y//2,20+(x+y)//32+generator.randrange(8),255))
+        image=Image.frombytes('RGBA',(width,height),pixels)
+        lettering=Image.new('L',(width*4,height*4),0)
+        draw=ImageDraw.Draw(lettering)
+        draw.rectangle((240,200,420,1250),fill=255)
+        draw.ellipse((420,200,1400,1250),fill=255)
+        draw.ellipse((650,410,1180,1040),fill=0)
+        lettering=lettering.resize(image.size,Image.Resampling.LANCZOS)
+        image=Image.composite(Image.new('RGBA',image.size,'white'),image,lettering)
+        self.assertIsNone(image.getcolors(65536),'Fixture must exercise the high-color PNG failure.')
+        source=self.root/'high-color-logo.png';image.save(source)
+        output=self.root/'high-color-logo.svg'
+        result=engine.vectorize(source,output,{'colors':0,'max_dimension':512})
+        self.assertEqual(result['trace_backend'],'potrace-1.16')
+        self.assertEqual(result['curve_backend'],'potrace')
+        self.assertLessEqual(result['color_count'],32)
+        self.assertLessEqual(result['path_count'],64)
+        self.assertEqual(result['options']['colors'],0)
+        prepared=engine._prepare(image.copy(),engine.normalize_options({'colors':0,'max_dimension':512}),[])
+        self.assertTrue(all(channel>230 for channel in prepared.getpixel((80,150))[:3]))
+        self.assertFalse(all(channel>230 for channel in prepared.getpixel((220,180))[:3]))
+        expected=lettering.point(lambda value:255 if value>=128 else 0)
+        white_pixels=bytes(255 if all(channel>230 for channel in pixel[:3]) else 0
+                           for pixel in prepared.get_flattened_data())
+        actual=Image.frombytes('L',prepared.size,white_pixels)
+        from PIL import ImageChops
+        intersection=ImageChops.darker(expected,actual).histogram()[255]
+        union=ImageChops.lighter(expected,actual).histogram()[255]
+        self.assertGreater(intersection/union,.985)
+        root=ET.fromstring(output.read_bytes())
+        white=[p for p in root.iter('{'+engine.SVG_NS+'}path')
+               if p.get('fill') and all(int(p.get('fill')[n:n+2],16)>230 for n in (1,3,5))]
+        self.assertTrue(white)
+        self.assertTrue(any(re.search('[Cc]',p.get('d','')) for p in white))
+
+    def test_auto_fallback_ignores_hidden_rgb_and_manual_palette_is_not_replaced(self):
+        import random
+        generator=random.Random(35)
+        image=Image.frombytes('RGBA',(160,120),bytes(channel for _ in range(19200)
+                         for channel in (*[generator.randrange(256) for _ in range(3)],0)))
+        draw=ImageDraw.Draw(image)
+        draw.rectangle((20,20,70,90),fill=(240,20,40,255))
+        draw.rectangle((90,20,140,90),fill=(255,255,255,255))
+        palette=engine._automatic_palette(image)
+        self.assertEqual(set(palette),{(240,20,40),(255,255,255)})
+        noisy=Image.effect_noise((96,96),65).convert('RGBA')
+        prepared=engine._prepare(noisy,engine.normalize_options({'colors':0}),[])
+        self.assertLessEqual(len(prepared.getcolors(256)),32)
+        image=Image.new('RGBA',(180,140),'white')
+        draw=ImageDraw.Draw(image)
+        for index in range(12):
+            draw.rectangle((index*15,10,index*15+14,130),fill=(index*20,240-index*15,30+index*17))
+        options=engine.normalize_options({'colors':4})
+        prepared=engine._prepare(image,options,[])
+        self.assertEqual(options['colors'],4)
+        self.assertLessEqual(len(prepared.getcolors(256)),4)
+
     def test_precision_backend_strict_palette_and_compound_holes(self):
         image=Image.new('RGBA',(180,140),(0,0,0,0))
         draw=ImageDraw.Draw(image)

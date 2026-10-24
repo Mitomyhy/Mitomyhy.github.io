@@ -1,7 +1,8 @@
 """Offline raster tracing for Vector Migic.
 
-VTracer fits real vector paths. This module never uploads input or downloads a
-model. It accepts raster inputs only and exports path-only SVG, PDF and EPS.
+Potrace and VTracer fit real vector paths. This module never uploads inputs or
+downloads a model. Raster inputs become path-only SVG, PDF, EPS or editable
+classic Illustrator documents through the independent export writer.
 """
 from __future__ import annotations
 
@@ -31,7 +32,7 @@ MAX_SVG_BYTES = 64 * 1024 * 1024
 ALLOWED_RASTER_FORMATS = frozenset({"PNG", "JPEG", "WEBP", "BMP", "TIFF"})
 SVG_NS = "http://www.w3.org/2000/svg"
 PRESETS = {
-    "logo": {"colors": 16, "color_precision": 8, "speckle": 1,
+    "logo": {"colors": 0, "color_precision": 8, "speckle": 1,
              "smoothing": 0.5, "corner_threshold": 60},
     "illustration": {"colors": 32, "color_precision": 7, "speckle": 4,
                      "smoothing": 0.45, "corner_threshold": 60},
@@ -172,11 +173,63 @@ def _report(callback, progress, message):
         callback({"progress": progress, "message": message})
 
 
+def _palette_histogram(image):
+    """Keep exact small palettes, but bound noisy/gradient color statistics.
+
+    More than 65,536 distinct RGBA values is common in antialiased PNGs. It
+    does not mean a logo needs that many inks. The fallback histogram uses a
+    five-bit RGB grid (at most 33**3 visible bins), ignoring transparent RGB.
+    It is used only for palette analysis; original pixels still locate edges.
+    """
+    histogram = image.getcolors(65536)
+    if histogram is not None:
+        return histogram
+    visible = image.getchannel('A').point(lambda value: 255 if value >= 128 else 0)
+    rounded = image.convert('RGB').point(lambda value: min(255, ((value+4)//8)*8))
+    rounded = Image.composite(rounded, Image.new('RGB', image.size), visible).convert('RGBA')
+    rounded.putalpha(visible)
+    return rounded.getcolors(65536)
+
+
+def _automatic_palette(image, limit=32):
+    """A bounded weighted palette when the artwork has no flat-logo solution.
+
+    Build a small opaque color sample from visible histogram bins, so hidden
+    RGB and a large transparent canvas cannot consume the selected inks.
+    Gradient/shaded illustrations retain bands instead of silently falling
+    through to thousands of raw-color polygon regions in the logo preset.
+    """
+    rgb = image.convert('RGB')
+    span = ImageChops.subtract(rgb.filter(ImageFilter.MaxFilter(3)), rgb.filter(ImageFilter.MinFilter(3)))
+    red, green, blue = span.split()
+    largest = ImageChops.lighter(ImageChops.lighter(red, green), blue)
+    interior = ImageChops.multiply(largest.point(lambda value:255 if value<=12 else 0),
+                                   image.getchannel('A').point(lambda value:255 if value>=128 else 0))
+    visible_count = image.getchannel('A').point(lambda value:255 if value>=128 else 0).histogram()[255]
+    sample_image = image
+    if interior.histogram()[255] >= max(8, visible_count*.2):
+        # Edge blends describe coverage, not additional inks. Exclude them
+        # when sufficient interior/slow-gradient samples define the palette.
+        sample_image = rgb.convert('RGBA')
+        sample_image.putalpha(interior)
+    histogram = [(count, color[:3]) for count, color in _palette_histogram(sample_image)
+                 if color[3] >= 128]
+    total = sum(count for count, _color in histogram)
+    if not total:
+        return None
+    unit = max(1, math.ceil(total/262144))
+    pixels = b''.join(bytes(color)*max(1, count//unit) for count, color in histogram)
+    sample = Image.frombytes('RGB', (len(pixels)//3, 1), pixels)
+    quantized = sample.quantize(colors=limit, method=Image.Quantize.MEDIANCUT,
+                               dither=Image.Dither.NONE)
+    palette = quantized.getpalette()
+    return [tuple(palette[index*3:index*3+3])
+            for _count, index in sorted(quantized.getcolors(), reverse=True)]
+
+
 def _logo_palette(image, limit):
     """Find repeated flat colors without treating blended JPEG edges as inks."""
-    histogram = image.getcolors(65536)
-    if histogram is None:
-        return None
+    histogram = _palette_histogram(image)
     histogram = sorted(((count, color[:3]) for count, color in histogram if color[3] >= 128), reverse=True)
     total = sum(count for count, _color in histogram)
     if not total:
@@ -191,9 +244,7 @@ def _logo_palette(image, limit):
                                    image.getchannel('A').point(lambda value: 255 if value >= 128 else 0))
     rgba = rgb.convert('RGBA')
     rgba.putalpha(interior)
-    flat_histogram = rgba.getcolors(65536)
-    if flat_histogram is None:
-        return None
+    flat_histogram = _palette_histogram(rgba)
     bins = {}
     for count, color in flat_histogram:
         if color[3] == 0:
@@ -362,7 +413,7 @@ def _local_ink_assignment(rgb, alpha, palette, working_scale, source_rgb=None, s
     that ink; distinct thin accent inks can seed from their exact color.
     Per-color distance fields are bounded by the validated processing canvas.
     """
-    if len(palette)<3 or len(palette)>16:
+    if len(palette)<3 or len(palette)>32:
         return None
     blends=_blend_inks(palette)
     span=ImageChops.subtract(rgb.filter(ImageFilter.MaxFilter(3)),rgb.filter(ImageFilter.MinFilter(3)))
@@ -376,9 +427,13 @@ def _local_ink_assignment(rgb, alpha, palette, working_scale, source_rgb=None, s
     source_alpha=source_alpha if source_alpha is not None else alpha
     endpoint_seeds={}
     trusted={}
+    # Larger adaptive palettes also represent slow gradients. Their centroids
+    # can be farther from an actual local pixel; starving those background
+    # seeds would wrongly expand a nearby white letter into that background.
+    seed_tolerance = 32 if len(palette)>16 else 20
     for color in palette:
         dist=_rgb_distance_image(rgb,Image.new('RGB',rgb.size,color))
-        close=ImageMath.lambda_eval(lambda a:(a['d']<=20**2)*255,d=dist).convert('L')
+        close=ImageMath.lambda_eval(lambda a:(a['d']<=seed_tolerance**2)*255,d=dist).convert('L')
         trusted[color]=ImageChops.multiply(close,flat if color in blends else alpha)
     distances=[]
     first=Image.new('L',rgb.size,255);second=first.copy()
@@ -416,11 +471,16 @@ def _local_ink_assignment(rgb, alpha, palette, working_scale, source_rgb=None, s
 
 def _prepare(image, options, notes):
     input_width=image.width
+    image.thumbnail((options["max_dimension"], options["max_dimension"]),
+                    Image.Resampling.LANCZOS)
     logo_palette = (_logo_palette(image, options['colors'] or 32)
                     if options['preset'] == 'logo' and options['color_mode'] == 'color'
                     else None)
-    image.thumbnail((options["max_dimension"], options["max_dimension"]),
-                    Image.Resampling.LANCZOS)
+    if options['preset']=='logo' and options['color_mode']=='color' and not options['colors']:
+        if not logo_palette:
+            logo_palette = _automatic_palette(image)
+        if logo_palette:
+            notes.append(f'Automatic palette selected {len(logo_palette)} inks; shaded areas use vector color bands.')
     ink_source=image.copy() if logo_palette and options['mode']!='none' else None
     if ink_source is not None and not options['transparent']:
         matte=Image.new('RGBA',ink_source.size,'white')
@@ -847,10 +907,166 @@ def _validated_svg(svg_data):
     return root, paths
 
 
+def _ai_document(drawing):
+    """Write legacy Illustrator 8 editable paths, with our own PS prolog.
+
+    Adobe Developer Support, AI File Format Specification (23 February 1998),
+    sections 2, 5.3-5.6 and 21. This is a legacy editable-path document, not a
+    renamed PDF/EPS or a modern Illustrator private-data container. SVG parsing,
+    arc/quadratic conversion and group/viewBox transforms come from svglib.
+    """
+    from reportlab.graphics.shapes import Group, Path as DrawingPath
+    from reportlab.graphics.transform import mmult, transformPoint
+
+    def number(value):
+        value = float(value)
+        if not math.isfinite(value) or abs(value) > 1e9:
+            raise VectorizationError("AI export contains an invalid coordinate.")
+        return format(value, '.7f').rstrip('0').rstrip('.') or '0'
+
+    width, height = float(drawing.width), float(drawing.height)
+    if not all(math.isfinite(value) and 0 < value <= 1e7 for value in (width, height)):
+        raise VectorizationError("AI export requires a finite, positive artboard.")
+    records = []
+
+    def visit(node, matrix):
+        if isinstance(node, Group):
+            matrix = mmult(matrix, node.transform)
+            for child in node.contents:
+                visit(child, matrix)
+            return
+        if not isinstance(node, DrawingPath) or node.isClipPath:
+            raise VectorizationError("Legacy AI export supports filled vector paths only. Use SVG or PDF for other artwork.")
+        if node.strokeColor is not None and node.strokeWidth:
+            raise VectorizationError("Legacy AI export requires outlined strokes. Use SVG or PDF for stroked artwork.")
+        color = node.fillColor
+        if color is None:
+            return
+        opacity = node.fillOpacity if node.fillOpacity is not None else 1
+        if abs(float(opacity) - 1) > 1e-9 or abs(float(getattr(color, 'alpha', 1)) - 1) > 1e-9:
+            raise VectorizationError("Legacy AI cannot preserve partial opacity. Export SVG or PDF instead.")
+        rgb = tuple(float(component) for component in color.rgb())
+        if not all(math.isfinite(component) and 0 <= component <= 1 for component in rgb):
+            raise VectorizationError("Invalid AI fill color.")
+        subpaths, current, position, start, cursor = [], None, None, None, 0
+        for operator in node.operators:
+            count = {0: 2, 1: 2, 2: 6, 3: 0}.get(operator)
+            if count is None or cursor + count > len(node.points):
+                raise VectorizationError("Unsupported path operator in AI export.")
+            # Illustrator's document artboard is [0, 0, width, -height].
+            # ReportLab supplies upward-positive page coordinates; place those
+            # within that artboard instead of importing artwork above it.
+            points = [(x, y - height) for x, y in
+                      (transformPoint(matrix, node.points[index:index + 2])
+                       for index in range(cursor, cursor + count, 2))]
+            cursor += count
+            if operator == 0:
+                if current is not None:
+                    subpaths.append((current, False))
+                position = start = points[0]
+                current = [('m', position)]
+            elif operator == 3:
+                if current is None:
+                    raise VectorizationError("Invalid closed path in AI export.")
+                subpaths.append((current, True))
+                current, position = None, start
+            else:
+                if current is None:
+                    if position is None:
+                        raise VectorizationError("AI path has no starting point.")
+                    current, start = [('m', position)], position
+                current.append(('L' if operator == 1 else 'C', tuple(value for point in points for value in point)))
+                position = points[-1]
+        if current is not None:
+            subpaths.append((current, False))
+        if cursor != len(node.points) or not subpaths:
+            raise VectorizationError("Invalid path geometry in AI export.")
+        if any(len(commands) > 8191 for commands, _closed in subpaths):
+            raise VectorizationError("A path exceeds the legacy AI segment limit. Export SVG or PDF instead.")
+        black = 1 - max(rgb)
+        cmyk = tuple((1 - component - black) / (1 - black) if black < 1 else 0
+                     for component in rgb) + (black,)
+        # AI8 stores both CMYK fallback values and the original RGB fill.
+        records.append(' '.join(number(component) for component in cmyk + rgb) + ' Xa')
+        records.append(('1' if node.fillMode == 0 else '0') + ' XR')
+        compound = len(subpaths) > 1
+        if compound:
+            records.append('*u')
+        for commands, closed in subpaths:
+            for operator, coordinates in commands:
+                records.append(' '.join(number(value) for value in coordinates) + ' ' + operator)
+            # Illustrator's legacy importer merges the final anchor into the
+            # first on a closed contour. Repeat the starting anchor explicitly,
+            # otherwise its last distinct corner is lost on actual import.
+            if closed and tuple(commands[-1][1][-2:]) != tuple(commands[0][1]):
+                records.append(' '.join(number(value) for value in commands[0][1]) + ' L')
+            records.append('f' if closed else 'F')
+        if compound:
+            records.append('*U')
+
+    visit(drawing, (1, 0, 0, 1, 0, 0))
+    if not records:
+        raise VectorizationError("No visible filled paths are available for AI export.")
+    # Only the documented operators used above are implemented. This original
+    # prolog has no borrowed Illustrator code, fonts, linked files or rasters.
+    prolog = r'''/VectorMigic_AI8 32 dict def
+VectorMigic_AI8 begin
+/_vm_compound false def
+/_vm_evenodd false def
+/m {moveto} bind def
+/L {lineto} bind def
+/C {curveto} bind def
+/Xa {7 3 roll pop pop pop pop setrgbcolor} bind def
+/XR {0 ne /_vm_evenodd exch def} bind def
+/_vm_paint {_vm_evenodd {eofill} {fill} ifelse newpath} bind def
+/F {_vm_compound not {_vm_paint} if} bind def
+/f {closepath F} bind def
+/*u {/_vm_compound true def newpath} bind def
+/*U {/_vm_compound false def _vm_paint} bind def
+/Lb {13 {pop} repeat} bind def
+/Ln {pop} bind def
+/A {pop} bind def
+/LB {} bind def
+end'''
+    header = [
+        '%!PS-Adobe-3.0', '%%Creator: MITOM Vector Migic - legacy Illustrator path writer',
+        '%%Title: Vector Migic artwork', '%%Pages: 1', '%%DocumentData: Clean7Bit',
+        f'%%BoundingBox: 0 0 {math.ceil(width)} {math.ceil(height)}',
+        f'%%HiResBoundingBox: 0 0 {number(width)} {number(height)}',
+        '%%DocumentSuppliedResources: procset VectorMigic_AI8 1.0 0',
+        '%AI5_FileFormat 4.0', '%AI3_ColorUsage: Color',
+        f'%AI3_TemplateBox: {number(width / 2)} {number(height / 2)} {number(width / 2)} {number(height / 2)}',
+        f'%AI5_ArtSize: {number(width)} {number(height)}', '%AI3_DocumentPreview: None',
+        '%AI5_NumLayers: 1', '%%PageOrigin:0 0',
+        '%%EndComments', '%%BeginProlog', '%%BeginResource: procset VectorMigic_AI8 1.0 0',
+        prolog, '%%EndResource', '%%EndProlog', '%%BeginSetup',
+        # PostScript has an upward-positive canvas, unlike the AI artboard.
+        'VectorMigic_AI8 begin', f'0 {number(height)} translate', '%%EndSetup',
+        '%AI5_BeginLayer', '1 1 1 1 0 0 1 0 79 128 255 0 50 Lb', '(Artwork) Ln', '0 A',
+    ]
+    return ('\n'.join(header + records + ['LB', '%AI5_EndLayer--', '%%PageTrailer', 'showpage', '%%Trailer', 'end', '%%EOF', ''])).encode('ascii')
+
+
 def _export_data(svg_data, output_format):
-    _validated_svg(svg_data)
+    root, _ = _validated_svg(svg_data)
     if output_format == "svg":
         return svg_data if isinstance(svg_data, bytes) else svg_data.encode("utf-8")
+    if output_format == "ai":
+        # svglib does not retain every SVG group/global opacity attribute in
+        # its drawing tree. Reject those here rather than silently exporting
+        # an opaque object in this legacy format.
+        for element in root.iter():
+            attributes = dict(element.attrib)
+            attributes.update(part.strip().split(':', 1) for part in
+                              element.get('style', '').split(';') if ':' in part)
+            for name in ('opacity', 'fill-opacity'):
+                if name in attributes:
+                    try:
+                        opacity = float(attributes[name])
+                    except ValueError as exc:
+                        raise VectorizationError("Unsupported AI opacity. Export SVG or PDF instead.") from exc
+                    if not math.isfinite(opacity) or abs(opacity - 1) > 1e-9:
+                        raise VectorizationError("Legacy AI cannot preserve partial opacity. Export SVG or PDF instead.")
     from svglib.svglib import svg2rlg
     from reportlab.graphics import renderPDF, renderPS
     from reportlab.graphics.shapes import Image as DrawingImage
@@ -863,6 +1079,8 @@ def _export_data(svg_data, output_format):
         for child in getattr(node, "contents", ()):
             reject_raster(child)
     reject_raster(drawing)
+    if output_format == "ai":
+        return _ai_document(drawing)
     if output_format == "pdf":
         data = renderPDF.drawToString(drawing)
         if not data.startswith(b"%PDF-"):
@@ -875,19 +1093,19 @@ def _export_data(svg_data, output_format):
         if not data.startswith(b"%!PS-Adobe-") or b"EPSF" not in data[:80]:
             raise VectorizationError("EPS export failed.")
         return data
-    raise VectorizationError("Export format must be SVG, PDF or EPS.")
+    raise VectorizationError("Export format must be SVG, PDF, EPS or AI.")
 
 
 def _output_format(output_path, format=None):
     suffix = Path(output_path).suffix.lower().lstrip(".")
     selected = str(format).lower().lstrip(".") if format is not None else suffix
-    if selected not in {"svg", "pdf", "eps"} or suffix != selected:
-        raise VectorizationError("Output extension must match SVG, PDF or EPS format.")
+    if selected not in {"svg", "pdf", "eps", "ai"} or suffix != selected:
+        raise VectorizationError("Output extension must match SVG, PDF, EPS or AI format.")
     return selected
 
 
 def export_vector(svg_path, output_path, format=None):
-    """Export our own path-only SVG to actual SVG/PDF/EPS, without rasterization."""
+    """Export path-only SVG to SVG/PDF/EPS or legacy Illustrator vector paths."""
     selected = _output_format(output_path, format)
     source = Path(svg_path)
     if source.stat().st_size > MAX_SVG_BYTES:

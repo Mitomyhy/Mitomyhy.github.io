@@ -46,7 +46,7 @@ from legacy_loader import populate as _populate
 
 _populate(globals(), "launcher")
 
-APP_VERSION = "2026.10.24.6"
+APP_VERSION = "2026.10.24.7"
 APP_TITLE = "MITOM Launcher"
 # This is a launcher repair. The verified Photoshop panel release is unchanged.
 CORE_VERSION = "2026.10.21.2"

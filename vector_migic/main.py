@@ -32,7 +32,7 @@ except ImportError:
 
 RESOURCES = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
 MAX_UPLOAD = 32 * 1024 * 1024
-FORMATS = {'svg', 'pdf', 'eps'}
+FORMATS = {'svg', 'pdf', 'eps', 'ai'}
 ID_RE = re.compile(r'^[a-f0-9]{32}$')
 
 class Session:
@@ -165,7 +165,7 @@ class Session:
 
     def export(self, identity, format):
         if format not in FORMATS:
-            raise ValueError('Export format must be SVG, PDF or EPS.')
+            raise ValueError('Export format must be SVG, PDF, EPS or AI.')
         with self.lock:
             job = self.jobs.get(identity)
             if not job or job['status'] != 'done':
@@ -245,7 +245,11 @@ def handler_for(session):
                     return self.send_data(200, (RESOURCES / file).read_bytes(), mime)
                 self.authorize()
                 if route == '/api/config':
-                    return self.json(200, {'version': VERSION, 'presets': engine.PRESETS, 'max_upload': MAX_UPLOAD})
+                    # Presets are complete option maps, so Reset also restores
+                    # advanced fields changed in a previous tracing session.
+                    presets = {name: engine.normalize_options({'preset': name})
+                               for name in engine.PRESETS}
+                    return self.json(200, {'version': VERSION, 'presets': presets, 'max_upload': MAX_UPLOAD})
                 if route == '/api/ping':
                     return self.json(200, {'ok': True})
                 parts = route.strip('/').split('/')
@@ -283,7 +287,7 @@ def handler_for(session):
                 if route == '/api/export':
                     format = request.get('format', 'svg')
                     data, name = session.export(request.get('job_id'), format)
-                    return self.send_data(200, data, {'svg': 'image/svg+xml', 'pdf': 'application/pdf', 'eps': 'application/postscript'}[format], name)
+                    return self.send_data(200, data, {'svg': 'image/svg+xml', 'pdf': 'application/pdf', 'eps': 'application/postscript', 'ai': 'application/postscript'}[format], name)
                 if route == '/api/export-batch':
                     identities, format = request.get('job_ids'), request.get('format', 'svg')
                     if not isinstance(identities, list) or not 1 <= len(identities) <= 30 or len(set(identities)) != len(identities):
@@ -336,7 +340,7 @@ def self_test():
         metrics = engine.vectorize(source, svg, {'preset': 'logo', 'colors': 8})
         assert '<path' in svg.read_text() and '<image' not in svg.read_text()
         formats = {}
-        for format in ('pdf', 'eps'):
+        for format in ('pdf', 'eps', 'ai'):
             output = folder / ('output.' + format)
             engine.export_vector(svg, output, format)
             assert output.stat().st_size > 100
