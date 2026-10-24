@@ -74,6 +74,7 @@ _VI = {
     "UPDATE AVAILABLE": "CÓ BẢN CẬP NHẬT", "NOT INCLUDED": "CHƯA CÓ GÓI CÀI",
     "INSTALL VECTOR MIGIC": "CÀI VECTOR MIGIC", "OPEN VECTOR MIGIC": "MỞ VECTOR MIGIC",
     "UPDATE VECTOR MIGIC": "CẬP NHẬT VECTOR MIGIC", "INSTALL PANEL": "CÀI PANEL",
+    "REPAIR VECTOR MIGIC": "SỬA VECTOR MIGIC", "REPAIR REQUIRED": "CẦN SỬA CÀI ĐẶT",
     "UPDATE PANEL": "CẬP NHẬT PANEL", "OPEN PHOTOSHOP": "MỞ PHOTOSHOP",
     "GRID": "LƯỚI", "TABLE": "BẢNG", "SEARCH ": "TÌM KIẾM ", "SORT ": "SẮP XẾP ",
     "01 / CREATIVE TOOLS": "01 / CÔNG CỤ SÁNG TẠO", "APPLICATION": "ỨNG DỤNG",
@@ -563,7 +564,7 @@ class MITOMLauncherUI:
         self._invoke(self._primary_key())
 
     def _vector_key(self):
-        return "open_vector" if self.state.get("vector_installed") else "install_vector"
+        return "open_vector" if self.state.get("vector_current_verified") else "install_vector"
 
     def _vector_action(self):
         self._invoke(self._vector_key())
@@ -656,12 +657,19 @@ class MITOMLauncherUI:
         self.table_status.configure(text=f"{self._t(state_title)}\n{version or '—'}", fg=GREEN if installed and not update else BLUE)
         vector_installed = bool(self.state.get("vector_installed"))
         vector_available = bool(self.state.get("vector_available"))
-        vector_status = "INSTALLED · UP TO DATE" if vector_installed else "AVAILABLE TO INSTALL" if vector_available else "NOT INCLUDED"
+        vector_update = bool(self.state.get("vector_update_available"))
+        vector_repair = bool(self.state.get("vector_repair_required"))
+        vector_status = ("UPDATE AVAILABLE" if vector_update else "REPAIR REQUIRED" if vector_repair else
+                         "INSTALLED · UP TO DATE" if vector_installed else "AVAILABLE TO INSTALL" if vector_available else "NOT INCLUDED")
         vector_version = self.state.get("vector_version") or self.state.get("vector_latest_version") or "—"
-        vector_title = "OPEN VECTOR MIGIC" if vector_installed else "INSTALL VECTOR MIGIC"
-        self.vector_badge.configure(text=self._t(vector_status), fg=GREEN if vector_installed else BLUE)
+        if vector_update:
+            vector_version += " → " + self.state.get("vector_latest_version", "")
+        vector_title = ("UPDATE VECTOR MIGIC" if vector_update else "REPAIR VECTOR MIGIC" if vector_repair else
+                        "OPEN VECTOR MIGIC" if self.state.get("vector_current_verified") else "INSTALL VECTOR MIGIC")
+        vector_color = GREEN if self.state.get("vector_current_verified") else BLUE
+        self.vector_badge.configure(text=self._t(vector_status), fg=vector_color)
         self.vector_version.configure(text=("Phiên bản " if self.state.get("language") == "vi" else "Version ") + vector_version)
-        self.vector_table_status.configure(text=f"{self._t(vector_status)}\n{vector_version}", fg=GREEN if vector_installed else BLUE)
+        self.vector_table_status.configure(text=f"{self._t(vector_status)}\n{vector_version}", fg=vector_color)
         for button in (self.vector_primary, self.vector_table_action):
             button.configure(text=self._t(vector_title))
             self._set_button_availability(button, self._vector_key())
@@ -694,7 +702,7 @@ class MITOMLauncherUI:
                            ("Repair / reinstall Vector Migic", "install_vector"),
                            ("Website ↗", "vector_website")):
             enabled = callable(self.actions.get(key)) and not self._busy and not self.state.get("preview")
-            if key == "open_vector" and not self.state.get("vector_installed"):
+            if key == "open_vector" and not self.state.get("vector_current_verified"):
                 enabled = False
             menu.add_command(label=self._t(title), command=lambda k=key: self._invoke(k),
                              state="normal" if enabled else "disabled")

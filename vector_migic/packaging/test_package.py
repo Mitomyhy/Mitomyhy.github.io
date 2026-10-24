@@ -23,7 +23,7 @@ class PortablePackageTests(unittest.TestCase):
         (self.app / "_internal").mkdir()
         (self.app / "_internal" / "engine.dat").write_bytes(b"local-runtime")
         self.smoke = self.root / "smoke.json"
-        self.smoke.write_text('{"ok":true}', encoding="utf-8")
+        self.smoke.write_text(json.dumps({"ok": True, "version": package.VERSION}), encoding="utf-8")
 
     def tearDown(self):
         self.temp.cleanup()
@@ -62,6 +62,12 @@ class PortablePackageTests(unittest.TestCase):
     def test_failed_runtime_not_packaged(self):
         self.smoke.write_text('{"ok":false}', encoding="utf-8")
         with self.assertRaisesRegex(ValueError, "must pass its self-test"):
+            self.build()
+        self.assertFalse((self.root / "launcher" / "vector-release.json").exists())
+
+    def test_wrong_runtime_version_not_packaged(self):
+        self.smoke.write_text(json.dumps({"ok": True, "version": "0.0.0"}), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "version does not match"):
             self.build()
         self.assertFalse((self.root / "launcher" / "vector-release.json").exists())
 

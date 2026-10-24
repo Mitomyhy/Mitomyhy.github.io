@@ -1,5 +1,6 @@
 from pathlib import Path
 import tempfile
+import re
 import unittest
 import xml.etree.ElementTree as ET
 from unittest import mock
@@ -39,7 +40,7 @@ class EngineTests(unittest.TestCase):
         self.assertNotIn("<image", text)
         self.assertNotIn("data:", text)
         self.assertEqual(root.attrib["viewBox"], "0 0 160 120")
-        self.assertTrue(any(path.attrib["d"].count("M") > 1 for path in paths), "hole must be a compound path")
+        self.assertTrue(any(len(re.findall('[Mm]',path.attrib['d']))>1 for path in paths), "hole must be a compound path")
         self.assertTrue(all(path.get("transform") != "translate(0,0)" for path in paths), "transparent canvas must not be filled")
 
     def test_bw_foreground_does_not_fill_transparent_canvas(self):

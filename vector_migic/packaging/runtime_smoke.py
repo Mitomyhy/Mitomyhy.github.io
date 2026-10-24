@@ -6,6 +6,7 @@ from io import BytesIO
 import json
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -13,6 +14,9 @@ import urllib.request
 import zipfile
 
 from PIL import Image, ImageDraw
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app_version import VERSION
 
 
 def run(executable: Path) -> dict:
@@ -53,7 +57,7 @@ def run(executable: Path) -> dict:
             else:
                 raise AssertionError("Private API accepted a request without the session token.")
             status, config, _ = request("/api/config")
-            assert status == 200 and json.loads(config)["version"] == "1.0.0"
+            assert status == 200 and json.loads(config)["version"] == VERSION
             image = Image.new("RGBA", (160, 120), (0, 0, 0, 0))
             draw = ImageDraw.Draw(image)
             draw.rectangle((12, 15, 90, 100), fill="#1559df")
@@ -74,6 +78,8 @@ def run(executable: Path) -> dict:
                 _, raw, _ = request("/api/job/" + identity)
                 job = json.loads(raw)
             assert job["status"] == "done", job.get("message")
+            assert job.get("metrics", {}).get("trace_backend") == "potrace-1.16", "Frozen app did not execute its reviewed Potrace tracing backend."
+            assert job.get("metrics", {}).get("curve_backend") == "potrace", "Unexpected frozen curve backend."
             export_sizes = {}
             for format, signature in (("svg", b"<svg"), ("pdf", b"%PDF"), ("eps", b"%!PS")):
                 _, raw, _ = request("/api/export", {"job_id": identity, "format": format})
@@ -87,8 +93,10 @@ def run(executable: Path) -> dict:
             request("/api/shutdown", {})
             process.wait(timeout=10)
             assert process.returncode == 0
-            return {"ok": True, "version": "1.0.0", "no_browser": True, "all_static_assets": True,
+            return {"ok": True, "version": VERSION, "no_browser": True, "all_static_assets": True,
                     "authenticated_loopback_api": True, "spawned_worker": True,
+                    "trace_backend": job["metrics"]["trace_backend"],
+                    "curve_backend": job["metrics"]["curve_backend"],
                     "path_only_svg": True, "exports": export_sizes, "batch_zip": True,
                     "conversion_seconds": round(time.monotonic() - started, 3),
                     "external_services_required": False, "clean_shutdown": True}

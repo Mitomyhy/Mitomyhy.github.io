@@ -7,9 +7,11 @@ $ErrorActionPreference = "Stop"
 $sourceRoot = $PSScriptRoot
 $workspaceRoot = Split-Path -Parent $sourceRoot
 if (-not $Python) { $Python = Join-Path $workspaceRoot ".work\vector-migic-env\Scripts\python.exe" }
-if (-not $OutputDirectory) { $OutputDirectory = Join-Path $workspaceRoot "releases\vector-migic\1.0.0" }
+$Version = (& $Python -c "import sys; sys.path.insert(0, sys.argv[1]); from app_version import VERSION; print(VERSION)" $sourceRoot).Trim()
+if ($LASTEXITCODE -ne 0 -or $Version -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid shared Vector Migic release version." }
+if (-not $OutputDirectory) { $OutputDirectory = Join-Path $workspaceRoot ("releases\vector-migic\" + $Version) }
 $OutputDirectory = [IO.Path]::GetFullPath($OutputDirectory)
-$buildRoot = Join-Path $workspaceRoot "build\vector-migic\1.0.0"
+$buildRoot = Join-Path $workspaceRoot ("build\vector-migic\" + $Version)
 New-Item -ItemType Directory -Path $buildRoot, $OutputDirectory -Force | Out-Null
 
 if (-not $SkipTests) {
@@ -29,6 +31,7 @@ $arguments = @(
     "--icon", (Join-Path $buildRoot "assets\VectorMigic.ico"),
     "--add-data", ((Join-Path $sourceRoot "static") + ";static"),
     "--add-data", ((Join-Path $sourceRoot "assets") + ";assets"),
+    "--add-data", ((Join-Path $sourceRoot "vendor") + ";vendor"),
     "--add-data", ((Join-Path $buildRoot "assets\notices") + ";notices"),
     "--collect-all", "vtracer", "--collect-all", "reportlab", "--collect-all", "svglib",
     "--collect-all", "PIL", "--collect-all", "lxml", "--collect-all", "cssselect2",
@@ -49,4 +52,4 @@ if (-not $smoke.ok) { throw "Packaged Vector Migic reported a failed self-test."
 if ($LASTEXITCODE -ne 0) { throw "Packaged Vector Migic HTTP/worker test failed." }
 & $Python (Join-Path $sourceRoot "packaging\package.py") --app-dir $appDirectory --output $OutputDirectory --workspace $workspaceRoot --smoke-report $smokePath
 if ($LASTEXITCODE -ne 0) { throw "Vector Migic archive validation failed." }
-Write-Output ("Built Vector Migic 1.0.0: " + (Join-Path $OutputDirectory "VectorMigic-1.0.0.zip"))
+Write-Output ("Built Vector Migic " + $Version + ": " + (Join-Path $OutputDirectory ("VectorMigic-" + $Version + ".zip")))

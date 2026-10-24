@@ -57,6 +57,16 @@ class VectorFixture(unittest.TestCase):
     def repin_archive(self):
         self.release["archive"].update(size=self.archive.stat().st_size, sha256=sha(self.archive.read_bytes()))
 
+    def next_release(self, version="1.0.1"):
+        manifest = json.loads(self.manifest)
+        manifest["version"] = version
+        self.manifest = json.dumps(manifest).encode()
+        self.release = {**self.release, "version": version, "manifest_sha256": sha(self.manifest),
+                        "archive": dict(self.release["archive"])}
+        self.write_archive()
+        self.repin_archive()
+        return self.release
+
     def test_offline_install_verifies_runtime_and_preserves_panel(self):
         release = vector_app.load_release(self.release_path)
         self.assertFalse(vector_app.installed_state(self.machine, release)["vector_installed"])
@@ -113,6 +123,93 @@ class VectorFixture(unittest.TestCase):
         self.assertEqual(options["cwd"], result["path"])
         self.assertEqual(options["env"]["PYINSTALLER_RESET_ENVIRONMENT"], "1")
 
+    def test_verified_previous_release_offers_update_and_never_opens_old_runtime(self):
+        previous = dict(self.release)
+        vector_app.install_app(self.machine, previous, bundle_root=self.bundle)
+        release = self.next_release()
+        with mock.patch.object(vector_app, "TRUSTED_PREVIOUS_RELEASES", (previous,)):
+            state = vector_app.installed_state(self.machine, release)
+            self.assertTrue(state["vector_installed"])
+            self.assertTrue(state["vector_update_available"])
+            self.assertFalse(state["vector_current_verified"])
+            self.assertEqual(state["vector_version"], "1.0.0")
+            self.assertEqual(state["vector_latest_version"], "1.0.1")
+            counts, updates = catalogue_selection(state, "updates")
+            self.assertEqual(counts["updates"], 1)
+            self.assertEqual([item["id"] for item in updates], ["vector"])
+            with mock.patch("subprocess.Popen") as launch:
+                with self.assertRaises(vector_app.VectorAppError):
+                    vector_app.open_app(self.machine, release)
+                launch.assert_not_called()
+            vector_app.install_app(self.machine, release, bundle_root=self.bundle)
+            current = vector_app.installed_state(self.machine, release)
+            self.assertTrue(current["vector_current_verified"])
+            self.assertFalse(current["vector_update_available"])
+            self.assertEqual(current["vector_version"], "1.0.1")
+
+    def test_changed_or_extra_files_in_previous_release_are_not_trusted(self):
+        previous = dict(self.release)
+        installed = vector_app.install_app(self.machine, previous, bundle_root=self.bundle)
+        release = self.next_release()
+        target = Path(installed["path"])
+        with mock.patch.object(vector_app, "TRUSTED_PREVIOUS_RELEASES", (previous,)):
+            for change in ("tampered", "extra"):
+                with self.subTest(change=change):
+                    if change == "tampered":
+                        (target / "VectorMigic.exe").write_bytes(b"changed")
+                    else:
+                        (target / "VectorMigic.exe").write_bytes(self.files["VectorMigic.exe"])
+                        (target / "unknown.dll").write_bytes(b"extra")
+                    state = vector_app.installed_state(self.machine, release)
+                    self.assertFalse(state["vector_installed"])
+                    self.assertFalse(state["vector_update_available"])
+
+    def test_verified_1_0_1_offers_1_0_2_update_with_old_release_also_present(self):
+        oldest = dict(self.release)
+        oldest_install = vector_app.install_app(self.machine, oldest, bundle_root=self.bundle)
+        previous = dict(self.next_release("1.0.1"))
+        previous_install = vector_app.install_app(self.machine, previous, bundle_root=self.bundle)
+        release = self.next_release("1.0.2")
+        history = (previous, oldest)
+        with mock.patch.object(vector_app, "TRUSTED_PREVIOUS_RELEASES", history):
+            state = vector_app.installed_state(self.machine, release)
+            self.assertEqual(state["vector_version"], "1.0.1")
+            self.assertEqual(state["vector_latest_version"], "1.0.2")
+            self.assertTrue(state["vector_update_available"])
+            self.assertFalse(state["vector_current_verified"])
+            self.assertEqual(state["vector_path"], previous_install["path"])
+            counts, apps = catalogue_selection(state, "updates")
+            self.assertEqual(counts, {"all": 2, "installed": 1, "updates": 1, "available": 1})
+            self.assertEqual([app["id"] for app in apps], ["vector"])
+            ui = object.__new__(MITOMLauncherUI)
+            ui.state = state
+            self.assertEqual(ui._vector_key(), "install_vector")
+            with mock.patch("subprocess.Popen") as launch:
+                with self.assertRaises(vector_app.VectorAppError):
+                    vector_app.open_app(self.machine, release)
+                launch.assert_not_called()
+            vector_app.install_app(self.machine, release, bundle_root=self.bundle)
+            current = vector_app.installed_state(self.machine, release)
+            self.assertEqual(current["vector_version"], "1.0.2")
+            self.assertTrue(current["vector_current_verified"])
+            self.assertFalse(current["vector_update_available"])
+            self.assertEqual(catalogue_selection(current, "updates")[1], [])
+            vector_app.verify_install(Path(previous_install["path"]), previous)
+            vector_app.verify_install(Path(oldest_install["path"]), oldest)
+            self.assertEqual(self.panel.read_bytes(), b"do-not-change-panel-or-private-state")
+
+    def test_corrupt_current_runtime_requires_repair_without_claiming_installed(self):
+        release = self.next_release()
+        installed = vector_app.install_app(self.machine, release, bundle_root=self.bundle)
+        (Path(installed["path"]) / "VectorMigic.exe").write_bytes(b"corrupt current runtime")
+        state = vector_app.installed_state(self.machine, release)
+        self.assertTrue(state["vector_repair_required"])
+        self.assertFalse(state["vector_current_verified"])
+        self.assertFalse(state["vector_installed"])
+        ui = object.__new__(MITOMLauncherUI)
+        ui.state = state
+        self.assertEqual(ui._vector_key(), "install_vector")
+
 
 class CatalogueTests(unittest.TestCase):
     def test_independent_install_counts_filters_and_search(self):
@@ -133,7 +230,8 @@ class CatalogueTests(unittest.TestCase):
         ui.actions = {"install_update": lambda: None}
         for installed, update, panel_key in ((False, False, "install"), (True, False, "open_photoshop"),
                                                (True, True, "install_update")):
-            ui.state = {"installed": installed, "update_available": update, "vector_installed": not installed}
+            ui.state = {"installed": installed, "update_available": update, "vector_installed": not installed,
+                        "vector_current_verified": not installed}
             self.assertEqual(ui._primary_key(), panel_key)
             self.assertEqual(ui._vector_key(), "open_vector" if not installed else "install_vector")
         self.assertEqual(len(catalogue_entries(ui.state)), 2)

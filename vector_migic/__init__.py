@@ -1,2 +1,2 @@
 """Vector Migic: independent, local raster-to-vector desktop application."""
-__version__ = '1.0.0'
+from .app_version import VERSION as __version__

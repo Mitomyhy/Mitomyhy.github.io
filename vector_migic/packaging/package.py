@@ -7,9 +7,12 @@ import json
 from pathlib import Path, PurePosixPath
 import shutil
 import stat
+import sys
 import zipfile
 
-VERSION = "1.0.0"
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from app_version import VERSION
+
 APP_ID = "vector-migic"
 ENTRY = "VectorMigic.exe"
 ARCHIVE = f"VectorMigic-{VERSION}.zip"
@@ -35,6 +38,8 @@ def create_package(app_dir: Path, output: Path, workspace: Path, smoke_report: P
     smoke = json.loads(smoke_report.read_text(encoding="utf-8-sig"))
     if smoke.get("ok") is not True:
         raise ValueError("Packaged runtime must pass its self-test before publication.")
+    if smoke.get("version") != VERSION:
+        raise ValueError("Packaged runtime version does not match the shared release version.")
     source_files = sorted((file for file in app_dir.rglob("*") if file.is_file() and file.name != MANIFEST), key=lambda file: file.relative_to(app_dir).as_posix())
     if not (app_dir / ENTRY).is_file():
         raise ValueError("Portable executable is missing.")

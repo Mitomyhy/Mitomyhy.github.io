@@ -25,6 +25,15 @@ RELEASE_PATH = BUNDLE_ROOT / "vector-release.json"
 MAX_ARCHIVE_BYTES = 768 * 1024 * 1024
 MAX_RUNTIME_BYTES = 2 * 1024 * 1024 * 1024
 _DEFAULT_RELEASE = object()
+# Known previous runtimes are trusted only by these exact manifest pins.
+# Keep newest first so an older side-by-side installation cannot mask it.
+# Never trust arbitrary folders or a manifest supplied from the user's machine.
+TRUSTED_PREVIOUS_RELEASES = (
+    {"schema": 1, "app_id": APP_ID, "version": "1.0.1", "entry": "VectorMigic.exe",
+     "manifest_sha256": "d0b6152cac4a1311c4cecc55999c340bc600ece69bfde3dee19cf5cb2c10be95"},
+    {"schema": 1, "app_id": APP_ID, "version": "1.0.0", "entry": "VectorMigic.exe",
+     "manifest_sha256": "76c2230f72edc5ff8765af5a3a0c44882cc3bc79c5000baa7a97b1f922cf034d"},
+)
 
 
 class VectorAppError(RuntimeError):
@@ -156,14 +165,32 @@ def verify_install(folder, release):
 def installed_state(data_root, release=_DEFAULT_RELEASE):
     release = load_release() if release is _DEFAULT_RELEASE else release
     state = {"vector_installed": False, "vector_version": "", "vector_available": bool(release),
-             "vector_latest_version": release["version"] if release else "", "vector_path": ""}
+             "vector_latest_version": release["version"] if release else "", "vector_path": "",
+             "vector_current_verified": False, "vector_update_available": False, "vector_repair_required": False}
     if not release:
         return state
     try:
-        target = verify_install(_target(data_root, release), release)
+        target = _target(data_root, release)
+        state["vector_repair_required"] = target.exists()
+        verify_install(target, release)
     except (OSError, ValueError, VectorAppError):
+        pass
+    else:
+        state.update(vector_installed=True, vector_version=release["version"], vector_path=str(target),
+                     vector_current_verified=True, vector_repair_required=False)
         return state
-    state.update(vector_installed=True, vector_version=release["version"], vector_path=str(target))
+    current_version = tuple(int(part) for part in release["version"].split(".")) if re.fullmatch(r"\d+(?:\.\d+)*", release["version"]) else ()
+    for previous in TRUSTED_PREVIOUS_RELEASES:
+        previous_version = tuple(int(part) for part in previous["version"].split("."))
+        if not current_version or previous_version >= current_version:
+            continue
+        try:
+            previous_target = verify_install(_target(data_root, previous), previous)
+        except (OSError, ValueError, VectorAppError):
+            continue
+        state.update(vector_installed=True, vector_version=previous["version"], vector_path=str(previous_target),
+                     vector_update_available=True)
+        return state
     return state
 
 

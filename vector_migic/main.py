@@ -23,12 +23,13 @@ import zipfile
 
 try:
     from . import engine
+    from .app_version import VERSION
     from .worker import run_engine
 except ImportError:
     import engine
+    from app_version import VERSION
     from worker import run_engine
 
-VERSION = '1.0.0'
 RESOURCES = Path(getattr(sys, '_MEIPASS', Path(__file__).resolve().parent))
 MAX_UPLOAD = 32 * 1024 * 1024
 FORMATS = {'svg', 'pdf', 'eps'}
