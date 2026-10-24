@@ -200,6 +200,18 @@ class ProjectStore:
         if entry is not None:value['char']=entry.get('char','')
         return value
 
+    def remove_image(self,project,image_id):
+        """Detach an uploaded image and its active glyphs in one project commit.
+
+        Immutable source assets and earlier built fonts stay available on disk;
+        a failed save never destroys their current project references.
+        """
+        image_id=identity(image_id)
+        if not any(image['id']==image_id for image in project['images']):
+            raise ValueError('Project image not found.')
+        project['images']=[image for image in project['images'] if image['id']!=image_id]
+        project['glyphs']=[glyph for glyph in project['glyphs'] if glyph.get('image_id')!=image_id]
+
     def put_glyph(self,project,record,*,glyph_id=None,image_id=None,box=None):
         record=validate_record(record);glyph_id=identity(glyph_id) if glyph_id else uuid.uuid4().hex
         folder=self.folder(project['id'])/'glyphs'

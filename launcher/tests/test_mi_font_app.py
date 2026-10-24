@@ -124,8 +124,11 @@ class MiFontFixture(unittest.TestCase):
         self.assertEqual(options["env"]["PYINSTALLER_RESET_ENVIRONMENT"], "1")
 
     def test_verified_previous_release_offers_update_and_never_opens_old_runtime(self):
+        pinned=mi_font_app.TRUSTED_PREVIOUS_RELEASES[0]
+        self.assertEqual(pinned['version'],'1.0.0')
+        self.assertEqual(pinned['manifest_sha256'],'9881638902890043fc979166637d2a23181166b6b016af93718e841054b532ee')
         previous = dict(self.release)
-        mi_font_app.install_app(self.machine, previous, bundle_root=self.bundle)
+        installed=mi_font_app.install_app(self.machine, previous, bundle_root=self.bundle)
         release = self.next_release()
         with mock.patch.object(mi_font_app, "TRUSTED_PREVIOUS_RELEASES", (previous,)):
             state = mi_font_app.installed_state(self.machine, release)
@@ -137,6 +140,9 @@ class MiFontFixture(unittest.TestCase):
             counts, updates = catalogue_selection(state, "updates")
             self.assertEqual(counts["updates"], 1)
             self.assertEqual([item["id"] for item in updates], ["mifont"])
+            ui=object.__new__(MITOMLauncherUI);ui.state=state
+            self.assertEqual(ui._mifont_key(),'install_mifont')
+            old_executable=(Path(state['mifont_path'])/'MiFont.exe').read_bytes()
             with mock.patch("subprocess.Popen") as launch:
                 with self.assertRaises(mi_font_app.MiFontAppError):
                     mi_font_app.open_app(self.machine, release)
@@ -146,6 +152,8 @@ class MiFontFixture(unittest.TestCase):
             self.assertTrue(current["mifont_current_verified"])
             self.assertFalse(current["mifont_update_available"])
             self.assertEqual(current["mifont_version"], "1.0.1")
+            mi_font_app.verify_install(Path(installed['path']),previous)
+            self.assertEqual((Path(installed['path'])/'MiFont.exe').read_bytes(),old_executable)
 
     def test_changed_or_extra_files_in_previous_release_are_not_trusted(self):
         previous = dict(self.release)

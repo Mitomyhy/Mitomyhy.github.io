@@ -46,6 +46,8 @@ priority over generated proposals. Generated entries retain `approximate` and
 | GET `/api/project/ID` | — | project |
 | POST `/api/project/update` | `{project_id,revision?,name?,family?,style?,charset?}` | project |
 | POST `/api/upload` | raw image body; `X-Project-Id`; URL-encoded `X-File-Name` | `{project,image}` |
+| POST `/api/image/remove` | `{project_id,image_id,revision?}` | project; detaches that image and associated active glyphs, preserves built fonts |
+| POST `/api/generate` | `{project_id,metadata?:{family?,style?},options?:{threshold:"auto"\|1..254,foreground?,ocr?,offline?}}` | one cancellable automatic job over every uploaded image; no mapped glyphs required |
 | POST `/api/analyze` | `{project_id,image_ids?:[],options?:{}}` | job; analyzes all images when omitted |
 | POST `/api/extract` | `{project_id,image_id,regions:[{id?,box,char?,baseline_y?,reference_height?}],options?:{}}` | job; ordered bulk extraction |
 | POST `/api/crop` | `{project_id,image_id,box,char?,baseline_y?,reference_height?,options?:{}}` | job; single manual extraction |
@@ -57,6 +59,8 @@ priority over generated proposals. Generated entries retain `approximate` and
 | GET `/api/job/ID` | — | job |
 | POST `/api/cancel` | `{job_id}` | job |
 | POST `/api/export` | `{project_id,format:"ttf"\|"otf",build_id?}` | font download; latest build when ID omitted |
+| POST `/api/export` | `{project_id,format:"fonts",build_id?}` | one ZIP with both TTF/OTF, coverage README, manifest and the selected build's full source/license notices |
+| POST `/api/font-bundle` | `{project_id,build_id?}` | alias for the `fonts` bundle |
 | POST `/api/export` | `{project_id,format:"project"}` | self-contained project ZIP |
 | POST `/api/project/import` | raw ZIP body | imported project with a new ID |
 | GET `/api/font-preview/PROJECT/BUILD/ttf` | — | authenticated font bytes; OTF also accepted |
@@ -67,26 +71,54 @@ priority over generated proposals. Generated entries retain `approximate` and
 | GET `/api/ping` | — | `{ok:true}` |
 | POST `/api/shutdown` | `{}` | `{ok:true}` |
 
-Upload multiple images by repeating `/api/upload` before Analyze. Image uploads
+Upload multiple images by repeating `/api/upload` before Generate. Image uploads
 are bounded to32MiB each; project ZIP imports to64MiB. Project changes save
 automatically. Edits to a project with an active job return409; other projects
 remain available. Optional revision checks reject stale edits with409.
 
-Job shape: `{id,project_id,kind,status,progress,message,result,project?}`.
+Job shape: `{id,project_id,kind,status,progress,message,message_key,result,project?}`.
 `project` appears after a successful mutating job. Build results contain
 `build_id`, font metrics and actual observed/generated/missing coverage.
+
+`generate` snapshots all images, family/style and normalized threshold options.
+It runs OCR/layout analysis, traces supported observed glyphs, optionally
+researches verified public OFL references locally, proposes remaining characters
+and creates both real font formats. No screenshot or outline is uploaded.
+An offline or failed reference lookup can use clearly marked CPU proposals.
+Automatic reference-derived fonts retain full OFL source notices. The requested
+family name is preserved unless it conflicts with a source Reserved Font Name;
+any required rename is reported in the result. Generated glyphs remain proposals
+rather than recovered originals.
+
+The worker's complete result must pass closed-outline, source-crop, license,
+1000UPM, actual TTF-glyf/OTF-CFF and ASCII95cmap validation. Only then does one
+atomic project revision attach new glyphs and the completed build. Failed or
+cancelled generation preserves previous project mappings and downloadable
+builds. Old builds remain available after image removal or another generation.
+Every automatic build stores immutable `source_image_ids` and normalized
+`generation_options` (including its requested `threshold`). On reopening the
+project, the UI can restore that threshold and detect images changed since
+the latest build instead of presenting an old result as current.
+
+Automatic progress keys are `generate_queued`, `generate_ocr`, `generate_analyze`,
+`generate_trace`, `generate_research`, `generate_complete`, `generate_build`,
+`generate_save`, `generate_ready`, `generate_cancelled`, `generate_error`.
+Each includes an English fallback `message`; the UI can translate keys to VI.
 
 The engine's exact accepted foreground/threshold/text options are exposed as
 `default_options`; supported foreground modes are `auto`, `dark`, `light`,
 `color` with `ink_color:"#RRGGBB"`. `options.text` may guide ordered analysis;
 explicit per-region `char` labels take precedence during extraction.
 
-Research is the separately requested online feature: it fetches public font
-catalogue metadata and open-license font candidates, then compares locally.
+Research fetches public font catalogue metadata and open-license font candidates,
+then compares locally. Generate may perform that research automatically unless
+`offline:true` is selected by its caller.
 It never uploads screenshots, glyph recordings or project archives. Source
 cards retain source URL/license/provenance and do not claim recovered originals.
 
-CPU completion produces **approximate proposals**, requires explicit opt-in,
-and is never presented as a trained model. Model connections require a
-separately verified local adapter. No model, cloud API, font substitution or OS
-font installation happens automatically. The user downloads and installs fonts.
+CPU completion produces **approximate proposals** and is never presented as a
+trained model. The one-step Generate action includes this automatic completion;
+the internal manual completion route retains its explicit opt-in fields.
+Verified OFL reference outlines can be selected automatically with their actual
+source and license retained. No large model, cloud API or OS font installation
+happens automatically. The user downloads and installs the finished fonts.

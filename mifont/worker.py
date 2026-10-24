@@ -13,7 +13,12 @@ def run_operation(kind,payload,directory,messages):
         def progress(event):
             messages.put({'kind':'progress',**event})
         def report(value,message):progress({'progress':value,'message':message})
-        if kind=='analyze':
+        if kind=='generate':
+            try:from . import auto_pipeline
+            except ImportError:import auto_pipeline
+            result=auto_pipeline.generate(payload['images'],payload['metadata'],payload.get('options'),folder,progress,
+                                           reference_cache_dir=Path(payload['reference_cache_dir']))
+        elif kind=='analyze':
             images=[]
             for index,image in enumerate(payload['images']):
                 report(5+int(85*index/len(payload['images'])),'Finding glyph regions')
@@ -65,7 +70,7 @@ def run_operation(kind,payload,directory,messages):
             result=engine.build_font(payload['records'],payload['metadata'],folder/'font.ttf',folder/'font.otf')
             result={'metrics':result}
         else:raise ValueError('Unknown MiFont operation.')
-        report(98,'Saving local results')
+        progress({'progress':98,'message':'Saving local results','message_key':'generate_save' if kind=='generate' else ''})
         temporary=folder/'result.tmp'
         temporary.write_text(json.dumps(result,ensure_ascii=False),encoding='utf-8')
         os.replace(temporary,folder/'result.json')

@@ -1,31 +1,37 @@
 # MiFont
 
-MiFont is a local Windows image-to-font workspace. Upload specimen images,
-inspect detected glyph regions, confirm their character labels, edit spacing,
-then export editable TrueType (`glyf`) and OpenType (`CFF`) fonts. The default
-target repertoire is printable ASCII U+0020–U+007E. Projects save locally and
-can be exported as self-contained ZIP files. Fonts are downloaded for the user
-to install; MiFont never installs them automatically.
+MiFont 1.0.1 is a simple Windows image-to-font app. Upload one or more images,
+enter the font family name, optionally adjust the ink threshold, and press
+Generate. One automatic job detects and labels letters, traces their shapes,
+completes the character set, and downloads one ZIP containing both TrueType
+(`glyf`) and OpenType (`CFF`) fonts. No manual mapping or separate research,
+completion and export buttons are needed.
 
-Windows OCR offers editable suggestions, not authoritative transcription.
-CPU geometric completion is an explicitly selected approximate proposal.
-Online research is a separate requested action: public Google Fonts catalogue
-and OFL-licensed candidates are downloaded and compared locally. Screenshots,
-glyph recordings and project files are never uploaded. Choosing reference-fit
-completion preserves observed glyphs, labels generated glyphs, requires license
-acceptance, renames the derivative family and carries the full source license
-into font metadata and project notices. This is not neural inference or a claim
-to recover an unknown original font.
+Generation uses local Windows OCR and image tracing. It can automatically
+compare verified OFL-licensed public Google Fonts references on the computer
+and fit a suitable source for missing characters. If online lookup is
+unavailable, it uses verified cached sources or its own CPU shape proposals.
+Screenshots, glyph shapes and projects are never uploaded. The default set is
+the 95 printable ASCII characters U+0020–U+007E: Latin letters, digits and common
+punctuation. OCR labels and unseen characters can be imperfect; generated
+characters are estimates, not guaranteed recovery of an unknown original font.
+
+The download includes both font files, coverage and file hashes in
+`manifest.json`, and a README. Any selected OFL source's full license and
+provenance travel in `licenses/` and inside the font metadata. Reference-derived
+fonts retain your new family name, with a safe rename if it conflicts with a
+source's Reserved Font Name. Fonts are downloaded for you to inspect and
+install; MiFont never installs them into Windows automatically.
 
 Projects live under `%LOCALAPPDATA%/MITOM/MiFont/Projects`; verified open-font
 reference files use the adjacent `ReferenceCache`. Each desktop launch uses an
 authenticated IPv4 loopback session and a random port. No cloud account, API
-credit, GPU, system font installation or online service is needed for local
-image tracing and font export.
+credit, GPU or model download is needed. Tracing, completion and export run on
+CPU; online catalogue lookup is only used for public reference sources.
 
 ## Build from complete source
 
-Use CPython3.12 x64 on Windows:
+Use CPython 3.12 x64 on Windows:
 
 ```powershell
 py -3.12 -m venv .work/mifont-env
@@ -35,12 +41,12 @@ py -3.12 -m venv .work/mifont-env
 
 The build runs source tests, creates an onedir portable application, exercises
 the actual frozen HTTP worker, then emits a hash-pinned flat-root ZIP and
-`mifont-release.json` for the launcher. App1.0.0 has executable `MiFont.exe` and
+`mifont-release.json` for the launcher. App 1.0.1 has executable `MiFont.exe` and
 manifest `mifont-app.json`. It does not depend on an installed Photoshop panel
 or Vector Migic. The launcher publishes compact online installers while the
 standalone ZIP runs offline after extraction.
 
-The separate unmodified Potrace1.16 CLI, GPL license, copyright notices and
+The separate unmodified Potrace 1.16 CLI, GPL license, copyright notices and
 complete matching upstream source archive are included under `vendor/potrace`.
 FontTools (MIT), Pillow (HPND and bundled library notices), Python and
 PyInstaller's bootloader exception notices are collected in the application.

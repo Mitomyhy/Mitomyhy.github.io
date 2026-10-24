@@ -444,7 +444,7 @@ def complete_glyphs(glyphs, options=None, progress=None, *, reference=None):
         style = _style(records, metrics)
         if mode == 'reference':
             generated, fit = _reference_proposals(records, missing, style, reference, progress)
-            warnings.append('Missing characters use the explicitly selected OFL reference with a local affine style fit. They are proposals from that source family, not recovered original characters or AI inference. Review spacing, joins and decorative differences. The derivative font must retain OFL notices and use a new MiFont family name.')
+            warnings.append('Missing characters use the selected OFL reference with a local affine style fit. They are proposals from that source family, not recovered original characters or AI inference. Review spacing, joins and decorative differences. The derivative font must retain OFL notices and respect source Reserved Font Names.')
             unavailable = ''.join(char for char in missing if char not in generated)
             if unavailable:
                 warnings.append('The selected source has no outlines for these characters: ' + unavailable + '. Existing proposals, if present, were preserved; no fallback outlines were substituted.')

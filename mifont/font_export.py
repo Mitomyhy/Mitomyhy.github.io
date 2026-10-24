@@ -128,8 +128,8 @@ def _metadata(metadata):
     if not isinstance(family,str) or not family.strip() or len(family)>80 or any(ord(c)<32 for c in family):raise FontError('Choose a font family name of 1 through 80 characters.')
     if not isinstance(style,str) or not style.strip() or len(style)>40 or any(ord(c)<32 for c in style):raise FontError('Choose a font style name of 1 through 40 characters.')
     if metadata.get('units_per_em',1000)!=1000:raise FontError('MiFont projects use 1000 units per em.')
-    if (metadata.get('requires_renamed_family') or metadata.get('license_obligations')) and not family.strip().startswith('MiFont '):
-        raise FontError('Reference-derived fonts need a new family name beginning with MiFont followed by a space.')
+    if reference_name_conflict(family,metadata.get('license_obligations',[])):
+        raise FontError('Choose a different font family name; this name belongs to the selected open-font reference.')
     ascii_name=unicodedata.normalize('NFKD',family+'-'+style).encode('ascii','ignore').decode()
     ps_name=re.sub('[^A-Za-z0-9-]','',ascii_name)[:63] or 'MiFont-Custom'
     ascender=round(_number(metadata.get('ascender',800),'Ascender',100,2000))
@@ -137,6 +137,26 @@ def _metadata(metadata):
     cap=round(_number(metadata.get('cap_height',700),'Cap height',100,1500))
     xheight=round(_number(metadata.get('x_height',500),'X height',50,1500))
     return family.strip(),style.strip(),ps_name,ascender,descender,cap,xheight
+
+
+def reference_name_conflict(family,obligations):
+    """Protect actual source/reserved names without imposing an app prefix."""
+    if isinstance(obligations,dict):obligations=[obligations]
+    if not isinstance(obligations,list):return False  # _notices validates its shape.
+    def key(value):return ''.join(c for c in unicodedata.normalize('NFKC',value).casefold() if c.isalnum())
+    reserved=[]
+    for item in obligations:
+        if not isinstance(item,dict):continue
+        if isinstance(item.get('family'),str):reserved.append(item['family'])
+        text=item.get('license_text','')
+        if not isinstance(text,str):continue
+        # Only the copyright/header can declare RFNs; the standard OFL body
+        # contains definitions that must never be mistaken for a declaration.
+        header=text.split('PREAMBLE',1)[0][:2500]
+        for match in re.finditer(r'Reserved Font Names?(?:\(s\))?\s*[:=]?\s*[\"\'\u201c]?([A-Za-z][A-Za-z0-9 _-]{1,79})',header,re.I):
+            name=match.group(1).strip()
+            if name.lower() not in {'version','refer','refers to any names specified as such after the'}:reserved.append(name)
+    return bool(key(family)) and key(family) in {key(value) for value in reserved if value}
 
 
 def _notices(metadata):

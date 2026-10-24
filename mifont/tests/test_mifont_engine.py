@@ -86,7 +86,7 @@ class EngineTests(unittest.TestCase):
 
     def test_reference_notices_embedded_and_reserved_family_rejected(self):
         text='Copyright 2026 Synthetic Test Authors\nSIL OPEN FONT LICENSE Version 1.1\nSynthetic notice fixture.'
-        obligation={'license':'OFL-1.1','license_text':text,'license_sha256':hashlib.sha256(text.encode()).hexdigest(),
+        obligation={'family':'Synthetic Source Family','license':'OFL-1.1','license_text':text,'license_sha256':hashlib.sha256(text.encode()).hexdigest(),
                     'license_url':'https://openfontlicense.org/','source_url':'https://example.com/font/source'}
         metadata={'family':'MiFont Derived QA','license_obligations':[obligation]}
         ttf,otf=self.folder/'licensed.ttf',self.folder/'licensed.otf'
@@ -99,8 +99,10 @@ class EngineTests(unittest.TestCase):
                 self.assertIn(obligation['source_url'],names[10])
                 self.assertEqual(names[14],obligation['license_url'])
                 if path.suffix=='.otf':self.assertEqual(font['CFF '].cff.topDictIndex[0].Notice,text)
-        with self.assertRaisesRegex(FontError,'MiFont'):
-            build_font([ring()],{**metadata,'family':'Reserved Source Family'},ttf,otf)
+        build_font([ring()],{**metadata,'family':'Stringlabs'},ttf,otf)
+        with TTFont(otf) as font:self.assertEqual(font['name'].getDebugName(1),'Stringlabs')
+        with self.assertRaisesRegex(FontError,'different font family'):
+            build_font([ring()],{**metadata,'family':'Synthetic Source Family'},ttf,otf)
         with self.assertRaisesRegex(FontError,'notice changed'):
             build_font([ring()],{**metadata,'license_obligations':[{**obligation,'license_text':text+'x'}]},ttf,otf)
 

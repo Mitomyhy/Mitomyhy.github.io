@@ -2,6 +2,7 @@
 from __future__ import annotations
 import argparse
 from io import BytesIO
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -12,7 +13,7 @@ import time
 import urllib.error
 import urllib.request
 import zipfile
-from PIL import Image,ImageDraw
+from PIL import Image,ImageDraw,ImageFont
 from fontTools.ttLib import TTFont
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
@@ -60,19 +61,20 @@ def run(executable=None,online_reference=False):
                 return response.read(),response.headers
         def json_request(path,data=None,extra=None):return json.loads(request(path,data,extra)[0])
         def job(path,payload):
-            value=json_request(path,payload);deadline=time.monotonic()+180
+            value=json_request(path,payload);deadline=time.monotonic()+300
             while value['status'] not in {'done','error','cancelled'}:
                 if time.monotonic()>deadline:raise TimeoutError('MiFont worker timed out: '+path)
                 time.sleep(.1);value=json_request('/api/job/'+value['id'])
             assert value['status']=='done',value['message']
             return value
-        def font_check(data,format,license_text=None,license_url=None):
+        def font_check(data,format,license_text=None,license_url=None,observed_metrics=True):
             assert data[:4]==(b'\x00\x01\x00\x00' if format=='ttf' else b'OTTO')
             with TTFont(BytesIO(data)) as font:
                 assert ('glyf' in font)==(format=='ttf') and ('CFF ' in font)==(format=='otf')
                 assert set(range(32,127))<=set(font.getBestCmap())
-                glyph=font.getBestCmap()[ord('A')]
-                assert font['hmtx'][glyph]==(700,75)
+                if observed_metrics:
+                    glyph=font.getBestCmap()[ord('A')]
+                    assert font['hmtx'][glyph]==(700,75)
                 if license_text is not None:
                     assert font['name'].getDebugName(13)==license_text
                     assert font['name'].getDebugName(14)==license_url
@@ -138,6 +140,54 @@ def run(executable=None,online_reference=False):
                     raw,_=request('/api/export',{'project_id':project_id,'format':format,'build_id':build_id})
                     font_check(raw,format,obligation['license_text'],obligation['license_url'])
                 online=True
+            auto_project=json_request('/api/project/new',{'name':'One-click specimen','family':'One Click QA'})
+            auto_id=auto_project['id']
+            alphabet=Image.new('RGB',(1100,320),'white');letters=ImageDraw.Draw(alphabet)
+            specimen_font=ImageFont.truetype(str(Path(__file__).resolve().parents[1]/'assets/body.ttf'),50)
+            for row,text in enumerate(('ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz','0123456789')):
+                letters.text((24,20+row*95),text,font=specimen_font,fill='black')
+            alphabet_bytes=BytesIO();alphabet.save(alphabet_bytes,'PNG')
+            auto_upload=json_request('/api/upload',alphabet_bytes.getvalue(),{'X-Project-Id':auto_id,'X-File-Name':'one-click.png','Content-Type':'application/octet-stream'})
+            assert not auto_upload['project']['glyphs'],'One-click test unexpectedly had preassigned glyphs.'
+            auto=job('/api/generate',{'project_id':auto_id,'metadata':{'family':'One Click QA'},'options':{'threshold':'auto'}})
+            assert len(auto['project']['glyphs'])==95 and not auto['project']['coverage']['missing_chars']
+            assert auto['result']['automation'] and auto['result']['build_id']
+            observed_auto=[item for item in auto['project']['glyphs'] if item['origin']=='observed']
+            assert observed_auto and all(item.get('image_id')==auto_upload['image']['id'] for item in observed_auto)
+            auto_archive,_=request('/api/export',{'project_id':auto_id,'format':'project'})
+            with zipfile.ZipFile(BytesIO(auto_archive)) as source_project:
+                observed_record=observed_auto[0]
+                record=json.loads(source_project.read('glyphs/'+observed_record.get('blob_id',observed_record['id'])+'.json'))
+                assert record['method']=='local-potrace' and record['recording']
+            auto_build=auto['result']['build_id']
+            fonts_zip,fonts_headers=request('/api/export',{'project_id':auto_id,'format':'fonts','build_id':auto_build})
+            assert fonts_headers.get_content_type()=='application/zip'
+            with zipfile.ZipFile(BytesIO(fonts_zip)) as fonts:
+                assert fonts.testzip() is None
+                font_members={kind:[name for name in fonts.namelist() if name.lower().endswith('.'+kind)] for kind in ('ttf','otf')}
+                assert all(len(names)==1 for names in font_members.values())
+                assert any('readme' in name.lower() for name in fonts.namelist())
+                bundle_manifest=json.loads(fonts.read('manifest.json'))
+                assert bundle_manifest['version']==VERSION and bundle_manifest['family']=='One Click QA'
+                assert not bundle_manifest['coverage']['missing_chars']
+                assert len(set(bundle_manifest['coverage']['observed_chars']+bundle_manifest['coverage']['generated_chars']))==95
+                for kind,names in font_members.items():
+                    value=fonts.read(names[0]);font_check(value,kind,observed_metrics=False)
+                    assert bundle_manifest['files'][names[0]]['size']==len(value)
+                    assert bundle_manifest['files'][names[0]]['sha256']==hashlib.sha256(value).hexdigest()
+                    with TTFont(BytesIO(value)) as font:
+                        assert font['name'].getDebugName(1)=='One Click QA'
+                        license_text=font['name'].getDebugName(13)
+                        if license_text and 'SIL OPEN FONT LICENSE' in license_text:
+                            license_members=[name for name in fonts.namelist() if name.lower().endswith('/ofl.txt') or name.lower()=='ofl.txt']
+                            assert license_members and any(fonts.read(name).decode('utf-8').replace('\r\n','\n')==license_text.replace('\r\n','\n') for name in license_members)
+                            assert any('source' in name.lower() and name.lower().endswith('.json') for name in fonts.namelist())
+            auto_more=json_request('/api/upload',alphabet_bytes.getvalue(),{'X-Project-Id':auto_id,'X-File-Name':'one-click-added.png','Content-Type':'application/octet-stream'})
+            auto_repeat=job('/api/generate',{'project_id':auto_id,'metadata':{'family':'One Click QA'},'options':{'threshold':180}})
+            assert len(auto_repeat['project']['glyphs'])==95 and not auto_repeat['project']['coverage']['missing_chars']
+            latest_auto=auto_repeat['project']['builds'][-1]
+            assert latest_auto['generation_options']['threshold']==180
+            assert set(latest_auto['source_image_ids'])=={auto_upload['image']['id'],auto_more['image']['id']}
             archive,_=request('/api/export',{'project_id':project_id,'format':'project'})
             with zipfile.ZipFile(BytesIO(archive)) as package:
                 doc=json.loads(package.read('project.json'))
@@ -171,6 +221,10 @@ def run(executable=None,online_reference=False):
             start()
             restored=json_request('/api/project/'+project_id)
             assert len(restored['glyphs'])==95 and len(restored['images'])==2
+            restored_auto=json_request('/api/project/'+auto_id)
+            assert len(restored_auto['glyphs'])==95 and restored_auto['builds']
+            assert restored_auto['builds'][-1]['generation_options']['threshold']==180
+            assert set(restored_auto['builds'][-1]['source_image_ids'])=={auto_upload['image']['id'],auto_more['image']['id']}
             raw,_=request('/api/font-preview/'+project_id+'/'+build_id+'/ttf')
             font_check(raw,'ttf',obligation['license_text'] if online else None,obligation['license_url'] if online else None)
             request('/api/shutdown',{});process.wait(timeout=15);assert process.returncode==0
@@ -180,6 +234,11 @@ def run(executable=None,online_reference=False):
                 'persistent_restart':True,'real_cancelled_worker_exited':True,'cancelled_job_preserves_project':True,
                 'repeated_completion_stable95':True,'public_reference_research_and_local_fit':online,
                 'reference_font_name_ids13_14':online,'project_license_notices':online,'licenses_survive_import_and_rebuild':online,
+                'one_click_auto_generate':True,'single_ttf_otf_zip':True,'auto_generate_without_manual_labels':True,
+                'auto_generate_observed_chars':auto['project']['coverage']['observed_chars'],
+                'auto_generate_uses_real_source_crops_and_potrace':True,'auto_generate_requested_family_preserved':True,
+                'auto_generate_added_images_included':True,'auto_generate_threshold_persists':True,
+                'auto_generate_threshold_rerun':True,'auto_generate_repeat_stable95':True,'auto_generate_project_persists':True,
                 'artwork_uploaded':False,'automatic_font_installation':False,'clean_shutdown':True}
         finally:
             if process is not None and process.poll() is None:

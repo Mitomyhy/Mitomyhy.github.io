@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "app_id": "mifont",
+  "version": "1.0.1",
+  "entry": "MiFont.exe",
+  "manifest_sha256": "a0bedd92404c23febe9b75612aea6e23f7f0cd8636de164429ca045a9f4f6902",
+  "archive": {
+    "url": "https://mitomyhy.github.io/releases/mifont/1.0.1/MiFont-1.0.1.zip",
+    "size": 27386741,
+    "sha256": "2c43a72f6edb48c54008266dff34c4154bdafa96ba1e1ddccc78ba45f50e84e1",
+    "bundled": "apps/MiFont-1.0.1.zip"
+  }
+}
