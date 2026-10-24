@@ -129,7 +129,7 @@
     const app = apps.find((item) => item.id === id) || apps[0];
     if (!app) return;
     const appLink = safeUrl(app.githubUrl, repositoryUrl);
-    openDialog(`<p class="dialog-kicker">${escapeHTML(t('dialog.detailsKicker'))} / ${escapeHTML(app.id.toUpperCase())}</p><div class="dialog-app-heading"><img src="${escapeHTML(safeUrl(app.icon))}" alt=""><h2 id="dialog-title">${escapeHTML(localized(app.name))}</h2></div><div class="dialog-tags"><span>${escapeHTML(localized(app.platform))}</span><span>${escapeHTML(app.version ? t('apps.version', { version: app.version }) : t('apps.viaLauncher'))}</span></div><p class="dialog-description">${escapeHTML(localized(app.detail || app.summary))}</p><div class="dialog-actions"><button class="button button-dark" data-action="download">${buttonLabel('apps.install', '↓')}</button><a class="button" href="${escapeHTML(appLink)}" target="_blank" rel="noopener"><span>GITHUB</span> ${arrow('↗')}</a></div><p class="dialog-note">${escapeHTML(t('dialog.detailsNote'))}</p>`);
+    openDialog(`<p class="dialog-kicker">${escapeHTML(t('dialog.detailsKicker'))} / ${escapeHTML(app.id.toUpperCase())}</p><div class="dialog-app-heading"><img src="${escapeHTML(safeUrl(app.icon))}" alt=""><h2 id="dialog-title">${escapeHTML(localized(app.name))}</h2></div><div class="dialog-tags"><span>${escapeHTML(localized(app.platform))}</span><span>${escapeHTML(app.version ? t('apps.version', { version: app.version }) : t('apps.viaLauncher'))}</span></div><p class="dialog-description">${escapeHTML(localized(app.detail || app.summary))}</p><div class="dialog-actions"><button class="button button-dark" data-action="download">${buttonLabel('apps.install', '↓')}</button><a class="button" href="${escapeHTML(appLink)}" target="_blank" rel="noopener"><span>GITHUB</span> ${arrow('↗')}</a></div><p class="dialog-note">${escapeHTML(localized(app.note) || t('dialog.detailsNote'))}</p>`);
   }
 
   function showUpcoming(section = 'IMAGE') {
@@ -221,3 +221,4 @@
   $('#year').textContent = new Date().getFullYear();
   applyLanguage(language);
 })();
+
