@@ -1,7 +1,7 @@
 param(
     [string]$Python = "",
     [string]$OutputDirectory = "",
-    [string]$Version = "2026.10.24.8",
+    [string]$Version = "2026.10.24.9",
     [ValidateSet("Online", "Bundled")]
     [string]$VectorPayload = "Online",
     [string]$CertificateThumbprint = $env:MITOM_SIGN_CERT_SHA1,
@@ -29,6 +29,7 @@ $arguments = @(
     "--add-data", ((Join-Path $sourceRoot "legacy") + ";legacy"),
     "--add-data", ((Join-Path $sourceRoot "licenses") + ";licenses"),
     "--add-data", ((Join-Path $sourceRoot "vector-release.json") + ";."),
+    "--add-data", ((Join-Path $sourceRoot "mifont-release.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "recovery-manifest.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "launcher-release.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "release-public-key.json") + ";."),

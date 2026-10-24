@@ -1,0 +1,18 @@
+{
+  "source_page": "https://potrace.sourceforge.net/",
+  "archive_url": "https://potrace.sourceforge.net/download/1.16/potrace-1.16.win64.zip",
+  "archive_bytes": 186345,
+  "archive_sha1_verified": "7e360015c8ac0e6efdffa6c26974daf65ab596e9",
+  "archive_sha256": "63699f9885b5ed053977fd94452a7bdbb77ee62b77bf28a3f17b2f14b9b9c65d",
+  "source_url": "https://potrace.sourceforge.net/download/1.16/potrace-1.16.tar.gz",
+  "source_bytes": 657314,
+  "source_sha256": "be8248a17dedd6ccbaab2fcc45835bb0502d062e40fbded3bc56028ce5eb7acc",
+  "executable": "potrace.exe",
+  "executable_bytes": 198144,
+  "executable_sha256": "f1bcde040ae6576dc9c5868be7a72064957c5aea08e1dece240428319fc672a4",
+  "local_qa_only": false,
+  "distributed_dependency": true,
+  "license": "GPL-2.0-or-later",
+  "upstream_binary_modified": false,
+  "system_install_required": false
+}

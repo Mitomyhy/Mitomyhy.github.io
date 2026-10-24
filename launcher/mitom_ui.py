@@ -48,6 +48,10 @@ def catalogue_entries(state):
          "update": bool(state.get("vector_installed") and state.get("vector_update_available")),
          "version": state.get("vector_version") or state.get("vector_latest_version", ""),
          "search": "vector migic vectorize trace raster bitmap svg png jpg jpeg offline cpu"},
+        {"id": "mifont", "name": "MiFont", "installed": bool(state.get("mifont_installed")),
+         "update": bool(state.get("mifont_installed") and state.get("mifont_update_available")),
+         "version": state.get("mifont_version") or state.get("mifont_latest_version", ""),
+         "search": "mifont font typography image glyph alphabet characters ttf otf"},
     ]
 
 
@@ -75,6 +79,10 @@ _VI = {
     "INSTALL VECTOR MIGIC": "CÀI VECTOR MIGIC", "OPEN VECTOR MIGIC": "MỞ VECTOR MIGIC",
     "UPDATE VECTOR MIGIC": "CẬP NHẬT VECTOR MIGIC", "INSTALL PANEL": "CÀI PANEL",
     "REPAIR VECTOR MIGIC": "SỬA VECTOR MIGIC", "REPAIR REQUIRED": "CẦN SỬA CÀI ĐẶT",
+    "INSTALL MIFONT": "CÀI MIFONT", "OPEN MIFONT": "MỞ MIFONT",
+    "UPDATE MIFONT": "CẬP NHẬT MIFONT", "REPAIR MIFONT": "SỬA MIFONT",
+    "Images to editable fonts.": "Từ ảnh thành phông chữ có thể chỉnh sửa.",
+    "GLYPHS / ASCII · TTF / OTF": "KÝ TỰ / ASCII · TTF / OTF",
     "UPDATE PANEL": "CẬP NHẬT PANEL", "OPEN PHOTOSHOP": "MỞ PHOTOSHOP",
     "GRID": "LƯỚI", "TABLE": "BẢNG", "SEARCH ": "TÌM KIẾM ", "SORT ": "SẮP XẾP ",
     "01 / CREATIVE TOOLS": "01 / CÔNG CỤ SÁNG TẠO", "APPLICATION": "ỨNG DỤNG",
@@ -459,6 +467,8 @@ class MITOMLauncherUI:
         self.vector_table_status = self._label(self.vector_row, "", "small", fg=BLUE)
         self.vector_table_status.pack(side="right")
 
+        self._build_mifont_card()
+
         self.empty = tk.Frame(self.catalogue, bg=BG, highlightbackground=LINE, highlightthickness=1, padx=28, pady=38)
         self.empty_title = self._label(self.empty, "No apps in this view", "heading")
         self.empty_title.pack(anchor="w")
@@ -498,6 +508,41 @@ class MITOMLauncherUI:
         self.platform_label = self._label(self.footer, "", "small", fg=MUTED)
         self.platform_label.pack(side="right", fill="y")
         self._action_button(self.footer, "WEBSITE ↗", "website", compact=True).pack(side="right", padx=15)
+
+    def _build_mifont_card(self):
+        self.mifont_card = tk.Frame(self.catalogue, bg=BG, highlightthickness=1, highlightbackground=LINE)
+        header = tk.Frame(self.mifont_card, bg=BG, height=48)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        self._label(header, "03", "small", bg=BLUE, fg="white", padx=7, pady=5).pack(side="left", padx=17)
+        self._action_button(header, "GITHUB ↗", "github", compact=True).pack(side="right")
+        self._action_button(header, "WEBSITE ↗", "mifont_website", compact=True).pack(side="right")
+        self._line(self.mifont_card).pack(fill="x")
+        content = tk.Frame(self.mifont_card, bg=BG, padx=20, pady=21)
+        content.pack(fill="x")
+        identity = tk.Frame(content, bg=BG)
+        identity.pack(fill="x")
+        icon = self._load_image("mifont.png", (72,72))
+        if icon: tk.Label(identity, image=icon, bg=BG).pack(side="left", anchor="n", padx=(0,13))
+        title = tk.Frame(identity, bg=BG)
+        title.pack(side="left", fill="x", expand=True)
+        self._label(title, "MiFont", "app").pack(fill="x")
+        self._label(title, "Images to editable fonts.", "body_small", fg=MUTED).pack(fill="x", pady=(3,2))
+        self.mifont_badge = self._label(content, "AVAILABLE TO INSTALL", "small", fg=BLUE,
+            padx=5, pady=5, highlightthickness=1, highlightbackground=LINE)
+        self.mifont_badge.pack(anchor="w", pady=(22,12))
+        self.mifont_version = self._label(content, "", "body_small", fg=MUTED)
+        self.mifont_version.pack(fill="x")
+        self._label(content, "GLYPHS / ASCII · TTF / OTF", "small", fg=MUTED).pack(fill="x", pady=(18,21))
+        self.mifont_primary = self._button(content, "INSTALL MIFONT", self._mifont_action, primary=True)
+        self.mifont_primary.pack(fill="x")
+        self.mifont_row = tk.Frame(self.table, bg=BG, padx=17, pady=22)
+        if icon: tk.Label(self.mifont_row, image=icon, bg=BG).pack(side="left", padx=(0,15))
+        self._label(self.mifont_row, "MiFont", "heading").pack(side="left")
+        self.mifont_table_action = self._button(self.mifont_row, "INSTALL MIFONT", self._mifont_action, primary=True, compact=True)
+        self.mifont_table_action.pack(side="right", padx=(18,0))
+        self.mifont_table_status = self._label(self.mifont_row, "", "small", fg=BLUE)
+        self.mifont_table_status.pack(side="right")
 
     def _load_image(self, filename, size):
         path = ASSETS / filename
@@ -570,6 +615,12 @@ class MITOMLauncherUI:
     def _vector_action(self):
         self._invoke(self._vector_key())
 
+    def _mifont_key(self):
+        return "open_mifont" if self.state.get("mifont_current_verified") else "install_mifont"
+
+    def _mifont_action(self):
+        self._invoke(self._mifont_key())
+
     def _banner_action(self):
         self._invoke(self._banner_key)
 
@@ -597,11 +648,13 @@ class MITOMLauncherUI:
             button.configure(bg=INK if self._layout == key else BG, fg=PAPER if self._layout == key else MUTED)
         self.card.grid_remove()
         self.vector_card.grid_remove()
+        self.mifont_card.grid_remove()
         self.future.grid_remove()
         self.table.grid_remove()
         self.empty.grid_remove()
         self.panel_row.pack_forget()
         self.vector_row.pack_forget()
+        self.mifont_row.pack_forget()
         count = len(entries)
         self.app_count.configure(text=f"{count} {'ỨNG DỤNG' if self.state.get('language') == 'vi' else 'APP' if count == 1 else 'APPS'}")
         if not entries:
@@ -610,11 +663,12 @@ class MITOMLauncherUI:
         elif self._layout == "table":
             self.table.grid(row=0, column=0, columnspan=2, sticky="new")
             for item in entries:
-                (self.panel_row if item["id"] == "panel" else self.vector_row).pack(fill="x")
+                {"panel":self.panel_row,"vector":self.vector_row,"mifont":self.mifont_row}[item["id"]].pack(fill="x")
         else:
             for index, item in enumerate(entries):
-                (self.card if item["id"] == "panel" else self.vector_card).grid(
-                    row=0, column=index, sticky="new", padx=(0, 18) if index == 0 and count > 1 else 0)
+                {"panel":self.card,"vector":self.vector_card,"mifont":self.mifont_card}[item["id"]].grid(
+                    row=index//2, column=index%2, sticky="new", pady=(0,18),
+                    padx=(0,18) if index%2==0 and index+1<count else 0)
         self.root.after_idle(self._size_catalogue)
 
     def _render(self):
@@ -678,6 +732,24 @@ class MITOMLauncherUI:
                 button.configure(state="disabled")
         for button in (self.vector_more, self.vector_table_more):
             button.configure(state="disabled" if self._busy or not vector_available else "normal")
+        mifont_installed = bool(self.state.get("mifont_installed"))
+        mifont_available = bool(self.state.get("mifont_available"))
+        mifont_update = bool(self.state.get("mifont_update_available"))
+        mifont_repair = bool(self.state.get("mifont_repair_required"))
+        mifont_status = ("UPDATE AVAILABLE" if mifont_update else "REPAIR REQUIRED" if mifont_repair else
+                         "INSTALLED · UP TO DATE" if mifont_installed else "AVAILABLE TO INSTALL" if mifont_available else "NOT INCLUDED")
+        mifont_version = self.state.get("mifont_version") or self.state.get("mifont_latest_version") or "—"
+        if mifont_update: mifont_version += " → " + self.state.get("mifont_latest_version", "")
+        mifont_title = ("UPDATE MIFONT" if mifont_update else "REPAIR MIFONT" if mifont_repair else
+                        "OPEN MIFONT" if self.state.get("mifont_current_verified") else "INSTALL MIFONT")
+        mifont_color = GREEN if self.state.get("mifont_current_verified") else BLUE
+        self.mifont_badge.configure(text=self._t(mifont_status), fg=mifont_color)
+        self.mifont_version.configure(text=("Phiên bản " if self.state.get("language")=="vi" else "Version ")+mifont_version)
+        self.mifont_table_status.configure(text=f"{self._t(mifont_status)}\n{mifont_version}", fg=mifont_color)
+        for button in (self.mifont_primary,self.mifont_table_action):
+            button.configure(text=self._t(mifont_title))
+            self._set_button_availability(button,self._mifont_key())
+            if not mifont_available: button.configure(state="disabled")
         self.status_text.configure(text=self._t(self._busy_text if self._busy else self.state.get("status", "Ready")))
         self.checked_label.configure(text=f"{self.state.get('checked_at', 'Not checked yet')} · MITOM RELEASES".upper())
         launcher_version = self.state.get("launcher_version") or "DEV"

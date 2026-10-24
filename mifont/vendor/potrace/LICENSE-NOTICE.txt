@@ -1,0 +1,37 @@
+Potrace 1.16 by Peter Selinger and contributors
+Copyright (C) 2001-2019 Peter Selinger
+License: GNU General Public License, version 2 or any later version.
+
+This directory contains the official, unmodified Windows x64 potrace.exe.
+The complete corresponding upstream Potrace source archive is included at
+source/potrace-1.16.tar.gz. Copying conditions are in COPYING; original author
+credits, usage documentation and build documentation are retained alongside it.
+
+Upstream project: https://potrace.sourceforge.net/
+Official Windows archive:
+https://potrace.sourceforge.net/download/1.16/potrace-1.16.win64.zip
+Official source archive:
+https://potrace.sourceforge.net/download/1.16/potrace-1.16.tar.gz
+Hashes and provenance are recorded in upstream.json.
+
+Vector Migic invokes the separate command-line program on its own temporary
+binary bitmap masks and reads the generated SVG paths. No system installation,
+PATH modification, network service, or Vector Magic application code is used.
+
+Potrace is a trademark of Peter Selinger. Vector Migic is an independent MITOM
+application; it is not a modified or renamed Potrace binary.
+
+Rebuilding or replacing the CLI:
+1. Extract the supplied source archive.
+2. Follow the archive's INSTALL and README instructions using an appropriate
+   Windows x64 C build toolchain (for example, a MinGW-w64 configure/make setup).
+   The --disable-zlib option is available when compression support is not needed.
+3. Replace vendor/potrace/potrace.exe with your built executable and update
+   upstream.json to describe the replacement and its exact SHA256. Also update
+   the reviewed binary hash in engine.py and packaging/prepare_assets.py; when
+   replacing its source archive, update that archive's hash in prepare_assets.py.
+   These checks are included as source so a replacement can be rebuilt without
+   disabling the application's file-integrity verification.
+4. Keep the matching source, license and copyright notices with redistribution.
+5. Rebuild Vector Migic using the complete source and SOURCE-REBUILD.txt included
+   in the application's notices directory.

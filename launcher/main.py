@@ -16,6 +16,7 @@ import webbrowser
 import backend
 import installer
 import vector_app
+import mi_font_app
 import self_update
 import launcher_channel
 import activation_smoke
@@ -83,6 +84,8 @@ class MITOMAdapter(backend.LauncherUI):
         self.update_button = _UpdateAction(self._install)
         self._vector_release = None
         self._vector_release_error = ""
+        self._mifont_release = None
+        self._mifont_release_error = ""
         try:
             preferences = json.loads((backend.launcher_data_root() / "launcher-preferences.json").read_text(encoding="utf-8"))
             language = "vi" if preferences.get("language") == "vi" else "en"
@@ -92,6 +95,10 @@ class MITOMAdapter(backend.LauncherUI):
             self._vector_release = vector_app.load_release()
         except (OSError, ValueError, vector_app.VectorAppError) as exc:
             self._vector_release_error = str(exc)
+        try:
+            self._mifont_release = mi_font_app.load_release()
+        except (OSError, ValueError, mi_font_app.MiFontAppError) as exc:
+            self._mifont_release_error = str(exc)
         self.ui = MITOMLauncherUI(self.root, {
             "install": self._install,
             "verify": self._verify,
@@ -108,6 +115,9 @@ class MITOMAdapter(backend.LauncherUI):
             "install_vector": self._install_vector,
             "open_vector": self._open_vector,
             "vector_website": lambda: webbrowser.open(backend.APPS_URL + "#vector-migic"),
+            "install_mifont": self._install_mifont,
+            "open_mifont": self._open_mifont,
+            "mifont_website": lambda: webbrowser.open(backend.APPS_URL + "#mifont"),
             "save_language": self._save_language,
         }, {
             "launcher_version": backend.APP_VERSION,
@@ -118,6 +128,7 @@ class MITOMAdapter(backend.LauncherUI):
             "signature_status": "No Authenticode certificate · panel packages verify release signatures and SHA-256",
             "language": language,
             **vector_app.installed_state(backend.launcher_data_root(), self._vector_release),
+            **mi_font_app.installed_state(backend.launcher_data_root(), self._mifont_release),
         })
         self.progress = self.ui.progress
         self.log = self.ui.log_text
@@ -126,6 +137,8 @@ class MITOMAdapter(backend.LauncherUI):
         self._append("MITOM Launcher " + backend.APP_VERSION)
         if self._vector_release_error:
             self._append("Vector Migic: " + self._vector_release_error)
+        if self._mifont_release_error:
+            self._append("MiFont: " + self._mifont_release_error)
         self._refresh_state()
 
     def _refresh_state(self):
@@ -154,6 +167,7 @@ class MITOMAdapter(backend.LauncherUI):
             "status": self.status_var.get(),
             "installed_path": str(roots["panel"]) if current else "",
             **vector_app.installed_state(backend.launcher_data_root(), self._vector_release),
+            **mi_font_app.installed_state(backend.launcher_data_root(), self._mifont_release),
         }
         self.ui.set_state(snapshot)
         return snapshot
@@ -170,6 +184,19 @@ class MITOMAdapter(backend.LauncherUI):
         self._run("Opening Vector Migic…", lambda: vector_app.open_app(
             backend.launcher_data_root(), self._vector_release),
             lambda _process: self.status_var.set("Vector Migic opened on this computer."))
+
+    def _install_mifont(self):
+        def complete(result):
+            self.status_var.set("MiFont " + result["version"] + " installed. Ready to open.")
+            self._append("MiFont verified and installed: " + result["path"])
+        self._run("Installing MiFont…", lambda: mi_font_app.install_app(
+            backend.launcher_data_root(), self._mifont_release,
+            progress=lambda value, maximum: self.ui.set_progress(value, maximum)), complete)
+
+    def _open_mifont(self):
+        self._run("Opening MiFont…", lambda: mi_font_app.open_app(
+            backend.launcher_data_root(), self._mifont_release),
+            lambda _process: self.status_var.set("MiFont opened on this computer."))
 
     def _save_language(self, language):
         if language not in {"en", "vi"}:
@@ -227,6 +254,8 @@ class MITOMAdapter(backend.LauncherUI):
             self.status_var.set("Some update checks could not finish. See Activity Log and retry.")
         elif snapshot.get("vector_update_available"):
             self.status_var.set("Vector Migic " + snapshot.get("vector_latest_version", "") + " is available.")
+        elif snapshot.get("mifont_update_available"):
+            self.status_var.set("MiFont " + snapshot.get("mifont_latest_version", "") + " is available.")
         elif snapshot.get("update_available"):
             self.status_var.set("Photoshop Panel " + snapshot.get("latest_version", "") + " is available.")
         else:

@@ -4,8 +4,8 @@ window.MITOM_CONFIG = {
   canonicalUrl: 'https://mitomyhy.github.io/',
   githubUrl: 'https://github.com/Mitomyhy',
   repositoryUrl: 'https://github.com/Mitomyhy/uoy-photoshop-panel',
-  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.24.8',
-  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.24.8/MITOM-Launcher-Setup-2026.10.24.8.exe',
+  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.24.9',
+  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.24.9/MITOM-Launcher-Setup-2026.10.24.9.exe',
   launcherProtocol: 'uoy://',
   apps: [{
     id: 'photoshop-panel',
@@ -45,6 +45,28 @@ window.MITOM_CONFIG = {
     note: {
       en: 'Runs independently on Windows. Adobe Photoshop and a dedicated GPU are not required.',
       vi: 'Chạy độc lập trên Windows. Không cần Adobe Photoshop hay card đồ họa rời.'
+    }
+  }, {
+    id: 'mifont',
+    name: 'MiFont',
+    category: { en: 'Images to fonts', vi: 'Tạo font từ ảnh' },
+    platform: 'WINDOWS · LOCAL CPU',
+    icon: 'mifont.png',
+    githubUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mifont/1.0.0',
+    status: 'available',
+    statusLabel: { en: 'AVAILABLE VIA LAUNCHER', vi: 'SẴN SÀNG QUA LAUNCHER' },
+    summary: {
+      en: 'Turn reference images into installable TTF and OTF fonts. Review traced letters and complete missing characters with explicit style proposals.',
+      vi: 'Tạo font TTF và OTF để cài đặt từ ảnh tham khảo. Kiểm tra chữ lấy từ ảnh và bổ sung chữ thiếu bằng các bản dựng có thể chỉnh sửa.'
+    },
+    version: '1.0.0',
+    detail: {
+      en: 'Editable letter regions, character labels, spacing, actual font previews, project archives and public open-font reference comparison. Image tracing and exports run locally. Missing glyphs are estimates, not guaranteed recovery of the original font.',
+      vi: 'Chỉnh vùng cắt, gán ký tự, khoảng cách, gõ thử font, lưu dự án và đối chiếu nguồn font mở. Tách chữ và xuất file chạy trên máy. Chữ chưa có là ước lượng, không bảo đảm khôi phục đúng font gốc.'
+    },
+    note: {
+      en: 'Latin letters, digits and common punctuation. Online reference lookup is optional; screenshots stay on your computer.',
+      vi: 'Gồm chữ Latin, số và dấu thông dụng. Có thể tìm nguồn tham khảo trực tuyến; ảnh của bạn luôn ở trên máy.'
     }
   }]
 };
