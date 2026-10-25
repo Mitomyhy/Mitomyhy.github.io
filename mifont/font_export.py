@@ -218,6 +218,13 @@ def _font_bytes(records,metadata,is_ttf):
             pen=TTGlyphPen(None);replayRecording(recording,Cu2QuPen(pen,max_err=.6,all_quadratic=True))
             glyphs[name]=pen.glyph()
         builder.setupGlyf(glyphs)
+        # TrueType xMin includes off-curve controls, which may extend beyond
+        # the visible cubic bounds after conversion. Keep its side bearing
+        # synchronized with glyf or renderers translate an otherwise correct
+        # outline by lsb-xMin. Advances and the outline's source origin stay
+        # unchanged; CFF retains its original exact-curve metrics below.
+        for name,glyph in glyphs.items():
+            metrics[name]=(metrics[name][0],glyph.xMin if glyph.numberOfContours else 0)
     else:
         strings={}
         for name,recording in drawings.items():

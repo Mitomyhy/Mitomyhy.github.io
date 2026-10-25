@@ -7,6 +7,7 @@ compared OFL reference. Source artwork is never sent to an online service.
 """
 from __future__ import annotations
 from collections import Counter
+from array import array
 from copy import deepcopy
 import hashlib
 import math
@@ -18,9 +19,9 @@ import tempfile
 from PIL import Image, ImageOps
 
 try:
-    from . import engine, completion, ocr, references
+    from . import engine, completion, ocr, references, layout
 except ImportError:
-    import engine, completion, ocr, references
+    import engine, completion, ocr, references, layout
 
 ASCII = engine.ASCII_CHARSET
 DEFAULT_OPTIONS = {'threshold':'auto', 'foreground':'auto', 'ocr':True, 'offline':False}
@@ -106,13 +107,318 @@ def _sequence_score(actual,expected):
     return best
 
 
-def _partition(mask,box,text):
+def _ink_components(mask):
+    """Keep connected source ink, even when neighbouring italic boxes overlap."""
+    width,height=mask.size;pixels=bytearray(mask.tobytes());result=[]
+    for start,value in enumerate(pixels):
+        if not value:continue
+        pixels[start]=0;todo=array('I',[start]);points=array('I')
+        left=width;right=0;top=height;bottom=0
+        while todo:
+            p=todo.pop();points.append(p);y,x=divmod(p,width)
+            left=min(left,x);right=max(right,x+1);top=min(top,y);bottom=max(bottom,y+1)
+            for yy in range(max(0,y-1),min(height,y+2)):
+                for xx in range(max(0,x-1),min(width,x+2)):
+                    q=yy*width+xx
+                    if pixels[q]:pixels[q]=0;todo.append(q)
+        result.append({'box':[left,top,right-left,bottom-top],'points':points,'area':len(points)})
+    return result
+
+
+def _char_weight(char):
+    if char in "ijlI!.,:;|'":return .48
+    if char in 'ft':return .75
+    if char in 'mw':return 1.5
+    if char in 'MW@':return 1.35
+    return 1
+
+
+def _slant(mask,baseline):
+    """Find stroke alignment for this line; do not shear the exported outline."""
+    image=mask.copy();image.thumbnail((1100,160),Image.Resampling.NEAREST)
+    sx=image.width/mask.width;sy=image.height/mask.height
+    width,height=image.size;raw=image.tobytes()
+    points=[(p%width,p//width) for p,value in enumerate(raw) if value]
+    if not points:return 0
+    best=(0,0)
+    for tick in range(-3,10):
+        slope=tick/10*sx/sy;margin=height+2;columns=[0]*(width+2*margin)
+        for x,y in points:columns[x+round(slope*y)+margin]+=1
+        score=sum(value*value for value in columns)
+        # A tiny tie preference prevents gratuitous slant in upright letters.
+        score*=1-abs(tick)*.0002
+        if score>best[0]:best=(score,tick/10)
+    return best[1]
+
+
+def _sheared(mask,baseline,slope):
+    width,height=mask.size;margin=math.ceil(height*abs(slope))+3
+    target=width+2*margin;data=bytearray(target*height);raw=mask.tobytes()
+    shifts=[round(slope*(y-baseline))+margin for y in range(height)]
+    for y,shift in enumerate(shifts):data[y*target+shift:y*target+shift+width]=raw[y*width:(y+1)*width]
+    return Image.frombytes('L',(target,height),bytes(data)),shifts
+
+
+def _seam(mask,cut,radius,body=None):
+    """A bounded minimum-ink path between adjacent glyphs, in aligned space."""
+    width,height=mask.size;raw=mask.tobytes()
+    left=max(1,cut-radius);right=min(width-1,cut+radius)
+    choices=list(range(left,right+1));previous={};history=[]
+    for y in range(height):
+        current={};back={}
+        allowed=[cut] if body and body[0]<=y<body[1] else choices
+        for x in allowed:
+            # Cutting between two ink pixels is more damaging than passing a
+            # tangent. Neighbouring blank pixels remain free of source edits.
+            a=bool(raw[y*width+x-1]);b=bool(raw[y*width+x])
+            ink=5 if a and b else .35 if a or b else 0
+            local=ink+.004*abs(x-cut)
+            if y:
+                options=[(previous[p]+.035*abs(x-p),p) for p in previous if abs(p-x)<=1]
+                if not options:continue
+                cost,parent=min(options);current[x]=cost+local;back[x]=parent
+            else:current[x]=local;back[x]=None
+        previous=current;history.append(back)
+    end=min(previous,key=previous.get);path=[end]
+    for row in reversed(history[1:]):end=row[end];path.append(end)
+    return list(reversed(path))
+
+
+def _region_mask(mask,region):
+    """Return just a glyph's source pixels, never its neighbour's overhang."""
+    x,y,w,h=region['box']
+    if 'ink_runs' not in region:return mask.crop((x,y,x+w,y+h))
+    data=bytearray(w*h)
+    for row,left,right in region['ink_runs']:
+        yy=row-y;a=max(0,left-x);b=min(w,right-x)
+        if 0<=yy<h and a<b:data[yy*w+a:yy*w+b]=b'\xff'*(b-a)
+    return Image.frombytes('L',(w,h),bytes(data))
+
+
+def _source_region(points,width,x,y,char,line,method,evidence,approximate):
+    """Encode original pixels as row runs; holes and detached dots survive."""
+    if not points:return None
+    rows={}
+    for p in points:
+        yy,xx=divmod(p,width);rows.setdefault(yy,[]).append(xx)
+    runs=[]
+    for yy,values in sorted(rows.items()):
+        values.sort();start=previous=values[0]
+        for xx in values[1:]:
+            if xx>previous+1:runs.append([y+yy,x+start,x+previous+1]);start=xx
+            previous=xx
+        runs.append([y+yy,x+start,x+previous+1])
+    left=min(r[1] for r in runs);right=max(r[2] for r in runs)
+    top=runs[0][0];bottom=runs[-1][0]+1
+    return {'box':[left,top,right-left,bottom-top],'ink_runs':runs,'char':char,'line_id':line['id'],
+            'baseline_y':line['baseline_y'],'reference_height':line['reference_height'],
+            'label_source':method,'label_evidence':deepcopy(evidence),'cut_approximate':approximate,
+            'segmentation':'source-components-and-slanted-seams','needs_review':True}
+
+
+def _clean_portion(points,width,reference):
+    """Remove only small detached fragments created at a neighbour cut."""
+    if not points:return []
+    left=min(p%width for p in points);right=max(p%width for p in points)+1
+    top=min(p//width for p in points);bottom=max(p//width for p in points)+1
+    local_width=right-left;data=bytearray(local_width*(bottom-top))
+    for point in points:
+        yy,xx=divmod(point,width);data[(yy-top)*local_width+xx-left]=255
+    components=_ink_components(Image.frombytes('L',(local_width,bottom-top),bytes(data)))
+    largest=max(c['area'] for c in components);minimum=max(4,round(largest*.025))
+    result=[]
+    for component in components:
+        if component['area']<minimum:continue
+        for point in component['points']:
+            yy,xx=divmod(point,local_width);result.append((yy+top)*width+xx+left)
+    return result
+
+
+def _component_groups(components,text,reference,baseline,width,slope=0):
+    """Align labels with ink clusters, allowing detached strokes to rejoin.
+
+    Bounding-box width includes decorative overhangs. Count allocation instead
+    measures aligned ink in the common body band and can merge a narrow stem
+    with its detached arms. Neither a component count nor equal cells prove a
+    character boundary.
+    """
+    if not components:return None
+    weights=[_char_weight(c) for c in text]
+    def body_bounds(component):
+        values=[p%width+slope*(p//width-baseline) for p in component['points']
+                if baseline-reference*.85<=p//width<=baseline-reference*.12]
+        if not values:values=[p%width+slope*(p//width-baseline) for p in component['points']]
+        return (min(values),max(values)+1)
+    for component in components:
+        component['body_bounds']=body_bounds(component)
+        component['asc_ratio']=sum(p//width<baseline-reference*.60 for p in component['points'])/component['area']
+        component['desc_ratio']=sum(p//width>baseline+reference*.1 for p in component['points'])/component['area']
+    unit=sum(c['body_bounds'][1]-c['body_bounds'][0] for c in components)/sum(weights)
+    lower=text.islower() and len(text)>3
+    use_dots=lower and sum(c.get('dot_count',0) for c in components)==sum(c in 'ij' for c in text)
+    def score(component,letters):
+        span=component['body_bounds'][1]-component['body_bounds'][0]
+        target=sum(_char_weight(c) for c in letters)*unit
+        fit=math.log(span/max(1,target))**2
+        if len(letters)>1:fit+=.025*(len(letters)-1)
+        if lower:
+            if use_dots and component.get('dot_count',0)!=sum(c in 'ij' for c in letters):fit+=5
+            asc=component['asc_ratio'];desc=component['desc_ratio']
+            if not any(c in 'bdfhijklt' for c in letters):fit+=asc*8
+            elif len(letters)==1 and letters in 'bdfhklt':fit+=max(0,.1-asc)*10
+            if not any(c in 'fgjpqy' for c in letters):fit+=desc*8
+            elif len(letters)==1 and letters in 'gjpqy':fit+=max(0,.1-desc)*10
+        elif text.isupper() and len(letters)==1 and letters in 'IJ':
+            desc=component['desc_ratio']
+            if letters=='I':fit+=desc*8
+            elif any(c['box'][1]+c['box'][3]>baseline+reference*.2 for c in components):fit+=max(0,.08-desc)*8
+        return fit
+    states={(0,0):(0,None,None)}
+    for index in range(len(components)):
+        for start in range(len(text)):
+            state=states.get((index,start))
+            if not state:continue
+            cost=state[0];component=components[index]
+            for end in range(start+1,len(text)+1):
+                # A single ink island may hold several actually joined glyphs.
+                value=cost+score(component,text[start:end])
+                key=(index+1,end)
+                if key not in states or value<states[key][0]:states[key]=(value,(index,start),(component,text[start:end]))
+            # Italic K arms, i/j dots, stencil cuts and swash fragments can be
+            # separate islands belonging to one letter, rather than extra text.
+            for count in (2,3):
+                if index+count>len(components):break
+                parts=components[index:index+count]
+                if not any(c['body_bounds'][1]-c['body_bounds'][0]<reference*.32 for c in parts):continue
+                if any(parts[i+1]['body_bounds'][0]-parts[i]['body_bounds'][1]>reference*.10 for i in range(count-1)):continue
+                if max(c['box'][1]+c['box'][3] for c in parts)-min(c['box'][1]+c['box'][3] for c in parts)>reference*.18:continue
+                points=array('I')
+                for part in parts:points.extend(part.get('all_points',part['points']))
+                left=min(c['box'][0] for c in parts);top=min(c['box'][1] for c in parts)
+                right=max(c['box'][0]+c['box'][2] for c in parts);bottom=max(c['box'][1]+c['box'][3] for c in parts)
+                merged={'box':[left,top,right-left,bottom-top],'points':points,'all_points':points,'area':len(points),
+                        'dot_count':sum(c.get('dot_count',0) for c in parts),
+                        'asc_ratio':sum(p//width<baseline-reference*.60 for p in points)/len(points),
+                        'desc_ratio':sum(p//width>baseline+reference*.1 for p in points)/len(points),
+                        'body_bounds':(min(c['body_bounds'][0] for c in parts),max(c['body_bounds'][1] for c in parts))}
+                value=cost+score(merged,text[start])+.18*(count-1);key=(index+count,start+1)
+                if key not in states or value<states[key][0]:states[key]=(value,(index,start),(merged,text[start]))
+    cursor=(len(components),len(text))
+    if cursor not in states:return None
+    output=[]
+    while cursor!=(0,0):
+        state=states[cursor];output.append(state[2]);cursor=state[1]
+    return list(reversed(output))
+
+
+def _segmented_line(mask,line,text,method,evidence):
+    """Separate independent italic glyphs first, then cut only actual joins."""
+    x,y,w,h=line['box'];crop=mask.crop((x,y,x+w,y+h));reference=line['reference_height']
+    components=_ink_components(crop)
+    minimum=max(6,reference*reference*.018)
+    primary=sorted([c for c in components if c['area']>=minimum and c['box'][3]>=reference*.38],key=lambda c:c['box'][0]+c['box'][2]/2)
+    if not primary:return []
+    # Tiny print distress must not become a glyph. Detached dots, however,
+    # belong to the nearest slant-aligned character group and are retained.
+    slope=_slant(crop,line['baseline_y']-y)
+    extras=[c for c in components if c not in primary and c['area']>=max(4,reference*.25)]
+    attached={id(c):list(c['points']) for c in primary}
+    for component in primary:component['dot_count']=0
+    for extra in extras:
+        ex,ey,ew,eh=extra['box'];center=ex+ew/2+slope*(ey+eh/2)
+        target=min(primary,key=lambda c:abs(center-(c['box'][0]+c['box'][2]/2+slope*(c['box'][1]+c['box'][3]/2))))
+        attached[id(target)]+=extra['points']
+        if eh<reference*.4 and ey+eh<line['baseline_y']-y-reference*.5:target['dot_count']+=1
+    for component in primary:component['all_points']=attached[id(component)]
+    groups=_component_groups(primary,text,reference,line['baseline_y']-y,w,slope)
+    if not groups:return []
+    output=[]
+    for component,letters in groups:
+        points=component.get('all_points',component['points'])
+        if len(letters)==1:
+            output.append(_source_region(points,w,x,y,letters,line,method,evidence,False));continue
+        local=bytearray(w*h)
+        for point in points:local[point]=255
+        selected=Image.frombytes('L',(w,h),bytes(local))
+        aligned,shifts=_sheared(selected,line['baseline_y']-y,slope)
+        bounds=aligned.getbbox()
+        box=[bounds[0],0,bounds[2]-bounds[0],h]
+        boxes=_partition(aligned,box,letters,baseline=line['baseline_y']-y,reference=reference)
+        if len(boxes)!=len(letters):continue
+        cuts=[b[0] for b in boxes]+[boxes[-1][0]+boxes[-1][2]]
+        paths=[]
+        for index,cut in enumerate(cuts):
+            if index in (0,len(cuts)-1):paths.append([cut]*h)
+            else:
+                radius=max(2,round(min(cut-cuts[index-1],cuts[index+1]-cut)*.4))
+                baseline=line['baseline_y']-y
+                body=(max(0,round(baseline-reference*.53)),min(h,round(baseline-reference*.1))) if letters.islower() else None
+                paths.append(_seam(aligned,cut,radius,body))
+        portions=[[] for _ in letters]
+        for point in points:
+            yy,xx=divmod(point,w);position=xx+shifts[yy]
+            for index in range(len(letters)):
+                if paths[index][yy]<=position<paths[index+1][yy]:portions[index].append(point);break
+        for index,(char,part) in enumerate(zip(letters,portions)):
+            part=_clean_portion(part,w,reference)
+            region=_source_region(part,w,x,y,char,line,method,{**evidence,'slant':slope,'joined_group':letters},True)
+            if region:
+                baseline_row=max(0,min(h-1,line['baseline_y']-y))
+                origin=x+paths[index][baseline_row]-shifts[baseline_row]
+                advance=paths[index+1][baseline_row]-paths[index][baseline_row]
+                region.update(layout_origin_x=origin,layout_advance_px=advance,
+                              layout_outer_start=index==0,layout_outer_end=index==len(letters)-1)
+                output.append(region)
+    return layout.annotate_line_layout([region for region in output if region],line,slope)
+
+
+def _partition(mask,box,text,*,baseline=None,reference=None):
     """Jointly place low-ink cuts, with broad character-width constraints."""
     x,y,width,height=box;count=len(text)
     if count<1 or width<count:return []
     crop=mask.crop((x,y,x+width,y+height))
     columns=[crop.crop((p,0,p+1,height)).histogram()[255] for p in range(width)]
-    weights=[.48 if c in 'ilI!.,:;|\'' else 1.35 if c in 'MWmw@' else 1 for c in text]
+    lower=text.islower() and len(text)>3
+    raw=crop.tobytes();base=baseline if baseline is not None else round(height*.69);ref=reference or height*.66
+    asc_end=max(1,round(base-ref*.68));desc_start=min(height-1,round(base+ref*.10))
+    prefixes=[]
+    for begin,finish in ((0,asc_end),(desc_start,height),(0,height)):
+        values=[sum(raw[yy*width+xx]!=0 for yy in range(begin,finish)) for xx in range(width)]
+        pref=[0]
+        for value in values:pref.append(pref[-1]+value)
+        prefixes.append(pref)
+    # Separate small ink islands above the lowercase body (i/j dots).
+    pixels=bytearray(raw);dots=[]
+    for pt,value in enumerate(pixels):
+        if not value:continue
+        stack=[pt];pixels[pt]=0;points=[]
+        while stack:
+            p=stack.pop();yy,xx=divmod(p,width);points.append((xx,yy))
+            for dy in (-1,0,1):
+                for dx in (-1,0,1):
+                    ay,ax=yy+dy,xx+dx
+                    if 0<=ay<height and 0<=ax<width and pixels[ay*width+ax]:pixels[ay*width+ax]=0;stack.append(ay*width+ax)
+        left=min(p[0] for p in points);right=max(p[0] for p in points)+1;top=min(p[1] for p in points);bottom=max(p[1] for p in points)+1
+        if len(points)>ref*.35 and bottom<base-ref*.5 and bottom-top<ref*.4:
+            dots.append((left,right))
+    use_dots=lower and len(dots)==sum(c in 'ij' for c in text)
+    def morphology(a,b,char):
+        if not lower:return 0
+        asc,desc,all_=[pref[b]-pref[a] for pref in prefixes]
+        if not all_:return 10
+        result=0
+        if use_dots:
+            contained=sum(a<=left and right<=b for left,right in dots)
+            overlap=sum(a<right and left<b for left,right in dots)
+            if char in 'ij' and contained!=1:result+=3
+            if char not in 'ij' and overlap:result+=3
+            if contained!=overlap:result+=3
+        if char not in 'bdfhijklt':result+=asc/all_*5
+        elif char in 'bdfhklt':result+=max(0,.1-asc/all_)*8
+        if char not in 'fgjpqy':result+=desc/all_*5
+        elif char in 'gjpqy':result+=max(0,.12-desc/all_)*5
+        return result
+    weights=[_char_weight(c) for c in text]
     unit=width/sum(weights)
     # Bound both memory and runtime for long, high-resolution rows.
     step=max(1,width//1000)
@@ -128,26 +434,20 @@ def _partition(mask,box,text):
             for start,(cost,_) in previous.items():
                 span=end-start
                 if not max(1,target*.3)<=span<=target*2.25:continue
-                fit=.38*math.log(span/target)**2
+                fit=1.2*math.log(span/target)**2
                 boundary=0 if last else min(columns[max(0,end-1):min(width,end+2)])/max(1,height)
-                candidate=(cost+fit+boundary*2,start)
+                candidate=(cost+fit+boundary*2+morphology(start,end,text[index]),start)
                 if best is None or candidate[0]<best[0]:best=candidate
             if best is not None:current[end]=best
-        if not current:return engine._guided_boxes(mask,box,text)
+        if not current:return []
         history.append(current);previous=current
     cuts=[width];end=width
     for stage in reversed(history):end=stage[end][1];cuts.append(end)
     cuts.reverse()
     return [[x+cuts[i],y,cuts[i+1]-cuts[i],height] for i in range(count)]
 
-
 def _mapped_line(mask,line,text,method,evidence):
-    boxes=line['boxes'] if len(line['boxes'])==len(text) else _partition(mask,line['box'],text)
-    approximate=len(line['boxes'])!=len(text)
-    return [{'box':box,'char':char,'line_id':line['id'],'baseline_y':line['baseline_y'],
-             'reference_height':line['reference_height'],'label_source':method,
-             'label_evidence':evidence,'cut_approximate':approximate,'needs_review':True}
-            for box,char in zip(boxes,text)]
+    return _segmented_line(mask,line,text,method,evidence)
 
 
 def _infer_chart(mask,lines,words,header_text):
@@ -218,11 +518,8 @@ def _word_regions(mask,lines,words,used):
             if mask.crop((x,y,x+w,y+h)).histogram()[255]/(w*h)<.10:continue
             # OCR is not allowed to turn a distant heading into selected ink.
             box=[max(0,x-2),max(0,y-2),min(mask.width-max(0,x-2),w+4),min(mask.height-max(0,y-2),h+4)]
-            boxes=_partition(mask,box,text)
-            for crop,char in zip(boxes,text):
-                result.append({'box':crop,'char':char,'line_id':line['id'],'baseline_y':line['baseline_y'],
-                               'reference_height':line['reference_height'],'label_source':'local_ocr','label_evidence':{'recognized_word':text},
-                               'cut_approximate':len(text)>1,'needs_review':True})
+            word_line={**line,'box':box}
+            result+=_segmented_line(mask,word_line,text,'local_ocr',{'recognized_word':text})
     return result
 
 
@@ -267,7 +564,7 @@ def _stable_prefix(mask,line,folder):
 
 
 def _extract(mask,region,image_id,folder):
-    x,y,w,h=region['box'];crop=mask.crop((x,y,x+w,y+h))
+    x,y,w,h=region['box'];crop=_region_mask(mask,region)
     if not crop.getbbox():return None
     path=folder/'glyph-mask.png';ImageOps.invert(crop).save(path)
     record=engine.extract_glyph(path,[0,0,w,h],{'foreground':'dark','threshold':128,'char':region['char'],
@@ -277,7 +574,7 @@ def _extract(mask,region,image_id,folder):
                   provenance={'method':'automatic-image-trace','image_id':image_id,'source_box':list(region['box']),
                               'label_source':region['label_source'],'label_evidence':deepcopy(region['label_evidence']),
                               'cut_approximate':region['cut_approximate'],'needs_review':True})
-    return record
+    return layout.apply_source_layout(record,region)
 
 
 def generate(images,metadata,options,output_dir,progress=None,*,reference_cache_dir=None):

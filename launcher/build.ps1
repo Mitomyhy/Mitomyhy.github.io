@@ -1,7 +1,7 @@
 param(
     [string]$Python = "",
     [string]$OutputDirectory = "",
-    [string]$Version = "2026.10.24.10",
+    [string]$Version = "2026.10.25.1",
     [ValidateSet("Online", "Bundled")]
     [string]$VectorPayload = "Online",
     [string]$CertificateThumbprint = $env:MITOM_SIGN_CERT_SHA1,

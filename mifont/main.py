@@ -259,7 +259,7 @@ class Session:
                                 source=job['folder']/('font.'+format)
                                 if not 100<=source.stat().st_size<=64*1024*1024:raise ValueError('Font output is empty or oversized.')
                                 shutil.copyfile(source,self.store.folder(project['id'])/'builds'/(build_id+'.'+format))
-                            build={'id':build_id,**payload['metadata'],'metrics':result['metrics'],'created_at':projects.now(),
+                            build={'id':build_id,**payload['metadata'],'metrics':result['metrics'],'created_at':projects.now(),'generator_version':VERSION,
                                    'coverage':self.store.view(project)['coverage']}
                             project['builds'].append(build);result={**result,'build_id':build_id,'coverage':build['coverage']}
                         if job['cancel'].is_set():
@@ -365,7 +365,7 @@ class Session:
         build={'id':build_id,**metadata,'metrics':deepcopy(result.get('metrics',{})),
                'coverage':coverage,'created_at':projects.now(),'automation':automation,'warnings':warnings,
                'generation_options':deepcopy(payload['options']),
-               'source_image_ids':[item['id'] for item in payload['images']]}
+               'source_image_ids':[item['id'] for item in payload['images']],'generator_version':VERSION}
         project['builds'].append(build)
         return {**result,'build_id':build_id,'coverage':coverage,'font_metadata':metadata}
 

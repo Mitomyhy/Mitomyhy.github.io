@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from PIL import Image,ImageDraw,ImageFont
+from PIL import Image,ImageDraw,ImageFont,ImageChops
 from fontTools.ttLib import TTFont
 
 from mifont import auto_pipeline,completion,engine
@@ -55,6 +55,56 @@ class AutomaticTests(unittest.TestCase):
         lines=auto_pipeline._line_geometry(mask)
         regions,used,evidence=auto_pipeline._infer_chart(mask,lines,[],'')
         self.assertEqual(regions,[]);self.assertEqual(used,set());self.assertEqual(evidence,[])
+
+    def test_italic_overlapping_boxes_do_not_cut_or_mix_source_components(self):
+        source=Image.new('L',(150,110));parts=[]
+        for offset in (0,45):
+            part=Image.new('L',source.size)
+            ImageDraw.Draw(part).polygon([(10+offset,90),(45+offset,15),(62+offset,15),(27+offset,90)],fill=255)
+            parts.append(part);source=ImageChops.lighter(source,part)
+        bounds=source.getbbox();box=[bounds[0],bounds[1],bounds[2]-bounds[0],bounds[3]-bounds[1]]
+        line={'id':0,'box':box,'boxes':[],'baseline_y':90,'reference_height':75}
+        regions=auto_pipeline._mapped_line(source,line,'AB','known_fixture',{'ordered_text':'AB'})
+        self.assertEqual([r['char'] for r in regions],list('AB'))
+        self.assertGreater(regions[0]['box'][0]+regions[0]['box'][2],regions[1]['box'][0])
+        for region,expected in zip(regions,parts):
+            actual=Image.new('L',source.size);actual.paste(auto_pipeline._region_mask(source,region),tuple(region['box'][:2]))
+            self.assertIsNone(ImageChops.difference(actual,expected).getbbox())
+            self.assertFalse(region['cut_approximate'])
+
+    def test_detached_stencil_arms_do_not_shift_remaining_character_labels(self):
+        source=Image.new('L',(230,120));parts=[]
+        letter=Image.new('L',source.size);draw=ImageDraw.Draw(letter)
+        draw.rectangle((15,20,22,90),fill=255)
+        draw.polygon([(27,55),(47,20),(57,20),(36,56),(62,90),(50,90)],fill=255)
+        parts.append(letter)
+        letter=Image.new('L',source.size);draw=ImageDraw.Draw(letter)
+        draw.rectangle((85,20,94,90),fill=255);draw.rectangle((120,20,129,90),fill=255);draw.rectangle((90,50,125,60),fill=255)
+        parts.append(letter)
+        letter=Image.new('L',source.size);draw=ImageDraw.Draw(letter)
+        draw.rectangle((155,20,164,90),fill=255);draw.rectangle((190,20,199,90),fill=255)
+        draw.polygon([(160,20),(168,20),(195,90),(187,90)],fill=255)
+        parts.append(letter)
+        for part in parts:source=ImageChops.lighter(source,part)
+        line={'id':0,'box':[15,20,185,71],'boxes':[],'baseline_y':90,'reference_height':70}
+        regions=auto_pipeline._mapped_line(source,line,'KHN','known_fixture',{'ordered_text':'KHN'})
+        self.assertEqual([r['char'] for r in regions],list('KHN'))
+        for region,expected in zip(regions,parts):
+            actual=Image.new('L',source.size);actual.paste(auto_pipeline._region_mask(source,region),tuple(region['box'][:2]))
+            self.assertIsNone(ImageChops.difference(actual,expected).getbbox())
+
+    def test_body_anchor_preserves_both_sides_of_a_script_counter(self):
+        source=Image.new('L',(80,70));draw=ImageDraw.Draw(source)
+        # The left letter's open counter is an attractive zero-ink detour.
+        draw.rectangle((25,12,31,54),fill=255);draw.rectangle((43,12,49,54),fill=255)
+        draw.rectangle((31,49,47,55),fill=255);draw.rectangle((61,12,67,54),fill=255)
+        draw.rectangle((49,49,61,55),fill=255)
+        path=auto_pipeline._seam(source,53,10,body=(15,45))
+        self.assertEqual(len(path),70)
+        self.assertTrue(all(x==53 for x in path[15:45]))
+        # Every selected path step stays locally adjacent, including entry to
+        # and exit from the anchor band; it cannot sever a remote stem.
+        self.assertTrue(all(abs(a-b)<=1 for a,b in zip(path,path[1:])))
 
     def test_noisy_cream_sheet_uses_headers_and_ordered_ocr_anchors(self):
         image=Image.new('RGB',(1300,550),(190,70,50));draw=ImageDraw.Draw(image)

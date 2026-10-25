@@ -1,11 +1,18 @@
 # MiFont
 
-MiFont 1.0.1 is a simple Windows image-to-font app. Upload one or more images,
+MiFont 1.0.2 is a simple Windows image-to-font app. Upload one or more images,
 enter the font family name, optionally adjust the ink threshold, and press
 Generate. One automatic job detects and labels letters, traces their shapes,
 completes the character set, and downloads one ZIP containing both TrueType
 (`glyf`) and OpenType (`CFF`) fonts. No manual mapping or separate research,
 completion and export buttons are needed.
+
+Character separation preserves whole ink components and follows slanted seams
+only where letters join. Detached dots stay with their letter. Source baseline
+anchors retain italic overhangs without adding their full width to spacing.
+TTF conversion keeps its side bearings synchronized with the quadratic outline.
+Projects made with the earlier extractor keep their previous files and prompt
+for one new Generate run before the simple UI previews or exports that result.
 
 Generation uses local Windows OCR and image tracing. It can automatically
 compare verified OFL-licensed public Google Fonts references on the computer
@@ -41,7 +48,7 @@ py -3.12 -m venv .work/mifont-env
 
 The build runs source tests, creates an onedir portable application, exercises
 the actual frozen HTTP worker, then emits a hash-pinned flat-root ZIP and
-`mifont-release.json` for the launcher. App 1.0.1 has executable `MiFont.exe` and
+`mifont-release.json` for the launcher. App 1.0.2 has executable `MiFont.exe` and
 manifest `mifont-app.json`. It does not depend on an installed Photoshop panel
 or Vector Migic. The launcher publishes compact online installers while the
 standalone ZIP runs offline after extraction.

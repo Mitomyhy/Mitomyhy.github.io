@@ -127,6 +127,7 @@ class GenerateTests(unittest.TestCase):
         project=snapshot['project'];self.assertEqual(project['revision'],job['revision']+1)
         self.assertEqual(len(project['glyphs']),95);self.assertEqual(project['coverage']['missing_chars'],'')
         self.assertEqual(len(project['builds']),2);self.assertEqual(project['builds'][0]['id'],self.old_build)
+        self.assertEqual(project['builds'][-1]['generator_version'],main.VERSION)
         self.assertEqual(project['family'],'MiFont Automatic')
         self.assertEqual(self.original_bytes()[1:],before[1:])
         for format in ('ttf','otf'):

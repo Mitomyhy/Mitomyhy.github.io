@@ -186,6 +186,7 @@ def run(executable=None,online_reference=False):
             auto_repeat=job('/api/generate',{'project_id':auto_id,'metadata':{'family':'One Click QA'},'options':{'threshold':180}})
             assert len(auto_repeat['project']['glyphs'])==95 and not auto_repeat['project']['coverage']['missing_chars']
             latest_auto=auto_repeat['project']['builds'][-1]
+            assert latest_auto['generator_version']==VERSION
             assert latest_auto['generation_options']['threshold']==180
             assert set(latest_auto['source_image_ids'])=={auto_upload['image']['id'],auto_more['image']['id']}
             archive,_=request('/api/export',{'project_id':project_id,'format':'project'})
@@ -224,6 +225,7 @@ def run(executable=None,online_reference=False):
             restored_auto=json_request('/api/project/'+auto_id)
             assert len(restored_auto['glyphs'])==95 and restored_auto['builds']
             assert restored_auto['builds'][-1]['generation_options']['threshold']==180
+            assert restored_auto['builds'][-1]['generator_version']==VERSION
             assert set(restored_auto['builds'][-1]['source_image_ids'])=={auto_upload['image']['id'],auto_more['image']['id']}
             raw,_=request('/api/font-preview/'+project_id+'/'+build_id+'/ttf')
             font_check(raw,'ttf',obligation['license_text'] if online else None,obligation['license_url'] if online else None)

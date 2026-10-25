@@ -9,6 +9,7 @@ from unittest.mock import patch
 import xml.etree.ElementTree as ET
 
 from PIL import Image,ImageDraw,ImageFont
+from fontTools.pens.boundsPen import BoundsPen
 from fontTools.ttLib import TTFont
 
 from mifont import engine
@@ -83,6 +84,32 @@ class EngineTests(unittest.TestCase):
             with TTFont(path) as font:self.assertEqual(set(font.getBestCmap()),set(range(32,127)))
             face=ImageFont.truetype(str(path),36)
             self.assertGreater(sum(face.getmask('O Missing 123 !?',mode='L')),0)
+
+    def test_quadratic_control_bounds_do_not_translate_observed_glyphs(self):
+        # Conversion puts an off-curve control left of the visible cubic
+        # extremum. The two bounds are intentionally different in this hook.
+        record=normalize_glyph({'char':'C','origin':'observed','advance_width':750,
+            'recording':[['moveTo',[[550,540]]],
+                         ['curveTo',[[-117,406],[-54,355],[310,288]]],
+                         ['lineTo',[[613,700]]],['lineTo',[[613,0]]],['closePath',[]]]})
+        snapshot=deepcopy(record)
+        ttf,otf=self.folder/'hook.ttf',self.folder/'hook.otf'
+        build_font([record],{},ttf,otf)
+        self.assertEqual(record,snapshot)
+        bounds=[]
+        for path in (ttf,otf):
+            with TTFont(path) as font:
+                glyphset=font.getGlyphSet();pen=BoundsPen(glyphset)
+                glyphset['uni0043'].draw(pen);bounds.append(pen.bounds)
+                self.assertEqual(font['hmtx']['uni0043'][0],750)
+                if path.suffix=='.ttf':
+                    glyph=font['glyf']['uni0043']
+                    self.assertLess(glyph.xMin,round(record['bbox'][0])-3)
+                    self.assertEqual(font['hmtx']['uni0043'][1],glyph.xMin)
+        for expected,actual in zip(record['bbox'],bounds[0]):
+            self.assertAlmostEqual(actual,expected,delta=1)
+        for expected,actual in zip(bounds[1],bounds[0]):
+            self.assertAlmostEqual(actual,expected,delta=1)
 
     def test_reference_notices_embedded_and_reserved_family_rejected(self):
         text='Copyright 2026 Synthetic Test Authors\nSIL OPEN FONT LICENSE Version 1.1\nSynthetic notice fixture.'

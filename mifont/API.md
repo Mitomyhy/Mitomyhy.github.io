@@ -26,7 +26,7 @@ return the updated project. Jobs return HTTP202 and are polled until
     "box":[10,20,80,100],"advance_width":700,"lsb":20,"bbox":[0,0,660,700],
     "svg_url":"/api/glyph/PROJECT/GLYPH/svg","crop_url":"/api/glyph/PROJECT/GLYPH/crop"}],
   "coverage":{"observed_chars":"A","generated_chars":"","missing_chars":"…","unassigned_count":0},
-  "builds":[{"id":"…","family":"My Font","style":"Regular","metrics":{}}]
+  "builds":[{"id":"…","family":"My Font","style":"Regular","generator_version":"1.0.2","metrics":{}}]
 }
 ```
 
@@ -95,7 +95,9 @@ The worker's complete result must pass closed-outline, source-crop, license,
 atomic project revision attach new glyphs and the completed build. Failed or
 cancelled generation preserves previous project mappings and downloadable
 builds. Old builds remain available after image removal or another generation.
-Every automatic build stores immutable `source_image_ids` and normalized
+Every build records `generator_version`. The simple UI requires regeneration
+when this differs from the running app version or is absent from an older
+build; previous files remain preserved. Every automatic build stores immutable `source_image_ids` and normalized
 `generation_options` (including its requested `threshold`). On reopening the
 project, the UI can restore that threshold and detect images changed since
 the latest build instead of presenting an old result as current.

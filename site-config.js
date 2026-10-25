@@ -4,8 +4,8 @@ window.MITOM_CONFIG = {
   canonicalUrl: 'https://mitomyhy.github.io/',
   githubUrl: 'https://github.com/Mitomyhy',
   repositoryUrl: 'https://github.com/Mitomyhy/uoy-photoshop-panel',
-  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.24.10',
-  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.24.10/MITOM-Launcher-Setup-2026.10.24.10.exe',
+  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.25.1',
+  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.25.1/MITOM-Launcher-Setup-2026.10.25.1.exe',
   launcherProtocol: 'uoy://',
   apps: [{
     id: 'photoshop-panel',
@@ -52,14 +52,14 @@ window.MITOM_CONFIG = {
     category: { en: 'Images to fonts', vi: 'Tạo font từ ảnh' },
     platform: 'WINDOWS · LOCAL CPU',
     icon: 'mifont.png',
-    githubUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mifont/1.0.1',
+    githubUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mifont/1.0.2',
     status: 'available',
     statusLabel: { en: 'AVAILABLE VIA LAUNCHER', vi: 'SẴN SÀNG QUA LAUNCHER' },
     summary: {
       en: 'Upload images, name your font and download TTF and OTF together with one button.',
       vi: 'Tải ảnh lên, đặt tên font và tải cả TTF lẫn OTF bằng một nút.'
     },
-    version: '1.0.1',
+    version: '1.0.2',
     detail: {
       en: 'Automatic letter detection, licensed open-font comparison, missing-character completion and one font ZIP. Keep only the ink threshold control; generation runs locally on CPU.',
       vi: 'Tự nhận diện chữ, đối chiếu font mở có giấy phép, bổ sung ký tự thiếu và xuất một ZIP chứa cả hai font. Chỉ cần chỉnh ngưỡng mực; xử lý chạy trên CPU.'

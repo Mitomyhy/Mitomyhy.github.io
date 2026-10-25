@@ -28,7 +28,9 @@ _DEFAULT_RELEASE = object()
 # Known previous runtimes are trusted only by these exact manifest pins.
 # Keep newest first so an older side-by-side installation cannot mask it.
 # Never trust arbitrary folders or a manifest supplied from the user's machine.
-TRUSTED_PREVIOUS_RELEASES = ({'schema':1,'app_id':'mifont','version':'1.0.0','entry':'MiFont.exe',
+TRUSTED_PREVIOUS_RELEASES = ({'schema':1,'app_id':'mifont','version':'1.0.1','entry':'MiFont.exe',
+    'manifest_sha256':'a0bedd92404c23febe9b75612aea6e23f7f0cd8636de164429ca045a9f4f6902'},
+    {'schema':1,'app_id':'mifont','version':'1.0.0','entry':'MiFont.exe',
     'manifest_sha256':'9881638902890043fc979166637d2a23181166b6b016af93718e841054b532ee'},)
 
 
