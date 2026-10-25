@@ -54,10 +54,13 @@ def install_verified_panel(release, progress=None):
     if minimum and backend.version_tuple(minimum) > backend.version_tuple(backend.APP_VERSION):
         raise backend.LauncherError("The signed panel requires launcher " + minimum + "; update the launcher first.")
     installer._closed(False)
+    recovery = installer.recover_pending()
     source = backend.obtain_core(release, progress=progress)
     result = None
     try:
         result = installer.install(source, dry_run=False)
+        if recovery is not None:
+            result["recovered_previous_install"] = True
         try:
             result["launcher_path"] = backend.persist_launcher()
         except Exception as exc:
@@ -96,6 +99,7 @@ class MITOMAdapter(backend.LauncherUI):
         super().__init__(*args, **kwargs)
         if {"--ui-smoke", "--self-test", "--verify-only", "--network-smoke", "--help", "-h"}.intersection(sys.argv[1:]):
             return
+        self._resume_unfinished_panel_setup()
         self._r4_ui_thread = threading.get_ident()
         self._update_discovery = UpdateDiscovery(
             self.root, lambda: bool(self.busy),
@@ -108,6 +112,19 @@ class MITOMAdapter(backend.LauncherUI):
             self.root.after_idle(self._prepare_activation_child)
         else:
             self._update_discovery.start()
+
+    def _resume_unfinished_panel_setup(self):
+        """An owned unfinished setup resumes only after fresh signed metadata."""
+        if getattr(self, "_pending_install_action", None) is not None:
+            return
+        try:
+            roots, _local, _sandbox = installer._roots(None)
+            pending = installer._plain(roots["launcher"] / "pending-transaction.json")
+            if pending.is_file() and installer.get_recovery_backup() is not None:
+                self._pending_install_action = "panel"
+                self._append("Unfinished Panel setup found. Checking the signed release before safe recovery and retry.")
+        except (OSError, ValueError, installer.InstallError) as exc:
+            self._append("Unfinished Panel setup was preserved: " + str(exc))
 
     def _build(self):
         if self._activation_request is not None:

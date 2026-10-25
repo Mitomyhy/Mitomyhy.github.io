@@ -44,6 +44,9 @@ class AdapterUpdateTests(unittest.TestCase):
         cls.entry = main
 
     def setUp(self):
+        recovery = mock.patch.object(self.entry.installer, "recover_pending", return_value=None)
+        recovery.start()
+        self.addCleanup(recovery.stop)
         self.app = object.__new__(self.entry.MITOMAdapter)
         self.app.root = CallbackRoot()
         self.app.busy = False
@@ -391,6 +394,33 @@ class AdapterUpdateTests(unittest.TestCase):
         dispatched[0][1](value)
         self.assertNotIn(('panel', release['version']), self.app._automatic_installs_attempted)
         self.assertIn('Waiting for Photoshop', self.app.status_var.get())
+
+    def test_recovery_is_checked_before_any_panel_download(self):
+        with mock.patch.object(self.entry.installer, 'get_installed_version', return_value=None), \
+                mock.patch.object(self.entry.installer, '_closed'), \
+                mock.patch.object(self.entry.installer, 'recover_pending', side_effect=self.entry.installer.InstallError('Later edits retained')), \
+                mock.patch.object(self.entry.backend, 'obtain_core') as obtain:
+            with self.assertRaisesRegex(self.entry.installer.InstallError, 'Later edits'):
+                self.entry.install_verified_panel({'version':'2026.10.25.1'})
+            obtain.assert_not_called()
+
+    def test_startup_resumes_owned_pending_setup_only_after_next_signed_check(self):
+        import tempfile
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parents[2]/'build') as folder:
+            pending=Path(folder)/'pending-transaction.json';pending.write_text('{}')
+            self.app._pending_install_action=None
+            with mock.patch.object(self.entry.installer, '_roots', return_value=({'launcher':Path(folder)}, None, True)), \
+                    mock.patch.object(self.entry.installer, 'get_recovery_backup', return_value=Path(folder)/'backups/owned'):
+                self.app._resume_unfinished_panel_setup()
+            self.assertEqual(self.app._pending_install_action,'panel')
+            self.assertEqual(pending.read_text(),'{}')
+            self.assertEqual(self.app.root.tasks,[])
+            self.app._pending_install_action=None;pending.unlink()
+            with mock.patch.object(self.entry.installer, '_roots', return_value=({'launcher':Path(folder)}, None, True)), \
+                    mock.patch.object(self.entry.installer, 'get_recovery_backup') as discover:
+                self.app._resume_unfinished_panel_setup()
+            discover.assert_not_called()
+            self.assertIsNone(self.app._pending_install_action)
 
 
 if __name__ == "__main__":

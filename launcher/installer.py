@@ -7,6 +7,7 @@ _populate(globals(), "installer")
 # before each file adds roughly 85 seconds on the measured machine. Keep the
 # existing process guard, with a bounded poll interval during one transaction.
 import threading as _threading
+import sys as _sys
 
 _original_install = install
 _original_closed = _closed
@@ -80,6 +81,22 @@ def install(payload_root, base_root=None, dry_run=False):
         raise InstallError("An installation is already active on this thread.")
     _install_poll.state = {"next": 0.0, "sandbox": base_root is not None}
     try:
+        if not dry_run:
+            recover_pending(base_root=base_root)
+            _install_poll.state["next"] = 0.0
         return _original_install(payload_root, base_root=base_root, dry_run=dry_run)
     finally:
         del _install_poll.state
+
+
+def recover_pending(base_root=None):
+    """Restore an owned interrupted transaction before a new installation."""
+    import recovery
+    scoped = getattr(_install_poll, "state", None) is None
+    if scoped:
+        _install_poll.state = {"next": 0.0, "sandbox": base_root is not None}
+    try:
+        return recovery.recover_pending(_sys.modules[__name__], base_root=base_root)
+    finally:
+        if scoped:
+            del _install_poll.state

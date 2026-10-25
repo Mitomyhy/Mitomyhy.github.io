@@ -46,7 +46,7 @@ from legacy_loader import populate as _populate
 
 _populate(globals(), "launcher")
 
-APP_VERSION = "2026.10.25.8"
+APP_VERSION = "2026.10.25.9"
 APP_TITLE = "MITOM Launcher"
 # This is a launcher repair. The verified Photoshop panel release is unchanged.
 CORE_VERSION = "2026.10.21.2"
@@ -80,16 +80,19 @@ def _transient_download_error(exc: BaseException) -> bool:
 def download_artifact(artifact, destination_dir, filename, progress=None):
     """Retry transient failures; never retry a signature, size or hash failure.
 
-    The original downloader verifies an existing cache before use and removes
-    each incomplete temporary file. Every retry begins with a new digest.
+    Short EOF is a transport failure even when HTTPResponse did not raise one.
+    Every small-artifact retry starts fresh; completed cache files keep their
+    existing size/hash checks and large artifacts retain verified resume.
     """
     import panel_payload
+    import verified_download
     if artifact["size"] >= panel_payload.RESUME_THRESHOLD:
         return panel_payload.download_large_artifact(sys.modules[__name__], artifact,
                                                      destination_dir, filename, progress)
     for attempt in range(DOWNLOAD_ATTEMPTS):
         try:
-            return _original_download_artifact(artifact, destination_dir, filename, progress)
+            return verified_download.download_once(sys.modules[__name__], artifact,
+                                                   destination_dir, filename, progress)
         except Exception as exc:
             if not _transient_download_error(exc):
                 raise
