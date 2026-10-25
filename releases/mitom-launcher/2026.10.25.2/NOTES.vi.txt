@@ -1,0 +1,9 @@
+MITOM Launcher 2026.10.25.2
+
+Panel mới: 2026.10.25.1, có CPU/GPU NVIDIA CUDA và Companion 1.0.27.
+
+Sửa lỗi cài lại sau rollback còn cây thư mục rỗng; vẫn giữ journal/backup, chặn file lạ và link. Giao diện dùng Segoe UI của Windows, không phân phối font riêng hoặc ảnh minh họa có dữ liệu đơn.
+
+Launcher 25.1 cần tải/mở 25.2 từ web một lần vì lỗi ưu tiên channel cũ. Nếu báo unfinished update: lưu và đóng Photoshop/OrderStudio -> trong Launcher, ô Photoshop Panel -> ... -> Restore previous version -> Install lại. Không xóa journal, backup hoặc ghép nối thủ công. Pending không hợp lệ vẫn giữ nguyên để kiểm tra.
+
+137 tests:135 pass,2 Windows privilege skips. Runtime/UI/strict-TLS smokes pass. Chưa cài trực tiếp trên máy trong ảnh. EXE không có chứng thư Authenticode.
