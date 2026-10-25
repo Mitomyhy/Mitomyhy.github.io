@@ -13,6 +13,7 @@
   let toastTimer;
   let toastKey;
   let lastFocus;
+  let downloadDialogOpen = false;
 
   const escapeHTML = (value) => String(value ?? '').replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
   const t = (key, values = {}) => (dictionaries[language]?.[key] ?? dictionaries.en?.[key] ?? key).replace(/\{(\w+)\}/g, (match, name) => values[name] ?? match);
@@ -24,11 +25,48 @@
   };
   const githubUrl = safeUrl(config.githubUrl, 'https://github.com/Mitomyhy');
   const repositoryUrl = safeUrl(config.repositoryUrl, githubUrl);
-  const releaseUrl = safeUrl(config.releaseUrl, repositoryUrl);
-  const downloadUrl = safeUrl(config.launcherDownloadUrl, '');
+  let releaseUrl = safeUrl(config.releaseUrl, repositoryUrl);
+  let downloadUrl = safeUrl(config.launcherDownloadUrl, '');
+  let launcherVersion = config.launcherVersion || '';
   const shareUrl = safeUrl(config.canonicalUrl, location.href.split('#')[0]);
   const arrow = (symbol) => `<span aria-hidden="true">${symbol}</span>`;
   const buttonLabel = (key, symbol = '') => `<span>${escapeHTML(t(key))}</span>${symbol ? ` ${arrow(symbol)}` : ''}`;
+
+  const versionParts = value => typeof value === 'string' && /^\d{4}\.\d{2}\.\d{2}\.\d+$/.test(value) && value.split('.').every(part => Number.isSafeInteger(Number(part))) ? value.split('.').map(Number) : null;
+  const versionAtLeast = (next, current) => {
+    const a = versionParts(next), b = versionParts(current);
+    if (!a) return false;
+    if (!b) return true;
+    for (let i = 0; i < a.length; i++) { if (a[i] !== b[i]) return a[i] > b[i]; }
+    return true;
+  };
+  const panelApp = () => apps.find(app => app.id === 'photoshop-panel');
+  const releaseVersions = () => `Launcher ${launcherVersion || '—'} · Photoshop Panel ${panelApp()?.version || '—'}`;
+  function renderReleaseVersions() {
+    document.querySelectorAll('[data-release-versions]').forEach(node => { node.textContent = releaseVersions(); });
+    document.querySelectorAll('[data-launcher-version]').forEach(node => { node.textContent = launcherVersion; });
+  }
+  async function refreshLatestDownload() {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch('releases/latest-download.json', { cache: 'no-store', credentials: 'omit', signal: controller.signal });
+      if (!response.ok) return;
+      const latest = await response.json();
+      if (!latest || !versionAtLeast(latest.version, launcherVersion) || !Number.isSafeInteger(latest.size) || latest.size <= 0 || typeof latest.sha256 !== 'string' || !/^[a-f0-9]{64}$/i.test(latest.sha256)) return;
+      const url = new URL(latest.url);
+      const expectedPath = `/releases/mitom-launcher/${latest.version}/MITOM-Launcher-Setup-${latest.version}.exe`;
+      if (url.origin !== 'https://mitomyhy.github.io' || url.username || url.password || url.pathname !== expectedPath || url.search || url.hash) return;
+      downloadUrl = url.href;
+      launcherVersion = latest.version;
+      releaseUrl = `https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/${latest.version}`;
+      if (panelApp() && versionAtLeast(latest.panel_version, panelApp().version)) panelApp().version = latest.panel_version;
+      renderReleaseVersions();
+      renderApps();
+      if (dialog.open && downloadDialogOpen) showDownload();
+    } catch (_) { /* Keep the current, pinned download when metadata is unavailable or invalid. */ }
+    finally { clearTimeout(timer); }
+  }
 
   function translateNodes(root = document) {
     root.querySelectorAll('[data-i18n]').forEach((element) => { element.textContent = t(element.dataset.i18n); });
@@ -68,6 +106,7 @@
     updateMenuLabel();
     updateShareLinks();
     renderApps();
+    renderReleaseVersions();
     // Keep the same select DOM node so switching languages preserves keyboard focus.
     const select = $('#settings-language');
     if (select) select.value = language;
@@ -88,6 +127,7 @@
   }
 
   function openDialog(content) {
+    downloadDialogOpen = false;
     if (!dialog.open) lastFocus = document.activeElement;
     dialogContent.innerHTML = content;
     if (!dialog.open) dialog.showModal();
@@ -117,6 +157,10 @@
       openDialog(`<p class="dialog-kicker">${escapeHTML(t('dialog.downloadKicker'))}</p><h2 id="dialog-title">${t('dialog.downloadTitle')}</h2><p class="dialog-description">${escapeHTML(t('dialog.downloadDescription'))}</p><ol class="dialog-checklist"><li>${escapeHTML(t('dialog.downloadStep1'))}</li><li>${escapeHTML(t('dialog.downloadStep2'))}</li><li>${escapeHTML(t('dialog.downloadStep3'))}</li></ol><div class="dialog-actions"><a class="button button-dark" href="${escapeHTML(downloadUrl)}">${buttonLabel('download.short', '↓')}</a><a class="button" href="${escapeHTML(releaseUrl)}" target="_blank" rel="noopener">${buttonLabel('download.release', '↗')}</a></div><p class="dialog-note">${escapeHTML(t('dialog.downloadNote'))}</p>`);
     } else {
       openDialog(`<p class="dialog-kicker">${escapeHTML(t('dialog.preparingKicker'))}</p><h2 id="dialog-title">${t('dialog.preparingTitle')}</h2><p class="dialog-description">${escapeHTML(t('dialog.preparingDescription'))}</p><div class="dialog-actions"><a class="button button-dark" href="${escapeHTML(releaseUrl)}" target="_blank" rel="noopener">${buttonLabel('dialog.github', '↗')}</a><button class="button" data-close-dialog>${buttonLabel('dialog.ok')}</button></div><p class="dialog-note">${escapeHTML(t('dialog.preparingNote'))}</p>`);
+    }
+    if (downloadUrl) {
+      dialogContent.innerHTML = `<div class="dialog-tags"><span>Launcher ${escapeHTML(launcherVersion || '—')}</span><span>Photoshop Panel ${escapeHTML(panelApp()?.version || '—')}</span></div>` + dialogContent.innerHTML;
+      downloadDialogOpen = true;
     }
   }
 
@@ -220,5 +264,6 @@
   });
   $('#year').textContent = new Date().getFullYear();
   applyLanguage(language);
+  refreshLatestDownload();
 })();
 

@@ -124,6 +124,7 @@
     'dialog.close': ['Close', 'Đóng'],
     'dialog.ok': ['GOT IT', 'ĐÃ HIỂU'],
     'dialog.github': ['OPEN GITHUB', 'MỞ GITHUB'],
+    'download.source': ['LAUNCHER 25.2 SOURCE · ZIP', 'NGUỒN LAUNCHER 25.2 · ZIP'],
     'dialog.downloadKicker': ['MITOM / WINDOWS LAUNCHER', 'MITOM / LAUNCHER WINDOWS'],
     'dialog.downloadTitle': ['Let’s get<br><span>started.</span>', 'Cùng<br><span>bắt đầu.</span>'],
     'dialog.downloadDescription': ["Download the Windows launcher, then choose Photoshop Panel or Vector Migic to install. Vector Migic runs locally on CPU; Photoshop Panel requires Adobe Photoshop.", "Tải launcher cho Windows, sau đó chọn Photoshop Panel hoặc Vector Migic để cài đặt. Vector Migic chạy local bằng CPU; Photoshop Panel cần Adobe Photoshop."],

@@ -4,8 +4,9 @@ window.MITOM_CONFIG = {
   canonicalUrl: 'https://mitomyhy.github.io/',
   githubUrl: 'https://github.com/Mitomyhy',
   repositoryUrl: 'https://github.com/Mitomyhy/uoy-photoshop-panel',
-  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.25.1',
-  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.25.1/MITOM-Launcher-Setup-2026.10.25.1.exe',
+  releaseUrl: 'https://github.com/Mitomyhy/Mitomyhy.github.io/tree/main/releases/mitom-launcher/2026.10.25.2',
+  launcherVersion: '2026.10.25.2',
+  launcherDownloadUrl: 'https://mitomyhy.github.io/releases/mitom-launcher/2026.10.25.2/MITOM-Launcher-Setup-2026.10.25.2.exe',
   launcherProtocol: 'uoy://',
   apps: [{
     id: 'photoshop-panel',
