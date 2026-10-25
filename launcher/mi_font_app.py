@@ -1,12 +1,13 @@
 """Verified, offline-capable sidecar installation for MiFont.
 
-The release descriptor is packaged with the launcher, never accepted from an
-unverified web response. It pins both the ZIP and the runtime file manifest.
+The release descriptor comes from a signed online catalogue or the bundled
+offline fallback. It pins both the ZIP and the runtime file manifest.
 Photoshop installation and its credentials are not used by this module.
 """
 from __future__ import annotations
 
 import hashlib
+import copy
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -25,10 +26,14 @@ RELEASE_PATH = BUNDLE_ROOT / "mifont-release.json"
 MAX_ARCHIVE_BYTES = 768 * 1024 * 1024
 MAX_RUNTIME_BYTES = 2 * 1024 * 1024 * 1024
 _DEFAULT_RELEASE = object()
+_online_release = None
+_online_history = ()
 # Known previous runtimes are trusted only by these exact manifest pins.
 # Keep newest first so an older side-by-side installation cannot mask it.
 # Never trust arbitrary folders or a manifest supplied from the user's machine.
-TRUSTED_PREVIOUS_RELEASES = ({'schema':1,'app_id':'mifont','version':'1.0.1','entry':'MiFont.exe',
+TRUSTED_PREVIOUS_RELEASES = ({'schema':1,'app_id':'mifont','version':'1.0.2','entry':'MiFont.exe',
+    'manifest_sha256':'ca2381e1dd19620a2c68d65a7ee80aa67f01c86901b20c221108a54ae1e509be'},
+    {'schema':1,'app_id':'mifont','version':'1.0.1','entry':'MiFont.exe',
     'manifest_sha256':'a0bedd92404c23febe9b75612aea6e23f7f0cd8636de164429ca045a9f4f6902'},
     {'schema':1,'app_id':'mifont','version':'1.0.0','entry':'MiFont.exe',
     'manifest_sha256':'9881638902890043fc979166637d2a23181166b6b016af93718e841054b532ee'},)
@@ -70,11 +75,18 @@ def _plain_path(path):
 
 
 def load_release(path=RELEASE_PATH):
-    """Read the immutable release descriptor bundled with this launcher."""
+    """Use authenticated online metadata, with the bundled offline fallback."""
+    if path == RELEASE_PATH and _online_release is not None:
+        return copy.deepcopy(_online_release)
     path = Path(path)
     if not path.is_file():
         return None
     raw = json.loads(path.read_text(encoding="utf-8"))
+    return validate_release(raw)
+
+
+def validate_release(raw):
+    raw = copy.deepcopy(raw)
     if not isinstance(raw, dict) or raw.get("schema") != 1 or raw.get("app_id") != APP_ID:
         raise MiFontAppError("Invalid MiFont release descriptor.")
     if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,63}", raw.get("version", "")):
@@ -96,6 +108,24 @@ def load_release(path=RELEASE_PATH):
     if not archive.get("bundled") and not archive.get("url"):
         raise MiFontAppError("MiFont has no installation package.")
     return raw
+
+
+def check_catalogue(release, history=()):
+    current = validate_release(release)
+    previous = tuple(validate_release(item) for item in history)
+    bundled = load_release()
+    if bundled and tuple(map(int, current["version"].split("."))) < tuple(map(int, bundled["version"].split("."))):
+        raise MiFontAppError("MiFont catalogue is older than the bundled release.")
+    if bundled and current["version"] == bundled["version"] and current != bundled:
+        raise MiFontAppError("MiFont release identity changed without a version change.")
+    return current, previous
+
+
+def use_catalogue(release, history=()):
+    """Accept only descriptors already authenticated by app_catalogue."""
+    global _online_release, _online_history
+    current, previous = check_catalogue(release, history)
+    _online_release, _online_history = current, previous
 
 
 def _download_url(url):
@@ -178,7 +208,8 @@ def installed_state(data_root, release=_DEFAULT_RELEASE):
                      mifont_current_verified=True, mifont_repair_required=False)
         return state
     current_version = tuple(int(part) for part in release["version"].split(".")) if re.fullmatch(r"\d+(?:\.\d+)*", release["version"]) else ()
-    for previous in TRUSTED_PREVIOUS_RELEASES:
+    for previous in sorted((*_online_history, *TRUSTED_PREVIOUS_RELEASES),
+                           key=lambda item: tuple(map(int, item["version"].split("."))), reverse=True):
         previous_version = tuple(int(part) for part in previous["version"].split("."))
         if not current_version or previous_version >= current_version:
             continue

@@ -46,7 +46,7 @@ from legacy_loader import populate as _populate
 
 _populate(globals(), "launcher")
 
-APP_VERSION = "2026.10.25.1"
+APP_VERSION = "2026.10.25.7"
 APP_TITLE = "MITOM Launcher"
 # This is a launcher repair. The verified Photoshop panel release is unchanged.
 CORE_VERSION = "2026.10.21.2"
@@ -83,6 +83,10 @@ def download_artifact(artifact, destination_dir, filename, progress=None):
     The original downloader verifies an existing cache before use and removes
     each incomplete temporary file. Every retry begins with a new digest.
     """
+    import panel_payload
+    if artifact["size"] >= panel_payload.RESUME_THRESHOLD:
+        return panel_payload.download_large_artifact(sys.modules[__name__], artifact,
+                                                     destination_dir, filename, progress)
     for attempt in range(DOWNLOAD_ATTEMPTS):
         try:
             return _original_download_artifact(artifact, destination_dir, filename, progress)
@@ -162,6 +166,7 @@ def staging_root(cache_root=None, base_root=None) -> Path:
 def obtain_core(release, progress=None, cache_root=None, base_root=None):
     """Assemble authenticated parts and extract into a separate staging tree."""
     import installer
+    import panel_payload
     version_tuple(release["version"])
     models = external_files(release)
     bundles = external_bundles(release)
@@ -173,12 +178,7 @@ def obtain_core(release, progress=None, cache_root=None, base_root=None):
                              include_install=cache_root is None or base_root is not None)
     cache.mkdir(parents=True, exist_ok=True)
     staging.mkdir(parents=True, exist_ok=True)
-    parts, previous = [], 0
-    for index, part in enumerate(core["parts"]):
-        offset = previous
-        callback = (lambda done, _size, offset=offset: progress(offset + done, core["size"])) if progress else None
-        parts.append(download_artifact(part, cache, f"core.part{index + 1:03d}", progress=callback))
-        previous += part["size"]
+    parts = panel_payload.obtain_parts(sys.modules[__name__], release, cache_base, progress)
     archive = cache / "core.zip"
     fd, temporary = tempfile.mkstemp(prefix="core-", suffix=".zip.part", dir=cache)
     try:
@@ -211,6 +211,9 @@ def obtain_core(release, progress=None, cache_root=None, base_root=None):
     try:
         _install_step("Extract panel", archive, safe_extract_core,
                       archive, extraction, expected_bytes=expected)
+        panel_payload.prefetch_dependencies(sys.modules[__name__], release, cache_base, base_root,
+                                            allow_installed=cache_root is None or base_root is not None,
+                                            progress=progress)
         if bundles:
             _install_step("Attach runtime components", cache_base / "Bundles", attach_external_bundles,
                           release, extraction, cache_base / "Bundles", manifest, progress)
@@ -304,3 +307,10 @@ def validate_open_uri(value):
             or parsed.path not in {"", "/", "/launch"} or parsed.query or parsed.fragment):
         raise LauncherError("Liên kết mở launcher không hợp lệ.")
     return True
+
+
+def download_space_preflight(release, cache, base_root=None, include_install=True):
+    """Budget remaining cache/staging, then let the installer check real changes."""
+    import disk_plan
+    return disk_plan.download_preflight(sys.modules[__name__], release, cache,
+                                        base_root=base_root, include_install=include_install)

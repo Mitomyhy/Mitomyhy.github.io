@@ -179,7 +179,7 @@ class VectorFixture(unittest.TestCase):
             self.assertFalse(state["vector_current_verified"])
             self.assertEqual(state["vector_path"], previous_install["path"])
             counts, apps = catalogue_selection(state, "updates")
-            self.assertEqual(counts, {"all": 2, "installed": 1, "updates": 1, "available": 1})
+            self.assertEqual(counts, {"all": 3, "installed": 1, "updates": 1, "available": 2})
             self.assertEqual([app["id"] for app in apps], ["vector"])
             ui = object.__new__(MITOMLauncherUI)
             ui.state = state
@@ -280,8 +280,8 @@ class CatalogueTests(unittest.TestCase):
         state = {"installed": True, "installed_version": "2026.10.24.2", "vector_installed": False,
                  "vector_latest_version": "1.0.0", "vector_available": True}
         counts, apps = catalogue_selection(state)
-        self.assertEqual(counts, {"all": 2, "installed": 1, "updates": 0, "available": 1})
-        self.assertEqual([item["id"] for item in apps], ["panel", "vector"])
+        self.assertEqual(counts, {"all": 3, "installed": 1, "updates": 0, "available": 2})
+        self.assertEqual([item["id"] for item in apps], ["panel", "vector", "mifont"])
         self.assertEqual([item["id"] for item in catalogue_selection(state, "installed")[1]], ["panel"])
         self.assertEqual([item["id"] for item in catalogue_selection(state, "available", "svg")[1]], ["vector"])
         self.assertEqual(catalogue_selection(state, "installed", "svg")[1], [])
@@ -298,7 +298,7 @@ class CatalogueTests(unittest.TestCase):
                         "vector_current_verified": not installed}
             self.assertEqual(ui._primary_key(), panel_key)
             self.assertEqual(ui._vector_key(), "open_vector" if not installed else "install_vector")
-        self.assertEqual(len(catalogue_entries(ui.state)), 2)
+        self.assertEqual(len(catalogue_entries(ui.state)), 3)
 
 
 if __name__ == "__main__":

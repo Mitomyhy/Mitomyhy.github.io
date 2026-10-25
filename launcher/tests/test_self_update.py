@@ -87,6 +87,39 @@ class SelfUpdateTests(unittest.TestCase):
         self.download.assert_not_called()
         self.assertFalse(self.data.exists())
 
+    def test_newest_signed_source_wins_over_stale_independent_channel(self):
+        newer = {"launcher": {**self.artifact, "version": "2026.10.24.8"}}
+        selected = self_update.select_newest_update(backend, self.release, newer)
+        self.assertEqual(selected.version, "2026.10.24.8")
+        self.assertEqual(self_update.select_newest_update(backend, newer, self.release), selected)
+        with self.assertRaises(self_update.SelfUpdateError):
+            self_update.select_newest_update(backend, newer,
+                {"launcher": {**newer["launcher"], "sha256": "b" * 64}})
+
+    def test_activation_continuation_is_allowlisted_and_bound_to_readiness(self):
+        target = self.stage()
+        process = mock.Mock()
+        process.poll.return_value = None
+        for action in ("panel", "vector", "mifont"):
+            with self.subTest(action=action), mock.patch.object(self_update.subprocess, "Popen", return_value=process):
+                attempt = self_update.begin_activation(backend, self.update, target, idle=True,
+                    data_root=self.data, resume_action=action)
+            child = self.child_request(attempt)
+            self.assertEqual(child.resume_action, action)
+            self_update.mark_activation_ready(child)
+            response = child.path.parent / "ready.json"
+            value = json.loads(response.read_text())
+            value["resume_action"] = "mifont" if action != "mifont" else "panel"
+            response.write_text(json.dumps(value))
+            with self.assertRaises(self_update.SelfUpdateError):
+                self_update.poll_activation(attempt)
+        for action in ("--install", "https://example.com", "C:/arbitrary.exe", [], {}):
+            with self.subTest(action=action), mock.patch.object(self_update.subprocess, "Popen") as spawn:
+                with self.assertRaises(self_update.SelfUpdateError):
+                    self_update.begin_activation(backend, self.update, target, idle=True,
+                        data_root=self.data, resume_action=action)
+                spawn.assert_not_called()
+
     def test_staging_verifies_new_and_existing_bytes_and_preserves_other_apps(self):
         target = self.stage()
         self.assertEqual(target, self.data / "MITOMLauncher-2026.10.24.6.exe")

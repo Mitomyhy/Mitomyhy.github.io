@@ -12,6 +12,7 @@ import argparse
 import ctypes
 import platform
 import queue
+import re
 import sys
 from pathlib import Path
 import tkinter as tk
@@ -107,6 +108,12 @@ _VI = {
     "Your creative workflow starts with Photoshop Panel.": "Bắt đầu sáng tạo với Photoshop Panel.",
     "Desktop interface preview · installation actions are disabled.": "Xem trước giao diện · chức năng cài đặt đang tắt.",
     "Ready. Choose an app to install or open.": "Sẵn sàng. Chọn ứng dụng để cài hoặc mở.",
+    "Checking launcher and app updates…": "Đang kiểm tra bản mới của Launcher và ứng dụng…",
+    "Checking the latest signed release before installing…": "Đang xác thực bản mới nhất trước khi cài…",
+    "Installing the verified Photoshop Panel…": "Đang cài Photoshop Panel đã xác thực…",
+    "Starting the updated launcher…": "Đang mở Launcher vừa cập nhật…",
+    "Panel update check failed. The installed panel is unchanged; retry when connected.": "Chưa kiểm tra được bản Panel mới. Bản đang cài được giữ nguyên; hãy thử lại khi có mạng.",
+    "Some update checks could not finish. See Activity Log and retry.": "Chưa kiểm tra xong một số bản cập nhật. Xem Nhật ký hoạt động và thử lại.",
 }
 
 
@@ -245,7 +252,26 @@ class MITOMLauncherUI:
         return widget
 
     def _t(self, text):
-        return _VI.get(text, text) if self.state.get("language") == "vi" else text
+        if self.state.get("language") != "vi":
+            return text
+        if text in _VI:
+            return _VI[text]
+        patterns = (
+            (r"Updating Launcher (\d[\d.]*) automatically…", "Đang tự cập nhật Launcher {0}…"),
+            (r"Downloading verified launcher (\d[\d.]*)…", "Đang tải Launcher {0} đã xác thực…"),
+            (r"Panel (\d[\d.]*) is ready\. Waiting for Photoshop / Order Studio to close before updating\.",
+             "Panel {0} đã sẵn sàng. Đang đợi bạn đóng Photoshop / Order Studio để cập nhật."),
+            (r"Updating (mifont|vector|panel) (\d[\d.]*) automatically…", "Đang tự cập nhật {0} {1}…"),
+            (r"(mifont|vector|panel) (\d[\d.]*) updated automatically\.", "Đã tự cập nhật {0} {1}."),
+            (r"Automatic (mifont|vector|panel) update could not finish\. Use Update to retry; the previous version is retained\.",
+             "Chưa tự cập nhật được {0}. Bấm Cập nhật để thử lại; bản trước vẫn được giữ nguyên."),
+        )
+        names = {"mifont": "MiFont", "vector": "Vector Migic", "panel": "Panel"}
+        for pattern, translation in patterns:
+            match = re.fullmatch(pattern, text)
+            if match:
+                return translation.format(*(names.get(value, value) for value in match.groups()))
+        return text
 
     def _button(self, parent, text, command, primary=False, compact=False, **kwargs):
         button = _CaptionButton(parent, text=self._t(text), command=command, cursor="hand2",

@@ -48,6 +48,7 @@ class ActivationRequest:
     sha256: str
     expires_at: float
     parent_pid: int
+    resume_action: str | None = None
 
 
 @dataclass
@@ -106,6 +107,18 @@ def select_update(backend, verified_release):
         return None
     _validate_update(backend, update)
     return update
+
+
+def select_newest_update(backend, *verified_releases):
+    """Reconcile independent signed channels without preferring a stale one."""
+    updates = [select_update(backend, release) for release in verified_releases if release]
+    updates = [update for update in updates if update is not None]
+    if not updates:
+        return None
+    newest = max(updates, key=lambda update: backend.version_tuple(update.version))
+    if any(update.version == newest.version and update != newest for update in updates):
+        raise SelfUpdateError("Signed channels disagree about the same launcher version.")
+    return newest
 
 
 def _plain(path):
@@ -216,13 +229,24 @@ def _write_record(path, value):
 
 
 def _identity(request):
-    return {"schema": 1, "nonce": request.nonce, "version": request.version,
-            "sha256": request.sha256, "target": str(request.target)}
+    value = {"schema": 1, "nonce": request.nonce, "version": request.version,
+             "sha256": request.sha256, "target": str(request.target)}
+    if request.resume_action is not None:
+        value["resume_action"] = request.resume_action
+    return value
 
 
-def begin_activation(backend, update, target, *, idle, timeout=30, data_root=None):
+def _resume_action(value):
+    # A continuation is an app identifier, never a command, path, URL or feed.
+    if value is not None and (not isinstance(value, str) or value not in {"panel", "vector", "mifont"}):
+        raise SelfUpdateError("Unsupported launcher update continuation.")
+    return value
+
+
+def begin_activation(backend, update, target, *, idle, timeout=30, data_root=None, resume_action=None):
     """Spawn the new launcher withdrawn; the caller must poll before closing UI."""
     _idle(idle)
+    resume_action = _resume_action(resume_action)
     _validate_update(backend, update)
     if isinstance(timeout, bool) or not isinstance(timeout, (int, float)) or not 5 <= timeout <= 60:
         raise SelfUpdateError("Launcher activation timeout must be between 5 and 60 seconds.")
@@ -235,7 +259,7 @@ def begin_activation(backend, update, target, *, idle, timeout=30, data_root=Non
     folder.mkdir(parents=True, exist_ok=False)
     now = time.time()
     request = ActivationRequest(folder / "request.json", nonce, target, update.version,
-                                update.size, update.sha256, now + timeout, os.getpid())
+                                update.size, update.sha256, now + timeout, os.getpid(), resume_action)
     _write_record(request.path, {**_identity(request), "size": request.size, "issued_at": now,
                                 "expires_at": request.expires_at, "parent_pid": request.parent_pid})
     process = subprocess.Popen([str(target), "--activate-launcher", str(request.path)],
@@ -260,6 +284,9 @@ def read_activation_request(backend, path, executable, *, data_root=None):
         raise SelfUpdateError("Invalid launcher activation request identity.")
     value = _read_record(path)
     keys = {"schema", "nonce", "version", "sha256", "target", "size", "issued_at", "expires_at", "parent_pid"}
+    if "resume_action" in value:
+        keys.add("resume_action")
+    resume_action = _resume_action(value.get("resume_action"))
     if set(value) != keys or value.get("schema") != 1 or value.get("nonce") != nonce:
         raise SelfUpdateError("Invalid launcher activation request identity.")
     issued, expires = value["issued_at"], value["expires_at"]
@@ -277,7 +304,8 @@ def read_activation_request(backend, path, executable, *, data_root=None):
     if _plain(value["target"]) != target or _plain(executable) != target:
         raise SelfUpdateError("The activation request must refer to this exact installed launcher.")
     _verify(target, value["size"], value["sha256"])
-    return ActivationRequest(path, nonce, target, version, value["size"], value["sha256"], expires, value["parent_pid"])
+    return ActivationRequest(path, nonce, target, version, value["size"], value["sha256"], expires,
+                             value["parent_pid"], resume_action)
 
 
 def _check_deadline(request):

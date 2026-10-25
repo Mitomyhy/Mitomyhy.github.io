@@ -86,11 +86,11 @@ class AdapterUpdateTests(unittest.TestCase):
         self.app._run = lambda message, worker, callback: dispatched.append(callback)
         activations = []
         self.app._begin_launcher_activation = lambda selected, target: activations.append((self.app.busy, selected, target))
-        with mock.patch.object(self.entry.self_update, "select_update", return_value=update):
+        with mock.patch.object(self.entry.self_update, "select_newest_update", return_value=update):
             self.app._download_update()
         self.app.busy = True
         target = Path("verified-versioned-launcher.exe")
-        dispatched[0](target)
+        dispatched[0]({"target": target})
         self.assertEqual(activations, [])
         self.app.busy = False
         self.app.root.next()
@@ -164,10 +164,10 @@ class AdapterUpdateTests(unittest.TestCase):
             app.latest = payload
 
         with mock.patch.object(self.entry, "apply_verified_release", side_effect=apply) as apply_panel, \
-                mock.patch.object(self.entry.self_update, "select_update", return_value=None) as select:
+                mock.patch.object(self.entry.self_update, "select_newest_update", return_value=None) as select:
             self.app._apply_catalogue_updates({"panel": panel, "launcher": launcher, "errors": []})
             apply_panel.assert_called_once_with(self.app, panel, self.entry._legacy_update_check, self.entry.backend)
-            select.assert_called_once_with(self.entry.backend, launcher)
+            select.assert_called_once_with(self.entry.backend, launcher, panel)
         self.assertIs(self.app.latest, panel)
         self.assertIs(self.app._launcher_release, launcher)
         self.assert_no_panel_or_app_install()
@@ -176,12 +176,12 @@ class AdapterUpdateTests(unittest.TestCase):
         self.app._launcher_release = None
         self.app.ui.state = {"vector_update_available": False, "update_available": False}
         self.app._refresh_state.return_value = {"vector_update_available": True, "vector_latest_version": "1.0.2"}
-        with mock.patch.object(self.entry.self_update, "select_update", return_value=None):
+        with mock.patch.object(self.entry.self_update, "select_newest_update", return_value=None):
             self.app._apply_catalogue_updates({"panel": None, "launcher": None, "errors": []})
         self.assertEqual(self.app.status_var.value, "Vector Migic 1.0.2 is available.")
         self.app.ui.state = {"vector_update_available": True, "vector_latest_version": "stale"}
         self.app._refresh_state.return_value = {"vector_update_available": False, "update_available": False}
-        with mock.patch.object(self.entry.self_update, "select_update", return_value=None):
+        with mock.patch.object(self.entry.self_update, "select_newest_update", return_value=None):
             self.app._apply_catalogue_updates({"panel": None, "launcher": None, "errors": []})
         self.assertIn("installed apps are up to date", self.app.status_var.value)
 
@@ -189,15 +189,15 @@ class AdapterUpdateTests(unittest.TestCase):
         launcher = {"launcher": {"version": "2099.10.24.1", "size": 65536, "sha256": "a" * 64,
                                  "url": "https://mitomyhy.github.io/releases/mitom-launcher/2099.10.24.1/setup.exe"}}
         with mock.patch.object(self.entry, "probe_signed_release", side_effect=OSError("panel feed offline")), \
-                mock.patch.object(self.entry.launcher_channel, "probe_launcher_release", return_value=launcher):
+                mock.patch.object(self.entry.launcher_channel, "probe_launcher_release", return_value=launcher), \
+                mock.patch.object(self.entry.app_catalogue, "probe_app_catalogue", return_value=None):
             result = self.entry.probe_catalogue_updates()
         self.assertIsNone(result["panel"])
         self.assertIs(result["launcher"], launcher)
         self.assertEqual(len(result["errors"]), 1)
         self.app._apply_catalogue_updates(result)
         self.assertIs(self.app._launcher_release, launcher)
-        self.assertIn("2099.10.24.1 is available", self.app.status_var.value)
-        self.assertIn("Update & restart", self.app.status_var.value)
+        self.assertIn("2099.10.24.1 automatically", self.app.status_var.value)
         self.app.ui.log.assert_called_once()
         self.assert_no_panel_or_app_install()
 
@@ -207,6 +207,128 @@ class AdapterUpdateTests(unittest.TestCase):
             with self.assertRaises(self.entry.backend.LauncherError):
                 self.entry.main()
             read.assert_not_called()
+
+    def test_discovery_upgrades_launcher_automatically_only_once_per_session(self):
+        update = types.SimpleNamespace(version="2099.01.01.1")
+        self.app._download_update = mock.Mock()
+        with mock.patch.object(self.entry.self_update, "select_newest_update", return_value=update):
+            self.app._apply_catalogue_updates({"panel": None, "launcher": None, "errors": []})
+            self.app._download_update.assert_not_called()
+            self.app.root.next()
+            self.app._download_update.assert_called_once_with()
+            self.app._apply_catalogue_updates({"panel": None, "launcher": None, "errors": []})
+            self.assertEqual(self.app.root.tasks, [])
+            self.app._download_update.assert_called_once_with()
+        self.assert_no_panel_or_app_install()
+
+    def test_pending_install_continues_after_healthy_activation_and_fresh_signed_check(self):
+        self.app._activation_request = types.SimpleNamespace(resume_action="panel")
+        self.app._pending_install_action = "panel"
+        self.app._check_updates = mock.Mock()
+        with mock.patch.object(self.entry.activation_smoke, "finish_if_smoke", return_value=False), \
+                mock.patch.object(self.entry.self_update, "activation_committed", return_value=True):
+            self.app._poll_activation_commit()
+        self.app._check_updates.assert_not_called()
+        self.app.root.next()
+        self.app._check_updates.assert_called_once_with()
+        self.assert_no_panel_or_app_install()
+
+    def test_pending_panel_never_installs_stale_metadata_when_online_probe_failed(self):
+        self.app._pending_install_action = "panel"
+        self.app.latest = {"version": "2026.10.25.1"}
+        self.app._run = mock.Mock()
+        self.assertTrue(self.app._continue_install({"panel": None}))
+        self.app._run.assert_not_called()
+        self.assertIsNone(self.app._pending_install_action)
+        self.assertIn("unchanged", self.app.status_var.value)
+
+    def test_auto_queue_updates_installed_apps_and_excludes_missing_apps(self):
+        self.app._mifont_release = {"version": "1.0.3"}
+        self.app._vector_release = {"version": "1.0.4"}
+        snapshot = {"installed": True, "update_available": True,
+                    "mifont_installed": True, "mifont_update_available": True,
+                    "vector_installed": False, "vector_update_available": True}
+        panel = {"version": "2026.10.25.1"}
+        self.app._queue_automatic_installs({"apps": {}, "panel": panel}, snapshot)
+        self.assertEqual([(row[0], row[1]) for row in self.app._automatic_install_queue],
+                         [("mifont", "1.0.3"), ("panel", "2026.10.25.1")])
+
+    def test_auto_panel_waits_for_photoshop_without_downloading_or_stopping_any_process(self):
+        panel = {"version": "2026.10.25.1"}
+        self.app.latest = panel
+        self.app._automatic_install_queue = [("panel", panel["version"], panel)]
+        self.app._run = mock.Mock()
+        with mock.patch.object(self.entry.installer, "_processes", return_value=[{"name": "Photoshop.exe", "pid": 123}]), \
+                mock.patch.object(self.entry, "install_verified_panel") as install:
+            self.app._automatic_install_next()
+            self.app._run.assert_not_called()
+            install.assert_not_called()
+            self.assertIn("Waiting for Photoshop", self.app.status_var.value)
+            self.assertTrue(self.app._waiting_panel_retry)
+        with mock.patch.object(self.entry.installer, "_processes", return_value=[]):
+            self.app.root.next()
+        self.app._run.assert_called_once()
+
+    def test_auto_failure_preserves_session_and_is_not_retried_until_manual_action(self):
+        release = {"version": "1.0.3"}
+        self.app._automatic_install_queue = [("mifont", "1.0.3", release)]
+        dispatched = []
+        self.app._run = lambda message, worker, callback: dispatched.append((worker, callback))
+        self.app._automatic_install_next()
+        with mock.patch.object(self.entry.mi_font_app, "install_app", side_effect=OSError("download interrupted")):
+            value = dispatched[0][0]()
+        self.assertFalse(value["ok"])
+        dispatched[0][1](value)
+        self.assertIn("previous version is retained", self.app.status_var.value)
+        self.app.root.next()
+        self.app._automatic_install_queue = [("mifont", "1.0.3", release)]
+        self.app._automatic_install_next()
+        self.assertEqual(len(dispatched), 1)
+
+    def test_panel_installs_compatible_release_even_when_it_advertises_newer_launcher(self):
+        release = {"version": "2026.10.25.1", "launcher": {"version": "2099.01.01.1"}}
+        with mock.patch.object(self.entry.installer, "get_installed_version", return_value="2026.10.23.2"), \
+                mock.patch.object(self.entry.installer, "_closed") as closed, \
+                mock.patch.object(self.entry.backend, "obtain_core", return_value=Path("verified-staging")) as obtain, \
+                mock.patch.object(self.entry.installer, "install", return_value={"version": release["version"]}) as install, \
+                mock.patch.object(self.entry.backend, "persist_launcher", return_value="managed.exe"), \
+                mock.patch.object(self.entry.backend, "cleanup_core_extraction") as cleanup:
+            result = self.entry.install_verified_panel(release)
+        closed.assert_called_once_with(False)
+        obtain.assert_called_once_with(release, progress=None)
+        install.assert_called_once_with(Path("verified-staging"), dry_run=False)
+        cleanup.assert_called_once_with(Path("verified-staging"))
+        self.assertEqual(result["version"], release["version"])
+
+    def test_real_minimum_and_running_photoshop_are_checked_before_any_panel_download(self):
+        with mock.patch.object(self.entry.installer, "get_installed_version", return_value="2026.10.23.2"), \
+                mock.patch.object(self.entry.backend, "obtain_core") as obtain:
+            with self.assertRaises(self.entry.backend.LauncherError):
+                self.entry.install_verified_panel({"version": "2026.10.25.1", "min_launcher_version": "2099.01.01.1"})
+            with mock.patch.object(self.entry.installer, "_closed", side_effect=self.entry.installer.InstallError("Photoshop is open")):
+                with self.assertRaises(self.entry.installer.InstallError):
+                    self.entry.install_verified_panel({"version": "2026.10.25.1"})
+            obtain.assert_not_called()
+
+    def test_compatible_manual_install_does_not_wait_for_a_broken_bootstrap(self):
+        self.app._pending_install_action = "panel"
+        self.app._run = mock.Mock()
+        panel = {"version": "2026.10.25.1"}
+        with mock.patch.object(self.entry, "apply_verified_release", side_effect=lambda app, value, *_: setattr(app, 'latest', value)), \
+                mock.patch.object(self.entry.self_update, "select_newest_update", return_value=types.SimpleNamespace(version="2099.01.01.1")):
+            self.app._apply_catalogue_updates({"panel": panel, "launcher": None, "apps": None})
+        self.app._run.assert_called_once()
+        self.assertIn("Installing", self.app._run.call_args.args[0])
+        self.assertEqual(self.app.root.tasks, [])
+
+    def test_failed_launcher_download_keeps_ui_and_queues_compatible_app_work(self):
+        self.app._pending_catalogue_result = {"panel": None, "apps": None}
+        self.app._queue_automatic_installs = mock.Mock()
+        self.app._launcher_download_complete(types.SimpleNamespace(version="2099.01.01.1"),
+                                            {"error": OSError("network interrupted")})
+        self.app.root.destroy.assert_not_called()
+        self.app.root.next()
+        self.app._queue_automatic_installs.assert_called_once()
 
 
 if __name__ == "__main__":

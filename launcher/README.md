@@ -1,5 +1,35 @@
 # MITOM Launcher
 
+## Connected online updates (2026.10.25.7)
+
+The launcher checks the authenticated Panel, Launcher and app channels when it
+opens and every five minutes while idle. It selects the newest verified Launcher
+from both channels and upgrades itself through a health-checked handoff. MiFont
+and Vector Migic use `releases/apps-stable.json`; a new app version no longer
+requires rebuilding Launcher. Cached metadata is signature-checked on startup.
+Already-installed apps update automatically. Panel updates wait for Photoshop
+and Order Studio to close; the launcher never closes those applications.
+
+The newest advertised Launcher is not a mandatory Panel minimum. Only an
+explicit authenticated `min_launcher_version` can impose that requirement.
+Compatible installation can continue if a Launcher upgrade is unavailable.
+
+Panel downloads reuse verified cache objects across versions, fetch at most
+three artifacts concurrently and resume large interrupted transfers. Process
+checks are bounded to every 250 ms during installation, with mandatory checks
+at transaction entry and commit. Disk planning credits only hash-verified cache
+and budgets full extraction plus the real changed files/backups. Initial setup
+still downloads the required AI models (about 1.4 GB) and runtimes; its duration
+depends on the connection, storage and Windows scanning.
+
+Use `publishing/prepare_online_release.py` to stage one synchronized release:
+the website cards, download index, signed Launcher channel and signed app
+catalogue. Publish the resulting manifest together, after tests and signatures
+pass. This prevents the website and installed Launcher from advertising
+different releases. The original signed Panel feed and both trusted keys remain
+separate. Private projects, credentials, specimen images and local test output
+must never be added to that manifest.
+
 Launcher **2026.10.24.9** includes **Vector Migic 1.0.4** and **MiFont 1.0.0** as separate, local applications.
 Its grid card and table row share independent install state, search, filters
 and counts. The Photoshop Panel's install/update/repair/rollback and account

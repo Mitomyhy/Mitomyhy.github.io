@@ -125,8 +125,8 @@ class MiFontFixture(unittest.TestCase):
 
     def test_verified_previous_release_offers_update_and_never_opens_old_runtime(self):
         pinned=mi_font_app.TRUSTED_PREVIOUS_RELEASES[0]
-        self.assertEqual(pinned['version'],'1.0.1')
-        self.assertEqual(pinned['manifest_sha256'],'a0bedd92404c23febe9b75612aea6e23f7f0cd8636de164429ca045a9f4f6902')
+        self.assertEqual(pinned['version'],'1.0.2')
+        self.assertEqual(pinned['manifest_sha256'],'ca2381e1dd19620a2c68d65a7ee80aa67f01c86901b20c221108a54ae1e509be')
         previous = dict(self.release)
         installed=mi_font_app.install_app(self.machine, previous, bundle_root=self.bundle)
         release = self.next_release()

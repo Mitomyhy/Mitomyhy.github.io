@@ -122,7 +122,8 @@ def probe_launcher_release(backend, cancelled=None):
             return super().redirect_request(request, fp, code, message, headers, newurl)
 
     request = urllib.request.Request(url, headers={
-        "User-Agent": "MITOM/" + backend.APP_VERSION, "Accept": "application/json"})
+        "User-Agent": "MITOM/" + backend.APP_VERSION, "Accept": "application/json",
+        "Cache-Control": "no-cache", "Pragma": "no-cache"})
     opener = urllib.request.build_opener(ChannelRedirects())
     deadline = time.monotonic() + PROBE_TIMEOUT_SECONDS
     chunks, size = [], 0
