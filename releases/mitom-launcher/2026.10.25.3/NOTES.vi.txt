@@ -1,0 +1,11 @@
+MITOM Launcher 2026.10.25.3
+
+Sửa lỗi yêu cầu dung lượng cập nhật quá lớn: trước đây cộng cả bản mới và toàn bộ bản cũ để sao lưu. Bản này tính hai giai đoạn; sau khi đọc manifest đã xác thực, chỉ tính file cài/backup thực sự thay đổi. Cache/model chỉ được tái sử dụng khi khớp size và SHA-256.
+
+14130 MiB trong hộp thoại cũ là dự phòng dung lượng trống, không phải dung lượng tải. Update vẫn cần vài GB staging đầy đủ; không bỏ kiểm tra an toàn, không xóa bản cũ/backup/cache để ép cài. Nếu một nguồn tái sử dụng mất hoặc hỏng, kiểm tra lại trước khi tải/copy thay thế.
+
+Panel mới nhất vẫn là 2026.10.25.1 (Companion 1.0.27; CPU và NVIDIA CUDA tùy chọn). Không tăng số Panel chỉ để trùng Launcher.
+
+Launcher25.2: Check for Updates để nhận25.3, sau đó mới Update Panel. Launcher25.1: tải/mở Launcher mới từ trang web một lần do lỗi ưu tiên channel cũ đã sửa ở25.2. Nếu có giao dịch dở: lưu/đóng Photoshop và OrderStudio, trong ô Photoshop Panel chọn ... -> Restore previous version rồi thử Install/Update; không xóa journal hoặc backup thủ công.
+
+155 tests:153 pass,2 Windows symlink-privilege skips. 3 packaged runtime/UI/strict-TLS smoke checks pass. Chưa cài trực tiếp trên máy công ty trong ảnh, không chạy CUDA inference trên PSD đang làm việc. Không kèm font riêng/ảnh dữ liệu đơn; EXE chưa có chứng thư Authenticode.
