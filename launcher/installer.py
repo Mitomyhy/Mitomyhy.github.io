@@ -15,14 +15,52 @@ _install_poll = _threading.local()
 PROCESS_POLL_INTERVAL = 0.25
 
 
+class ApplicationsOpen(InstallError):
+    """A positively identified application guard, eligible for a deferred retry."""
+
+
+def _guard_closed(sandbox):
+    try:
+        return _original_closed(sandbox)
+    except InstallError as exc:
+        # Only the original guard's controlled open-process outcome is typed.
+        # Snapshot/permission failures and unrelated installation errors remain
+        # ordinary failures; a currently open app cannot hide another error.
+        if str(exc).startswith("Save your work and close these applications: "):
+            raise ApplicationsOpen(str(exc)) from exc
+        raise
+
+
+def is_applications_open(exc):
+    """Allow waiting only before writes, or after a confirmed complete rollback.
+
+    The recovered transaction explicitly chains its original guard exception
+    after rollback. Retained edits/recovery-required outcomes must remain errors,
+    even when an ApplicationsOpen exception appears deeper in their cause chain.
+    Implicit exception contexts and arbitrary wrapper messages are not trusted.
+    """
+    seen = set()
+    while id(exc) not in seen:
+        seen.add(id(exc))
+        if isinstance(exc, ApplicationsOpen):
+            return True
+        if (not isinstance(exc, InstallError)
+                or not str(exc).startswith("Installation stopped. Previous files restored. Backup: ")):
+            return False
+        exc = exc.__cause__
+        if exc is None:
+            return False
+    return False
+
+
 def _closed(sandbox):
     state = getattr(_install_poll, "state", None)
     if state is None:
-        return _original_closed(sandbox)
+        return _guard_closed(sandbox)
     state["sandbox"] = sandbox
     now = time.monotonic()
     if now >= state["next"]:
-        _original_closed(sandbox)
+        _guard_closed(sandbox)
         state["next"] = now + PROCESS_POLL_INTERVAL
 
 
@@ -32,7 +70,7 @@ def _atomic(file, data, expected):
         # The receipt is the last file in the transaction. Force a fresh guard
         # inside the existing rollback boundary, even for a sub-250ms install.
         state["next"] = 0.0
-        _original_closed(state["sandbox"])
+        _guard_closed(state["sandbox"])
         state["next"] = time.monotonic() + PROCESS_POLL_INTERVAL
     return _original_atomic(file, data, expected)
 

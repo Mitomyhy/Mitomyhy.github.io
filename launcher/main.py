@@ -203,6 +203,7 @@ class MITOMAdapter(backend.LauncherUI):
             "launcher_latest_version": launcher_version,
             "status": self.status_var.get(),
             "installed_path": str(roots["panel"]) if current else "",
+            "panel_update_waiting": getattr(self, "_waiting_panel_release", None) is not None,
             **vector_app.installed_state(backend.launcher_data_root(), self._vector_release),
             **mi_font_app.installed_state(backend.launcher_data_root(), self._mifont_release),
         }
@@ -244,14 +245,36 @@ class MITOMAdapter(backend.LauncherUI):
             if release is None:
                 self.status_var.set("Panel update check failed. The installed panel is unchanged; retry when connected.")
                 return True
-            self._run("Installing the verified Photoshop Panel…",
-                lambda: install_verified_panel(release, progress=lambda done, total: self.ui.set_progress(done, total)),
-                self._installed)
+            self._start_panel_install(release)
         elif action == "vector":
             self._install_vector_current()
         else:
             self._install_mifont_current()
         return True
+
+    def _defer_panel_install(self, release, manual=False):
+        self._waiting_panel_manual = bool(manual or getattr(self, "_waiting_panel_manual", False))
+        self._waiting_panel_release = release
+        self.status_var.set("Panel " + release["version"] + " is ready. Waiting for Photoshop / Order Studio to close before updating.")
+        if not getattr(self, "_waiting_panel_retry", False):
+            self._waiting_panel_retry = True
+            self.root.after(15000, self._retry_waiting_panel)
+
+    def _start_panel_install(self, release):
+        def work():
+            try:
+                return {"result": install_verified_panel(release,
+                    progress=lambda done, total: self.ui.set_progress(done, total))}
+            except Exception as exc:
+                if installer.is_applications_open(exc):
+                    return {"waiting": True}
+                raise
+        def complete(value):
+            if value.get("waiting"):
+                self._defer_panel_install(release, manual=True)
+            else:
+                self._installed(value["result"])
+        self._run("Installing the verified Photoshop Panel…", work, complete)
 
     def _queue_automatic_installs(self, result, snapshot):
         """Update already-installed apps; a missing app is never installed implicitly."""
@@ -288,10 +311,7 @@ class MITOMAdapter(backend.LauncherUI):
                     self._append("Automatic panel update deferred: " + str(exc))
                     continue
                 if running:
-                    self.status_var.set("Panel " + version + " is ready. Waiting for Photoshop / Order Studio to close before updating.")
-                    if not getattr(self, "_waiting_panel_retry", False):
-                        self._waiting_panel_retry = True
-                        self.root.after(15000, lambda: self._retry_waiting_panel(release))
+                    self._defer_panel_install(release)
                     continue
             attempted.add(key)
             def work(action=action, release=release):
@@ -307,9 +327,14 @@ class MITOMAdapter(backend.LauncherUI):
                         value = module.install_app(backend.launcher_data_root(), release, progress=progress)
                     return {"ok": True, "result": value}
                 except Exception as exc:
+                    if action == "panel" and installer.is_applications_open(exc):
+                        return {"ok": False, "waiting": True}
                     return {"ok": False, "error": backend.failure_details(exc)}
-            def complete(value, action=action, version=version):
-                if value["ok"]:
+            def complete(value, action=action, version=version, release=release):
+                if value.get("waiting"):
+                    attempted.discard((action, version))
+                    self._defer_panel_install(release)
+                elif value["ok"]:
                     self.status_var.set(action + " " + version + " updated automatically.")
                 else:
                     self._append("Automatic " + action + " update failed: " + value["error"])
@@ -317,10 +342,26 @@ class MITOMAdapter(backend.LauncherUI):
                 self.root.after_idle(self._automatic_install_next)
             return self._run("Updating " + action + " " + version + " automatically…", work, complete)
 
-    def _retry_waiting_panel(self, release):
+    def _retry_waiting_panel(self):
+        if self.busy:
+            self.root.after(250, self._retry_waiting_panel)
+            return
         self._waiting_panel_retry = False
+        release = getattr(self, "_waiting_panel_release", None)
+        manual = getattr(self, "_waiting_panel_manual", False)
+        self._waiting_panel_release = None
+        self._waiting_panel_manual = False
         # A newer check may have superseded this release while Photoshop was open.
-        if self.latest is not None and self.latest.get("version") == release["version"]:
+        if release is None or self.latest is None:
+            return
+        if self.latest.get("version") != release["version"]:
+            # A manually requested install follows the newer signed release too.
+            if not manual:
+                return
+            release = self.latest
+        if manual:
+            self._start_panel_install(release)
+        else:
             self._automatic_install_queue.append(("panel", release["version"], release))
             self._automatic_install_next()
 

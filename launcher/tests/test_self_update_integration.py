@@ -330,6 +330,68 @@ class AdapterUpdateTests(unittest.TestCase):
         self.app.root.next()
         self.app._queue_automatic_installs.assert_called_once()
 
+    def test_manual_update_waits_without_popup_then_installs_after_photoshop_closes(self):
+        panel = {"version": "2026.10.25.1"}
+        self.app.latest = panel
+        self.app._pending_install_action = "panel"
+        self.app._installed = mock.Mock()
+        dispatched = []
+        self.app._run = lambda message, work, callback: dispatched.append((work, callback))
+        with mock.patch.object(self.entry.installer, "_original_closed", side_effect=self.entry.installer.InstallError(
+                "Save your work and close these applications: Photoshop.exe (PID 123).")), \
+                mock.patch.object(self.entry.installer, "get_installed_version", return_value="2026.10.23.2"), \
+                mock.patch.object(self.entry.backend, "obtain_core") as download:
+            self.app._continue_install({"panel": panel})
+            value = dispatched[0][0]()
+            self.assertTrue(value['waiting'])
+            dispatched[0][1](value)
+            download.assert_not_called()
+        self.assertIn("Waiting for Photoshop", self.app.status_var.get())
+        self.app._installed.assert_not_called()
+        self.assertEqual(len(self.app.root.tasks), 1)
+        self.app.root.next()
+        with mock.patch.object(self.entry, "install_verified_panel", return_value={"version": panel['version']}):
+            value = dispatched[1][0]()
+        dispatched[1][1](value)
+        self.app._installed.assert_called_once_with({"version": panel['version']})
+
+    def test_waiting_first_install_follows_new_signed_release_and_keeps_one_timer(self):
+        old, new = {"version": "2026.10.25.1"}, {"version": "2026.10.25.2"}
+        self.app.latest = old
+        self.app._defer_panel_install(old, manual=True)
+        self.app._defer_panel_install(old)
+        self.assertEqual(len(self.app.root.tasks), 1)
+        self.assertTrue(self.app._waiting_panel_manual)
+        self.app.latest = new
+        self.app._start_panel_install = mock.Mock()
+        self.app.busy = True
+        self.app.root.next()
+        self.app._start_panel_install.assert_not_called()
+        self.app.busy = False
+        self.app.root.next()
+        self.app._start_panel_install.assert_called_once_with(new)
+
+    def test_waiting_never_hides_unrelated_install_failure(self):
+        self.app._run = lambda message, work, callback: work()
+        with mock.patch.object(self.entry, "install_verified_panel", side_effect=OSError("disk failure")):
+            with self.assertRaisesRegex(OSError, 'disk failure'):
+                self.app._start_panel_install({"version": "2026.10.25.1"})
+
+    def test_automatic_race_guard_returns_to_wait_without_becoming_failed_attempt(self):
+        release = {"version": "2026.10.25.1"}
+        self.app.latest = release
+        self.app._automatic_install_queue = [("panel", release['version'], release)]
+        dispatched = []
+        self.app._run = lambda message, work, callback: dispatched.append((work, callback))
+        with mock.patch.object(self.entry.installer, '_processes', return_value=[]):
+            self.app._automatic_install_next()
+        with mock.patch.object(self.entry, 'install_verified_panel', side_effect=self.entry.installer.ApplicationsOpen('Photoshop open')):
+            value = dispatched[0][0]()
+        self.assertTrue(value['waiting'])
+        dispatched[0][1](value)
+        self.assertNotIn(('panel', release['version']), self.app._automatic_installs_attempted)
+        self.assertIn('Waiting for Photoshop', self.app.status_var.get())
+
 
 if __name__ == "__main__":
     unittest.main()

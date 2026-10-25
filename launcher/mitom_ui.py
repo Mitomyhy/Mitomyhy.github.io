@@ -98,6 +98,8 @@ _VI = {
     "SHOW ALL APPS": "HIỆN TẤT CẢ ỨNG DỤNG", "READY": "SẴN SÀNG", "UPDATE": "CẬP NHẬT",
     "CHECK FOR UPDATES": "KIỂM TRA CẬP NHẬT", "UPDATE LAUNCHER": "CẬP NHẬT LAUNCHER",
     "UPDATE & RESTART": "CẬP NHẬT & KHỞI ĐỘNG LẠI",
+    "WAITING": "ĐANG ĐỢI", "WAITING FOR PHOTOSHOP": "ĐANG ĐỢI PHOTOSHOP",
+    "Update queued. Save your work and close Photoshop / Order Studio; installation will continue automatically.": "Đã xếp hàng cập nhật. Lưu công việc rồi đóng Photoshop / Order Studio; Launcher sẽ tự cài tiếp.",
     "Settings & installation": "Cài đặt & vị trí cài", "LANGUAGE": "NGÔN NGỮ",
     "Not installed": "Chưa cài", "Available after installation": "Có sau khi cài đặt",
     "INSTALL LOCATION": "VỊ TRÍ CÀI ĐẶT", "DOWNLOAD CACHE": "BỘ NHỚ TẢI XUỐNG",
@@ -626,6 +628,8 @@ class MITOMLauncherUI:
             messagebox.showerror("MITOM Launcher", str(exc), parent=self.root)
 
     def _primary_key(self):
+        if self.state.get("panel_update_waiting"):
+            return "wait_panel"
         if not self.state.get("installed"):
             return "install"
         if self.state.get("update_available"):
@@ -714,6 +718,10 @@ class MITOMLauncherUI:
             banner = f"MITOM Launcher {self.state.get('launcher_latest_version', '')} is available."
             self._banner_key = "update_launcher" if callable(self.actions.get("update_launcher")) else "install_update"
             banner_action = "UPDATE & RESTART"
+        elif self.state.get("panel_update_waiting"):
+            badge, banner = "WAITING", "Update queued. Save your work and close Photoshop / Order Studio; installation will continue automatically."
+            self._banner_key = "wait_panel"
+            banner_action = "WAITING FOR PHOTOSHOP"
         elif update:
             badge, banner = "UPDATE", f"Photoshop Panel {latest} is available."
             self._banner_key = self._primary_key()
@@ -729,10 +737,11 @@ class MITOMLauncherUI:
         self.banner_badge.configure(text=self._t(badge))
         self.banner_text.configure(text=self._t(banner))
         self.banner_button.configure(text=self._t(banner_action))
-        state_title = "UPDATE AVAILABLE" if update else "INSTALLED · UP TO DATE" if installed else "AVAILABLE TO INSTALL"
+        waiting = bool(self.state.get("panel_update_waiting"))
+        state_title = "WAITING FOR PHOTOSHOP" if waiting else "UPDATE AVAILABLE" if update else "INSTALLED · UP TO DATE" if installed else "AVAILABLE TO INSTALL"
         self.status_badge.configure(text=self._t(state_title), fg=BLUE if not installed or update else GREEN)
         self.version_label.configure(text=f"Version {version}" if version else "Version information available after checking updates")
-        primary_title = "UPDATE PANEL" if update else "OPEN PHOTOSHOP" if installed else "INSTALL PANEL"
+        primary_title = "WAITING FOR PHOTOSHOP" if waiting else "UPDATE PANEL" if update else "OPEN PHOTOSHOP" if installed else "INSTALL PANEL"
         self.primary_button.configure(text=self._t(primary_title))
         self.table_action.configure(text=self._t(primary_title))
         self.table_status.configure(text=f"{self._t(state_title)}\n{version or '—'}", fg=GREEN if installed and not update else BLUE)
