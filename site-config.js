@@ -19,7 +19,7 @@ window.MITOM_CONFIG = {
       en: '3D tools, order management, Lark Base and creative connections, inside your Photoshop workspace.',
       vi: 'Công cụ 3D, quản lý đơn hàng, Lark Base và các kết nối sáng tạo trong không gian Photoshop.'
     },
-    version: '2026.10.23.2',
+    version: '2026.10.25.1',
     detail: {
       en: 'Photoshop Panel brings design tools and order processing into Adobe Photoshop. Install, check and update the panel with MITOM Launcher.',
       vi: 'Photoshop Panel tập hợp công cụ hỗ trợ thiết kế và xử lý đơn hàng trong Adobe Photoshop. Cài đặt, kiểm tra và cập nhật panel qua MITOM Launcher.'

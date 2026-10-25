@@ -3,14 +3,14 @@
   "url": "https://mitomyhy.github.io/releases/mitom-launcher/2026.10.25.1/MITOM-Launcher-Setup-2026.10.25.1.exe",
   "size": 19994560,
   "sha256": "739b14ec3721f2371961f4819925a8093b82a3bd69355d94b4e6812b59b75327",
-  "panel_version": "2026.10.23.2",
-  "core_size": 197478508,
+  "panel_version": "2026.10.25.1",
+  "core_size": 197700672,
   "model_size": 1423034338,
   "runtime_size": 378215822,
-  "installed_size": 3624664842,
+  "installed_size": 3624753782,
   "components": [
-    "Panel + Base + Save Task",
-    "3D R10 UHD + DA2",
+    "Panel + Base Companion 1.0.27 + Save Task",
+    "3D CPU / NVIDIA CUDA (optional runtime)",
     "Canva + Photoroom companions",
     "GPT/Codex runtime"
   ]

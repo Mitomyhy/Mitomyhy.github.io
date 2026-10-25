@@ -1,0 +1,132 @@
+{
+  "schema": 1,
+  "extension_id": "nbmhofblkjlmlijiokgdeojjomjcphhj",
+  "target_version": "1.0.27",
+  "target": {
+    "README.txt": {
+      "sha256": "a634c70a5d1e90e800d9bbb558eb417d799b98aa3d557006f97683a1da537e14",
+      "size": 24328
+    },
+    "background.js": {
+      "sha256": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+      "size": 51664
+    },
+    "content.js": {
+      "sha256": "2fc6b4e4d07bfe4c034b6b7b7aa2c70f51f633f7d628f862534573d2a0a1d57a",
+      "size": 65759
+    },
+    "core.js": {
+      "sha256": "dad35a2dab3455883f9483487a155751f6d335888996ed0a12f5ab238a3759e7",
+      "size": 20693
+    },
+    "manifest.json": {
+      "sha256": "862089f33dc5478648bc00de283d420813ef4a982333d073861351b5d04bc76e",
+      "size": 1104
+    },
+    "popup.css": {
+      "sha256": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+      "size": 1195
+    },
+    "popup.html": {
+      "sha256": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b",
+      "size": 3020
+    },
+    "popup.js": {
+      "sha256": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218",
+      "size": 4862
+    }
+  },
+  "accepted_vectors": [
+    {
+      "label": "1.0.24",
+      "files": {
+        "README.txt": "c9e7c9cf5e0486e6d62247fe53131a400deb571cb824c73648a4e7e80fa7bb62",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "87fc4af9259df9f06f406fe61cc61bf7be156d24596bf0659776dd71ec5f0f83",
+        "core.js": "a49acfb065b7274890a5180850c37a0e52d5b754430a4a3b6449d4592d71c164",
+        "manifest.json": "258dca7147d21cd044c0c0aded2d5e95096d5f5108e15953592e9af310560e6b",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b",
+        "popup.js": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+      }
+    },
+    {
+      "label": "1.0.25",
+      "files": {
+        "README.txt": "537bdaff277f8f17345fd33746ae615280e6a0903bfc1f07d281ac40e1942ec8",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "c21df55be5d877aa1c026d33e75f7c79c6a001445c437ff61aec8a0807ad90a0",
+        "core.js": "2fb1dd6c592440cd931cfa7fc927d7e033a975713188152d65d201ed412641ad",
+        "manifest.json": "db22a0de667d723cc04a9eb24138caf49eefcb02596feac02eb198fbfe87d924",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b",
+        "popup.js": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+      }
+    },
+    {
+      "label": "1.0.26",
+      "files": {
+        "README.txt": "09cc750077f739ce7761a7122a110b8436ec15730466388f5f2941740d447f4b",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "4d77fbcd66caec1a8e3665b2aa196e256bef72259e9e9b06ec32c1b916498626",
+        "core.js": "43c385fa14b61e1275d00534ced1e36deda797ecaa2b659f4c31dfc2f60c26ca",
+        "manifest.json": "48b5e9367ac2866e5924c13ec692ed213f8da542667dce46c3d12f53b1aa4f69",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b",
+        "popup.js": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+      }
+    },
+    {
+      "label": "1.0.27",
+      "files": {
+        "README.txt": "a634c70a5d1e90e800d9bbb558eb417d799b98aa3d557006f97683a1da537e14",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "2fc6b4e4d07bfe4c034b6b7b7aa2c70f51f633f7d628f862534573d2a0a1d57a",
+        "core.js": "dad35a2dab3455883f9483487a155751f6d335888996ed0a12f5ab238a3759e7",
+        "manifest.json": "862089f33dc5478648bc00de283d420813ef4a982333d073861351b5d04bc76e",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b",
+        "popup.js": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+      }
+    },
+    {
+      "label": "1.0.24-D1",
+      "files": {
+        "README.txt": "c9e7c9cf5e0486e6d62247fe53131a400deb571cb824c73648a4e7e80fa7bb62",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "87fc4af9259df9f06f406fe61cc61bf7be156d24596bf0659776dd71ec5f0f83",
+        "core.js": "a49acfb065b7274890a5180850c37a0e52d5b754430a4a3b6449d4592d71c164",
+        "manifest.json": "258dca7147d21cd044c0c0aded2d5e95096d5f5108e15953592e9af310560e6b",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "5b82f8a9d4f990a387ee4e1880d640fa5b20c17d75823a64e960591c71b4b807",
+        "popup.js": "376faa9cd4dd6594e41d0b6d847c53536ad7661ecf3d581b2c1a6f070681510d"
+      }
+    },
+    {
+      "label": "1.0.24-D2",
+      "files": {
+        "README.txt": "c9e7c9cf5e0486e6d62247fe53131a400deb571cb824c73648a4e7e80fa7bb62",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "87fc4af9259df9f06f406fe61cc61bf7be156d24596bf0659776dd71ec5f0f83",
+        "core.js": "a49acfb065b7274890a5180850c37a0e52d5b754430a4a3b6449d4592d71c164",
+        "manifest.json": "258dca7147d21cd044c0c0aded2d5e95096d5f5108e15953592e9af310560e6b",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "0cb843cae2b348172117161dc078378a2e350af0d34a1195ba6dae136b90b30c",
+        "popup.js": "3b5ec31be0c289f981ae7de18f9c4b7718521d74a368ad622851ceeb24720186"
+      }
+    },
+    {
+      "label": "1.0.24-D3",
+      "files": {
+        "README.txt": "c9e7c9cf5e0486e6d62247fe53131a400deb571cb824c73648a4e7e80fa7bb62",
+        "background.js": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00",
+        "content.js": "87fc4af9259df9f06f406fe61cc61bf7be156d24596bf0659776dd71ec5f0f83",
+        "core.js": "a49acfb065b7274890a5180850c37a0e52d5b754430a4a3b6449d4592d71c164",
+        "manifest.json": "258dca7147d21cd044c0c0aded2d5e95096d5f5108e15953592e9af310560e6b",
+        "popup.css": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf",
+        "popup.html": "2d261ad98b646539d6dbcad2f92ddc89f483971a632804546ac220decd4a3bc6",
+        "popup.js": "f39d1c3f073f4e1bc0385bc032e9e9a0075ff4fc213d5fd2103dfa8e24e7a7e6"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+Bản Panel đầy đủ: gộp toàn bộ mã đã phát hành tới 25/10, không chỉ cập nhật Launcher. Cài mới và Update cùng nhận một bộ thành phần.
+
+3D: có Generate CPU và Generate GPU (NVIDIA CUDA), gồm bản sửa IN/capture/login 2026.10.24.1 và bản sửa CUT Acrylic 2026.10.24.2.
+
+GPU là lựa chọn riêng: chỉ cài runtime CUDA vào LOCALAPPDATA/UOY/DepthGPU khi người dùng chọn; không tự tải CUDA và không thay runtime CPU đang có.
+
+Base Companion 1.0.27: gộp bản sửa điều hướng Base native, khung Order thu gọn và khởi động lại reader chạy nền. Giữ nhịp tự đọc tối thiểu 1 phút, Nạp thủ công vẫn tức thì.
+
+Giữ Save Task Save for Web, Save PSD, web bridge, template/model/runtime và các công cụ đã có. Không kèm tài khoản, ghép nối, dữ liệu đơn, PSD hoặc thiết lập máy phát hành.
+
+Lưu công việc và đóng Photoshop/OrderStudio trước khi Update. Không có ứng dụng hoặc tài liệu nào bị tự đóng. Mở lại Panel để cập nhật mã Companion trong thư mục Chrome cũ đã nhận diện; có bản sao lưu riêng, không đổi ghép nối hay thiết lập. Sau đó Tải lại tiện ích và tab Base; không Xóa/Quên ghép nối. Thư mục tự sửa hoặc không nhận diện được sẽ được giữ nguyên và báo cần xử lý, không ghi đè.
+
+Kiểm thử bản phát hành xác minh đúng mã nguồn, thành phần và cài đặt/khôi phục. Không khẳng định đã chạy Generate CUDA thực tế trên mọi máy/card hoặc mọi PSD.

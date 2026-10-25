@@ -1,30 +1,31 @@
-MITOM BASE COMPANION 1.0.24 / 20261023-R55
-Gói này chỉ cập nhật Chrome Base Companion, không thay Photoshop Panel.
-Panel tương ứng phải là bản 2026.10.23.2 / bridge R55.
+MITOM BASE COMPANION 1.0.27 / NATIVE BASE READER R64
 
-NẾU CHROME ĐÃ CÀI BASE COMPANION:
-1. Mở chrome://extensions, tìm UOY Base Companion có ID:
-   nbmhofblkjlmlijiokgdeojjomjcphhj
-2. Bật Developer mode nếu cần; mở Details và tìm thư mục nguồn đang nạp.
-   Phải dùng ĐÚNG THƯ MỤC ĐÃ LOAD trước đây, có thể nằm trong Downloads.
-   Thư mục launcher quản lý là %LOCALAPPDATA%\UOY\Companion;
-   Chrome có thể đang nạp một thư mục cũ khác.
-3. Đóng popup Companion. Sao chép TOÀN BỘ 8 file bên trong thư mục
-   Chrome-Base-Companion của gói này vào ĐÚNG thư mục nguồn ở bước 2.
-   Đồng ý thay thế các file cùng tên. Không đổi đường dẫn thư mục đang nạp.
-4. Quay lại chrome://extensions, bấm Reload của chính Base Companion.
-   Kiểm tra phiên bản hiển thị là 1.0.24; popup có build 20261023-R55.
-5. Refresh chỉ tab Base đang dùng một lần. Mở lại panel Photoshop đã cập nhật,
-   giữ Base đã đăng nhập, rồi thử Nạp từ Base.
+Bản đầy đủ qua Launcher: Photoshop Panel 2026.10.25.1.
+Gồm CPU/NVIDIA CUDA, sửa IN/capture/login/CUT 24.1 + 24.2 và Companion 1.0.27.
+Launcher mới không đồng nghĩa Panel/Companion đã được cập nhật; kiểm tra cả
+phiên bản Photoshop Panel sau Update.
 
-KHÔNG bấm Remove, Forget/Quên; KHÔNG xoá Chrome storage hay ghép lại tùy tiện.
-Giữ nguyên extension ID và thư mục nguồn để giữ quyền, pairing, cấu hình.
+CÁCH CẬP NHẬT KHUYẾN NGHỊ
+1. Lưu công việc, tự đóng Photoshop và OrderStudio khi tiện.
+2. Launcher -> Check for updates -> Update Photoshop Panel 2026.10.25.1.
+3. Mở lại UOY Order Panel. Bộ đồng bộ mã Companion chỉ cập nhật tám file đã
+   xác minh ở đúng thư mục Chrome đăng ký, gồm các thư mục ZIP cũ đã biết.
+   Cấu hình Chrome, quyền, storage và ghép nối không bị sửa; có backup riêng.
+4. Chrome -> chrome://extensions -> UOY Base Companion -> Tải lại.
+5. Tải lại riêng tab Base một lần. Manifest phải hiện 1.0.27.
 
-NẾU MÁY CHƯA CÀI COMPANION:
-Chọn Load unpacked tại chrome://extensions và chọn Chrome-Base-Companion.
-Ghép Base trên chính máy này một lần; không sao chép pairing từ máy khác.
+NẾU PANEL BÁO CÒN THƯ MỤC COMPANION CẦN KIỂM TRA
+Không xóa extension, không bấm Quên, không ghép lại tùy tiện.
+Bộ đồng bộ giữ nguyên thư mục tùy chỉnh/không xác định thay vì ghi đè.
+Trong Chrome -> Chi tiết tiện ích, xem đúng thư mục nguồn đang được nạp.
+Gói tải riêng mới nhất:
+https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.27.zip
+SHA-256: 6409f3c13e51300f17aa72971c72b42dd1c3ac51a95c3c4706c608c14224e4a3
+Sao chép tám file trong Chrome-Base-Companion của gói vào đúng thư mục đó,
+rồi Tải lại tiện ích và tab Base. Không chuyển thư mục hoặc tạo bản trùng.
 
-Tám file gốc được giữ nguyên byte từ payload 2026.10.23.2 và kiểm tra SHA-256.
-README.txt gốc trong thư mục Chrome còn ghi 1.0.19 ở dòng đầu;
-manifest.json mới là phiên bản thực 1.0.24, core.js là build 20261023-R55.
-Gói không chứa tài khoản, cookie, token hay pairing của máy phát hành.
+ID ổn định: nbmhofblkjlmlijiokgdeojjomjcphhj
+Không chia sẻ tài khoản, cookie, token hay pairing giữa các máy.
+Rollback Panel không tự rollback lần đồng bộ mã Companion; backup riêng
+được ghi trong thông báo đồng bộ. Không sửa Chrome Preferences để đổi đường dẫn.
+GPU là lựa chọn riêng; không tải CUDA cho đến khi người dùng chọn cài GPU.
