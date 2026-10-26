@@ -1,0 +1,233 @@
+{
+  "schema": 1,
+  "version": "2026.10.26.1",
+  "sourceBaselineCommit": "abb03c83de59215bbecf04cafa40bc265c0da02e",
+  "coreSHA256": "4611468ecfb4d0b77159b993800916fae133653f030c72f788c662fc44b8ccd3",
+  "manifestSHA256": "1dde63c88f95ef3fade2fca750faf15e6a4ea74112df2c1e981c64c709acdcc8",
+  "completeFileCount": 17962,
+  "components": [
+    {
+      "id": "home-2026.10.24.1",
+      "version": "2026.10.24.1",
+      "manifestSHA256": "4c289ab97c4d51081b5b9cc874c0784a41e0a4f0fef59e2b1056aa67c86fee11",
+      "expectedFileCount": 15,
+      "files": [
+        {
+          "path": "core/depth-engine/da2_backend.py",
+          "size": 15123,
+          "sha256": "309b356294722691687a6c81e51f85b0b58d95c8fee94f1970ec2c66388eae1e"
+        },
+        {
+          "path": "core/depth-engine/dense_workflow.py",
+          "size": 6666,
+          "sha256": "134a45da78cbbf9638454bd73222e4232bff35f41db7bdc3516ba4ae5252ef79"
+        },
+        {
+          "path": "core/depth-engine/engine.py",
+          "size": 77793,
+          "sha256": "6560582e3b0fd58da68ddf70348ec36956f83465211b19b53f81a72d3a4e2ec9"
+        },
+        {
+          "path": "core/depth-engine/preview_ai.py",
+          "size": 10109,
+          "sha256": "114d14863951da7d2bf19ba649c6509aa0226e0c6aa19ae537e9b157b7d43720"
+        },
+        {
+          "path": "core/depth-engine/setup_gpu.py",
+          "size": 5343,
+          "sha256": "acaa260362a39f10bca704893864dfcb8aa22ccd4fe568db29b18a3f7343372a"
+        },
+        {
+          "path": "panel/js/depth-map.js",
+          "size": 237461,
+          "sha256": "9da76ce9477018396ce59280a27ae5fb29ccb87e6631099d47aa6233deecb1da",
+          "supersededBy": "gpu-route-2026.10.26.1"
+        },
+        {
+          "path": "panel/js/depth-runtime-config.js",
+          "size": 2581,
+          "sha256": "2d1e1376f2cf9a0eddadab3444504cca31a274043f59e168c81f5389e313b1ed",
+          "supersededBy": "gpu-route-2026.10.26.1"
+        },
+        {
+          "path": "panel/js/depth-toolbar.js",
+          "size": 11218,
+          "sha256": "1184f3e46c2902aa289408181bbcd59d8e39d299d85e251633e81cad84492cd4"
+        },
+        {
+          "path": "panel/js/main.js",
+          "size": 548743,
+          "sha256": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9"
+        },
+        {
+          "path": "panel/js/system-login-runtime.js",
+          "size": 3124,
+          "sha256": "f84ef3457f790af7dc840b1579d8174d4d4fd584cf48953034ebce0d64cccb56"
+        },
+        {
+          "path": "panel/js/web-tools-bridge.js",
+          "size": 25293,
+          "sha256": "46debde4136ccd2afccd7382446342734d506034fbc2c62c683a51ee79bcfe4d"
+        },
+        {
+          "path": "panel/js/web-tools-panel.js",
+          "size": 10236,
+          "sha256": "9802b85ed5c5f6fbcc9d9e34240815ecd99300b94cba46ade5f601705e3b852c"
+        },
+        {
+          "path": "panel/jsx/depth-toolbar.jsx",
+          "size": 42434,
+          "sha256": "b3d4388f03aeb420fdff76fdc5aeb8e87fad9f2315d703e704959d2be71a13ef"
+        },
+        {
+          "path": "panel/jsx/web-tools-export.jsx",
+          "size": 5195,
+          "sha256": "b13d646e9f1dc302e05a36ad26afc721a9c5f29b9893570a29bef98e06cbdd22"
+        },
+        {
+          "path": "panel/jsx/web-tools-import.jsx",
+          "size": 5653,
+          "sha256": "37489525c1682b861e64624065a915be8d758d37832b78874a30c319bda3ffc8"
+        }
+      ]
+    },
+    {
+      "id": "home-2026.10.24.2",
+      "version": "2026.10.24.2",
+      "manifestSHA256": "9de4d5eb5241723cc3df2ce1720d2a3d43010204880ffb9bf8ac51989ec9439e",
+      "expectedFileCount": 1,
+      "files": [
+        {
+          "path": "panel/jsx/depth-template-import.jsx",
+          "size": 35864,
+          "sha256": "54994fa4d328794c5a77ab41c3a5f0d3c456441c609fbf035a9982585117ccc2"
+        }
+      ]
+    },
+    {
+      "id": "companion-1.0.27",
+      "version": "1.0.27",
+      "expectedFileCount": 8,
+      "files": [
+        {
+          "path": "companion/README.txt",
+          "size": 24328,
+          "sha256": "a634c70a5d1e90e800d9bbb558eb417d799b98aa3d557006f97683a1da537e14"
+        },
+        {
+          "path": "companion/background.js",
+          "size": 51664,
+          "sha256": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00"
+        },
+        {
+          "path": "companion/content.js",
+          "size": 65759,
+          "sha256": "2fc6b4e4d07bfe4c034b6b7b7aa2c70f51f633f7d628f862534573d2a0a1d57a"
+        },
+        {
+          "path": "companion/core.js",
+          "size": 20693,
+          "sha256": "dad35a2dab3455883f9483487a155751f6d335888996ed0a12f5ab238a3759e7"
+        },
+        {
+          "path": "companion/manifest.json",
+          "size": 1104,
+          "sha256": "862089f33dc5478648bc00de283d420813ef4a982333d073861351b5d04bc76e"
+        },
+        {
+          "path": "companion/popup.css",
+          "size": 1195,
+          "sha256": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf"
+        },
+        {
+          "path": "companion/popup.html",
+          "size": 3020,
+          "sha256": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b"
+        },
+        {
+          "path": "companion/popup.js",
+          "size": 4862,
+          "sha256": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+        }
+      ]
+    },
+    {
+      "id": "gpu-route-2026.10.26.1",
+      "version": "2026.10.26.1",
+      "expectedFileCount": 2,
+      "files": [
+        {
+          "path": "panel/js/depth-map.js",
+          "size": 239306,
+          "sha256": "b08954f02da3716c0afc0c9482066d7d806afe0d64e4812a95c0d0d8f091a1e9"
+        },
+        {
+          "path": "panel/js/depth-runtime-config.js",
+          "size": 5566,
+          "sha256": "7019b35ce6606f4accfb0782a3f2800da48295a170421a42e0d230cdba119f6f"
+        }
+      ],
+      "purpose": "Select managed GPU setup and worker independently of preserved custom CPU configuration; atomic device routing and cancel-safe continuation.",
+      "supersedes": [
+        {
+          "component": "home-2026.10.24.1",
+          "path": "panel/js/depth-map.js",
+          "sha256": "9da76ce9477018396ce59280a27ae5fb29ccb87e6631099d47aa6233deecb1da"
+        },
+        {
+          "component": "home-2026.10.24.1",
+          "path": "panel/js/depth-runtime-config.js",
+          "sha256": "2d1e1376f2cf9a0eddadab3444504cca31a274043f59e168c81f5389e313b1ed"
+        }
+      ]
+    }
+  ],
+  "retained": {
+    "r63WatcherSHA256": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+    "r62BridgeSHA256": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+    "externalFileCount": 10793,
+    "runtimeAndModelBytesUnchanged": true
+  },
+  "integration": {
+    "activation": "normal-panel-startup",
+    "files": [
+      {
+        "path": "panel/js/companion-update-handoff.js",
+        "sha256": "4bb009a92532b086aeed36c8ccff56835018e837083be235660d1463ae1e6d75"
+      },
+      {
+        "path": "core/companion-handoff/companion_handoff.py",
+        "sha256": "6671767bace45abff3ee915f5c1b34ef499f5dc2178edb97756f54d68e34f549"
+      },
+      {
+        "path": "core/companion-handoff/companion-handoff-manifest.json",
+        "sha256": "487684c5bb7cfea04b73dae17e59e413121747e1869cf7750ea5bab7c69280c1"
+      }
+    ],
+    "policy": "Known complete eight-file Companion code vectors only; unknown/custom roots remain unchanged and pending. Pairing, Chrome preferences and application state are not modified.",
+    "activationSteps": "After full Panel installation, reopen Order Panel normally; then Reload the Chrome Companion and refresh the Base tab once. Disk version alone does not establish activated Chrome code.",
+    "rollbackBoundary": "The handoff creates its own exact Companion transaction backup displayed in the panel. Full Panel rollback does not automatically downgrade already-updated legacy Chrome roots."
+  },
+  "verification": {
+    "archiveMembersHashed": 7170,
+    "installerCasesPassed": 10,
+    "appendExtractorTestsPassed": 12,
+    "sourceTestsPassed": 47,
+    "hotfixFixturesPassed": 20,
+    "retainedHistoricalVerification": {
+      "archiveMembersHashed": 7170,
+      "installerCasesPassed": 10,
+      "appendExtractorTestsPassed": 12,
+      "sourceTestsPassed": 25,
+      "handoffTestsPassed": 27,
+      "realGPUInferenceVerified": false,
+      "liveChromeActivationVerified": false
+    },
+    "realGPUInferenceVerified": false,
+    "liveChromeActivationVerified": false,
+    "inferenceLimit": "No CUDA setup, driver change, model download or real GT1030 inference/VRAM-fit verification was performed.",
+    "integrationEvidence": "Initial combined run retained12/12 extraction pass and an installer fixture NameError; reviewed fixture-only correction then10/10 installer rerun. Artifact/payload hashes unchanged."
+  },
+  "priorComponentsSHA256": "ec04626e94dc188041a7eea3d174fcce806048f0cd48b81822a56a82307307d0",
+  "componentResolution": "Ordered overlays: later components supersede earlier rows for the same path. supersededBy marks historical source bytes, not current payload bytes."
+}

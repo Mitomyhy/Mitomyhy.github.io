@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "version": "2026.10.26.1",
+  "base_panel_version": "2026.10.25.1",
+  "purpose": "Managed GPU bootstrap/worker routing; not a CUDA runtime or model installer",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-GPU-Route-Repair-2026.10.26.1.zip",
+  "size": 82344,
+  "sha256": "ba993ca78f1c7ae42bfb9aac118e7b92fc10ead8371642e145a010a1fc3c0558",
+  "files": [
+    {
+      "path": "panel/js/depth-map.js",
+      "size": 239306,
+      "sha256": "b08954f02da3716c0afc0c9482066d7d806afe0d64e4812a95c0d0d8f091a1e9",
+      "accepted_before_sha256": [
+        "9da76ce9477018396ce59280a27ae5fb29ccb87e6631099d47aa6233deecb1da",
+        "b08954f02da3716c0afc0c9482066d7d806afe0d64e4812a95c0d0d8f091a1e9"
+      ]
+    },
+    {
+      "path": "panel/js/depth-runtime-config.js",
+      "size": 5566,
+      "sha256": "7019b35ce6606f4accfb0782a3f2800da48295a170421a42e0d230cdba119f6f",
+      "accepted_before_sha256": [
+        "2d1e1376f2cf9a0eddadab3444504cca31a274043f59e168c81f5389e313b1ed",
+        "7019b35ce6606f4accfb0782a3f2800da48295a170421a42e0d230cdba119f6f"
+      ]
+    }
+  ],
+  "requires_manual_closed_apps": [
+    "Photoshop",
+    "OrderStudio"
+  ],
+  "full_install_receipt_preserved": true,
+  "configuration_and_runtime_preserved": true,
+  "starts_gpu_setup_or_inference": false,
+  "real_gpu_inference_verified": false,
+  "backup_recovery": "Use the current user Launcher Photoshop Panel > ... > Restore previous version for interrupted recovery."
+}

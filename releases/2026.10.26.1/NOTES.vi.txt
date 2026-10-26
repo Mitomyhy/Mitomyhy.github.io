@@ -1,0 +1,11 @@
+Panel2026.10.26.1: sửa Generate GPU báo yêu cầu cài bản CPU/GPU dù bản hiện tại đã có engine và setup. Cấu hình CPU tùy chỉnh vẫn giữ nguyên; GPU dùng cặp Python/worker managed riêng đã kiểm tra.
+
+Chuyển CPU/GPU theo cặp Python + worker. Cancel hoặc dispose hủy cả continuation đang đợi; yêu cầu GPU không âm thầm chạy CPU.
+
+Giữ nguyên toàn bộ thành phần Panel25.1, Companion1.0.27, Save Task, template, model và runtime. Chỉ hai module JS thay đổi; không kèm cấu hình cá nhân, tài khoản, dữ liệu đơn hoặc PSD.
+
+Launcher mới nhất vẫn là2026.10.25.9 qua kênh Launcher độc lập; bản này chỉ tăng phiên bản Panel. Không tải lại hoặc hạ cấp Launcher.
+
+Lưu công việc và tự đóng Photoshop/OrderStudio trước khi Update hoặc chạy gói sửa nhỏ. Không ứng dụng hay tài liệu nào được tự đóng; có backup và kiểm tra hash/rollback.
+
+Không tự tải CUDA hoặc chạy Generate. Tính tương thích driver, kiến trúc và đủ VRAM vẫn được kiểm tra khi cài/chạy GPU; không khẳng định MoGe2Large chạy được trong2GB của GT1030. Không thay wheel Torch hoặc driver trong bản vá này.
