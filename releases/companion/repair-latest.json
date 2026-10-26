@@ -1,0 +1,26 @@
+{
+  "tool_version": "2026.10.26.1",
+  "extension_version": "1.0.27",
+  "purpose": "file-integrity-check-and-explicit-code-restore",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-Check-Repair-2026.10.26.1.zip",
+  "size": 66783,
+  "sha256": "babee6d336e22e1185d78d47fc2cca29412eb5662556b94f18161b7750df21ad",
+  "minimum_chrome_version": "120",
+  "actual_other_PC_Chrome_error_resolved": false,
+  "modifies_browser_profile": false,
+  "modifies_pairing": false,
+  "creative_downloads": [
+    {
+      "version": "1.0.3",
+      "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Canva-Companion-1.0.3.zip",
+      "size": 26971,
+      "sha256": "bdf7eb50d796b3b211ff15ef5fcc1b085a9471b874303e242398a7360264e068"
+    },
+    {
+      "version": "1.0.6",
+      "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Photoroom-Companion-1.0.6.zip",
+      "size": 22958,
+      "sha256": "4453344437c86c0297378a13073895b8b02a7ceef98f96c9e51d92b6796ed161"
+    }
+  ]
+}
