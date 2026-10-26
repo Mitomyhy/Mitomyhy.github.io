@@ -1,0 +1,13 @@
+Panel2026.10.26.2: sửa lỗi CPU input_slot takes no parameters khi cấu hình còn trỏ tới runtime cũ3.28/29/30. Chỉ các cặp engine/handler cũ đã nhận diện chính xác mới chuyển sang CPU managed tương thích trong bộ nhớ.
+
+Không bỏ product_type hoặc thử lại lệnh sai schema. Thiếu CPU managed đúng bản sẽ chặn rõ trước khi nhận ảnh hay Generate; runtime tùy chỉnh không nhận diện hoặc mới hơn không bị tự thay.
+
+Giữ nguyên sửa GPU26.1: chọn cặp Python/worker managed riêng, Cancel/dispose hủy continuation, không âm thầm chạy CPU khi yêu cầu GPU. Không đổi cấu hình JSON, data/models hoặc mã engine/setup/wheel.
+
+Giữ nguyên toàn bộ thành phần Panel25.1, Companion1.0.27, Save Task, template, model và runtime. Gói sửa mang hai module JS, nhưng so với26.1 chỉ selector được cập nhật; không kèm dữ liệu cá nhân hay PSD.
+
+Launcher mới nhất vẫn là2026.10.25.9 qua kênh Launcher độc lập; bản này chỉ tăng phiên bản Panel. Không tải lại hoặc hạ cấp Launcher.
+
+Lưu công việc và tự đóng Photoshop/OrderStudio trước khi Update hoặc chạy gói sửa nhỏ. Không ứng dụng hay tài liệu nào được tự đóng; có backup và kiểm tra hash/rollback.
+
+Không tự tải CUDA hoặc chạy Generate. Tính tương thích driver, kiến trúc và đủ VRAM vẫn được kiểm tra khi cài/chạy GPU; không khẳng định MoGe2Large chạy được trong2GB của GT1030. Không thay wheel Torch hoặc driver trong bản vá này.
