@@ -1,0 +1,13 @@
+Panel2026.10.26.3: đối chiếu Base tự động mỗi5phút sau khi lượt trước hoàn tất; không quét chồng hoặc chạy bù liên tiếp. Nút đối chiếu thủ công vẫn chạy ngay và được tuần tự hóa.
+
+Không hiện thông báo hoàn tất, số thông báo mới hay tự mở lịch sử sau mỗi lượt quét. Chỉ dựng lịch sử khi người dùng mở Nhật ký; lỗi kết nối cần xử lý vẫn được hiển thị.
+
+Cập nhật nội dung Base sạch theo đúng Record ID, giữ chỉnh sửa cục bộ và kế hoạch của PSD đang làm. Trạng thái Working Status và việc ra khỏi view lọc không tự buộc Nạp Base lại trước Save.
+
+Khi bấm Save, xác minh dòng thực tế đúng Record ID với bằng chứng mới. Không bỏ bảo vệ đổi SKU/Name fullprint thật, sai bảng, mất dòng, link đích của tác vụ đã bắt đầu hoặc biên nhận upload chưa rõ; không thử lại upload không an toàn.
+
+Giảm bind và lưu session lặp cho snapshot không đổi, không dựng lại hàng trăm dòng nhật ký khi đang đóng. Chưa đo trực tiếp hiệu năng máy thực tế, nên không khẳng định đây là nguyên nhân duy nhất gây lag.
+
+Bản Panel đầy đủ giữ nguyên sửa CPU input_slot26.2, Generate CPU/GPU26.1, Companion1.0.27, template, model và runtime. Gói sửa nhỏ chỉ chứa ba module Base JS, không cài bổ sung hoặc sửa GPU trên máy cũ chưa có bản GPU.
+
+Launcher mới nhất vẫn là2026.10.25.9 qua kênh Launcher độc lập. Lưu công việc và tự đóng Photoshop/OrderStudio trước khi Update hoặc chạy gói sửa nhỏ; không ứng dụng hay tài liệu nào được tự đóng. Không cần ghép Companion lại.

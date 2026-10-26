@@ -1,0 +1,5 @@
+bdc52e54b4a681f20e8cc084fc29bcd89e478e69762e4a374af0402d2bf19d10  core.zip (assembled authenticated parts)
+884797f7c737f01c085e0d4c999295f03a69f254cc041fbd5dd64032896df90a  core-tail.bin
+e69d266274c89e249a4ba5133e70d6d6baa5676dccee69d265d3511fc4e5da8b  payload-manifest.json (inside core.zip)
+09d23ba4639a4b1c7ce8723df54102d5de8d1bf6d470c4c86ec2f88f9d672306  COMPONENTS.json
+b8f050e931fedae61747de4eb22d2c5e8bea76225b4724c8eb198494f7e37478  MITOM-Base-Silent-Sync-2026.10.26.3.zip

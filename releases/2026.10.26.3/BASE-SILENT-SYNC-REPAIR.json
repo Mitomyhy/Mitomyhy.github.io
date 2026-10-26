@@ -1,0 +1,108 @@
+{
+  "schema": 1,
+  "version": "2026.10.26.3",
+  "base_panel_versions": [
+    "2026.10.25.1",
+    "2026.10.26.1",
+    "2026.10.26.2"
+  ],
+  "purpose": "Base five-minute silent sync and selected-record explicit Save verification only; not a CPU/GPU, CUDA runtime or model installer",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Silent-Sync-2026.10.26.3.zip",
+  "size": 193891,
+  "sha256": "b8f050e931fedae61747de4eb22d2c5e8bea76225b4724c8eb198494f7e37478",
+  "files": [
+    {
+      "path": "panel/js/main.js",
+      "size": 556978,
+      "sha256": "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5"
+    },
+    {
+      "path": "panel/js/lark-base-watch.js",
+      "size": 31862,
+      "sha256": "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd"
+    },
+    {
+      "path": "panel/js/lark-live-status.js",
+      "size": 40503,
+      "sha256": "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f"
+    }
+  ],
+  "supported_receipts": [
+    {
+      "version": "2026.10.25.1",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd"
+        ],
+        "panel/js/lark-live-status.js": [
+          "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f"
+        ]
+      }
+    },
+    {
+      "version": "2026.10.26.1",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd"
+        ],
+        "panel/js/lark-live-status.js": [
+          "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f"
+        ]
+      }
+    },
+    {
+      "version": "2026.10.26.2",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd"
+        ],
+        "panel/js/lark-live-status.js": [
+          "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f"
+        ]
+      }
+    }
+  ],
+  "requires_manual_closed_apps": [
+    "Photoshop",
+    "OrderStudio"
+  ],
+  "full_install_receipt_preserved": true,
+  "configuration_and_runtime_preserved": true,
+  "starts_gpu_setup_or_inference": false,
+  "real_gpu_inference_verified": false,
+  "live_base_or_performance_verified": false,
+  "backup_recovery": "Use the current user Launcher Photoshop Panel > ... > Restore previous version for interrupted recovery."
+}
