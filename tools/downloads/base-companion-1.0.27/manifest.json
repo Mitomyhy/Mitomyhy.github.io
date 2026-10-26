@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "UOY Base Companion",
+  "version": "1.0.27",
+  "description": "Warm the calibrated UOY Order reader on restored Base tabs, then retain it hidden for explicit Photoshop reads. No API key or cookies.",
+  "minimum_chrome_version": "120",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAub6UR3zGuBDWn8UY28dWywhaW0FPOHkO/qyC586Bhs/7arwTDf5h5ceGNhhRcIs5bOAtObmSfvS9fDKl9z9xh8c+hFqAH1f7s5jdMFgm7h7WHuIB7DgnPat5lGYiPsIbhhZmxqcZVoQRMWZ+W5lnJxjCpLOk9olCaKAOyRIENYVtX7V0VXMDAy/YCsldLkWMCNDfmxEZ6GGeEyNi0BOT2+SvXttxE8H+AgXJ/sMe/8HyI1fcFaKmIJ0EVBV0x/ZoBI4sx9IRELpIFM2fe+E1/G+v5n1w6q1GMZ4eD+4Op0P0SdjJ0QaSEzURNo1SapNDsGM1cM2hdttd22ak7nMuhQIDAQAB",
+  "permissions": ["storage", "scripting", "alarms", "activeTab"],
+  "host_permissions": ["http://127.0.0.1/*"],
+  "optional_host_permissions": ["https://*.larksuite.com/*", "https://*.feishu.cn/*"],
+  "background": {"service_worker": "background.js"},
+  "action": {"default_popup": "popup.html", "default_title": "UOY Base Companion"},
+  "content_security_policy": {"extension_pages": "script-src 'self'; object-src 'none'"}
+}

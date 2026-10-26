@@ -1,0 +1,13 @@
+{
+  "version": "1.0.27",
+  "purpose": "restore-canonical-manifest-format-only",
+  "extension_id": "nbmhofblkjlmlijiokgdeojjomjcphhj",
+  "manifest_url": "https://mitomyhy.github.io/tools/downloads/base-companion-1.0.27/manifest.json",
+  "manifest_sha256": "862089f33dc5478648bc00de283d420813ef4a982333d073861351b5d04bc76e",
+  "zip_url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-Manifest-Fix-1.0.27.zip",
+  "zip_sha256": "df9bc4a6538e0f5c5a4ca63c75d9eefc3c36713e295784c16344ab1b990ab6cf",
+  "zip_size": 1752,
+  "unchanged_keys_permissions_code": true,
+  "actual_other_PC_runtime_error_resolved": false,
+  "limitation": "Byte-identical to released1.0.27; cannot fix a different runtime error when manifest is already canonical."
+}
