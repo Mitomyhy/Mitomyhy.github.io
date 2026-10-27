@@ -1,8 +1,10 @@
 {
-  "version": "1.0.27",
-  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.27.zip",
-  "size": 59527,
-  "sha256": "6409f3c13e51300f17aa72971c72b42dd1c3ac51a95c3c4706c608c14224e4a3",
-  "included_in_panel": "2026.10.25.1",
-  "wire_revision": "20261023-R55"
+  "schema": 1,
+  "version": "1.0.30",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.30.zip",
+  "size": 59386,
+  "sha256": "3d93a20d73898d66dc7c5783db2a9a2964bc40201335294c2e5ea9f063ac7bc4",
+  "included_in_panel": "2026.10.27.5",
+  "wire_revision": "20261023-R55",
+  "content_revision": "20261027-R74"
 }

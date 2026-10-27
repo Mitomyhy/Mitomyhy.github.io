@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "version": "2026.10.27.5",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Background-Read-2026.10.27.5.zip",
+  "size": 478553,
+  "sha256": "418b2231cc606dff97c1a25e2064a97bf2129e8bc7326f8fe2cb0a607a65b463",
+  "requires_managed_code_repair": "2026.10.27.4",
+  "requires_exact_r71_prerequisites": true,
+  "supported_full_receipts": [
+    "2026.10.25.1",
+    "2026.10.26.1",
+    "2026.10.26.2",
+    "2026.10.26.3",
+    "2026.10.27.1"
+  ],
+  "files": [
+    {
+      "path": "companion/README.txt",
+      "size": 25929,
+      "sha256": "3d055b1652284e177678c6a85321e17f14ada8b8b1b8c2a720f8cba33a9a8317"
+    },
+    {
+      "path": "companion/background.js",
+      "size": 63796,
+      "sha256": "2043026219cf425fe22fed56d5b201ba7e6f8910e1e76d07a655e88bd50ecf21"
+    },
+    {
+      "path": "companion/content.js",
+      "size": 68028,
+      "sha256": "789d3ce96598650e16b96f3c6ecedecb3e82ada7ac201dfd8daefee87b5c1fdb"
+    },
+    {
+      "path": "companion/core.js",
+      "size": 21049,
+      "sha256": "ad7d9d06782f5a023879b20d65a49f48f6fa5eb9b805573ac2b2b0b5295b3d95"
+    },
+    {
+      "path": "companion/manifest.json",
+      "size": 1104,
+      "sha256": "f22b6e6d5a0412d222f55ad8d5450d80ec973bbe041a1ee80768a6f62ede26f7"
+    },
+    {
+      "path": "core/companion-handoff/companion-handoff-manifest.json",
+      "size": 9021,
+      "sha256": "d47e67e00ad82aec251304967861e58bdccbb0c76ea9d36001ccbde99a399f66"
+    },
+    {
+      "path": "core/companion-handoff/companion_handoff.py",
+      "size": 14385,
+      "sha256": "658f407e42fb5447f7d5932b5afd0c12f5140eef2167b240f7894a8f09d3ee78"
+    },
+    {
+      "path": "panel/js/companion-update-handoff.js",
+      "size": 6139,
+      "sha256": "97f4850eea7f8df880f011a74d1f9b367ff59aa86b30f6a0ba2fc123e8c79a03"
+    },
+    {
+      "path": "panel/js/lark-base-bridge.js",
+      "size": 110388,
+      "sha256": "6c787fcd4f04af78954d40a487fafd0fbba297470989666087d676daff0c5d74"
+    },
+    {
+      "path": "panel/lark-base-extension/extension.js",
+      "size": 1045170,
+      "sha256": "f533f2197df17a6d509ca818d0dd3a0f99f5fc96af9bf9fbb8ddbec6d7bf9e56"
+    },
+    {
+      "path": "panel/lark-base-extension/index.html",
+      "size": 3659,
+      "sha256": "7db527d8f05fb7008d25892d460e26846bda6bda7d62b66d1ffe7da087f368b6"
+    },
+    {
+      "path": "panel/lark-base-extension/reader-adapter.js",
+      "size": 67991,
+      "sha256": "06b2807a9c63e1ebee2f5a388ea7213b4e92dc55a2138a83e6ea50cfd88528be"
+    },
+    {
+      "path": "panel/lark-base-extension/reader-live-status.js",
+      "size": 45086,
+      "sha256": "a9a501db75aaee3752df903b619b8d791eb85b4219e2df0dc47c48989331b807"
+    },
+    {
+      "path": "panel/lark-base-extension/reader-ownership.js",
+      "size": 13769,
+      "sha256": "850caccf16ab957bd51aebcbe31564d6c2144665c9926ded1294ac6112ce51d8"
+    }
+  ],
+  "configuration_and_runtime_preserved": true,
+  "starts_gpu_setup_or_inference": false,
+  "native_r75_latency_verified": false,
+  "older_installations": "Use the cumulative Launcher update. This narrow ZIP requires exact R74 code even when the preserved full-install receipt is older."
+}

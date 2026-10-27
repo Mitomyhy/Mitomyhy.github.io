@@ -1,31 +1,8 @@
-MITOM BASE COMPANION 1.0.27 / NATIVE BASE READER R64
+MITOM BASE COMPANION 1.0.30 / content R74 / host wire R55
 
-Bản đầy đủ qua Launcher: Photoshop Panel 2026.10.25.1.
-Gồm CPU/NVIDIA CUDA, sửa IN/capture/login/CUT 24.1 + 24.2 và Companion 1.0.27.
-Launcher mới không đồng nghĩa Panel/Companion đã được cập nhật; kiểm tra cả
-phiên bản Photoshop Panel sau Update.
-
-CÁCH CẬP NHẬT KHUYẾN NGHỊ
-1. Lưu công việc, tự đóng Photoshop và OrderStudio khi tiện.
-2. Launcher -> Check for updates -> Update Photoshop Panel 2026.10.25.1.
-3. Mở lại UOY Order Panel. Bộ đồng bộ mã Companion chỉ cập nhật tám file đã
-   xác minh ở đúng thư mục Chrome đăng ký, gồm các thư mục ZIP cũ đã biết.
-   Cấu hình Chrome, quyền, storage và ghép nối không bị sửa; có backup riêng.
-4. Chrome -> chrome://extensions -> UOY Base Companion -> Tải lại.
-5. Tải lại riêng tab Base một lần. Manifest phải hiện 1.0.27.
-
-NẾU PANEL BÁO CÒN THƯ MỤC COMPANION CẦN KIỂM TRA
-Không xóa extension, không bấm Quên, không ghép lại tùy tiện.
-Bộ đồng bộ giữ nguyên thư mục tùy chỉnh/không xác định thay vì ghi đè.
-Trong Chrome -> Chi tiết tiện ích, xem đúng thư mục nguồn đang được nạp.
-Gói tải riêng mới nhất:
-https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.27.zip
-SHA-256: 6409f3c13e51300f17aa72971c72b42dd1c3ac51a95c3c4706c608c14224e4a3
-Sao chép tám file trong Chrome-Base-Companion của gói vào đúng thư mục đó,
-rồi Tải lại tiện ích và tab Base. Không chuyển thư mục hoặc tạo bản trùng.
-
-ID ổn định: nbmhofblkjlmlijiokgdeojjomjcphhj
-Không chia sẻ tài khoản, cookie, token hay pairing giữa các máy.
-Rollback Panel không tự rollback lần đồng bộ mã Companion; backup riêng
-được ghi trong thông báo đồng bộ. Không sửa Chrome Preferences để đổi đường dẫn.
-GPU là lựa chọn riêng; không tải CUDA cho đến khi người dùng chọn cài GPU.
+Khuyến nghị: Launcher -> Update Photoshop Panel 2026.10.27.5 để có đủ mọi sửa R72–R75 và Reader R75. Không có thao tác cài trên máy hiện tại khi phát hành.
+Tải riêng https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.30.zip
+SHA-256: 3d93a20d73898d66dc7c5783db2a9a2964bc40201335294c2e5ea9f063ac7bc4
+Giải nén, chọn đúng thư mục Chrome-Base-Companion có manifest.json. Máy đã ghép: giữ nguyên ID/thư mục đang dùng, không Xóa/Quên, không chia sẻ token/pairing; mã tùy chỉnh được giữ nguyên để kiểm tra.
+Companion ID nbmhofblkjlmlijiokgdeojjomjcphhj không đổi. Cập nhật Panel và đồng bộ mã Companion là hai bước riêng; khi chủ động cập nhật Companion, tự Reload tiện ích và tab Base. Nếu đã dùng Companion1.0.30, R75 không yêu cầu tải lại nó; chỉ hard-reload tab Base khi tiện để nạp Reader mới.
+ZIP sửa nhỏ MITOM-Base-Background-Read-2026.10.27.5.zip yêu cầu đúng mã R74, không dùng thay bản đầy đủ. CPU/GPU/model/runtime không thay. Không có quét định kỳ hoặc Save-triggered Base read. Native R75 latency chưa xác minh.

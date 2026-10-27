@@ -1,0 +1,49 @@
+{
+  "schema": 1,
+  "version": "1.0.30",
+  "extension_id": "nbmhofblkjlmlijiokgdeojjomjcphhj",
+  "files": {
+    "README.txt": {
+      "size": 25929,
+      "sha256": "3d055b1652284e177678c6a85321e17f14ada8b8b1b8c2a720f8cba33a9a8317"
+    },
+    "background.js": {
+      "size": 63796,
+      "sha256": "2043026219cf425fe22fed56d5b201ba7e6f8910e1e76d07a655e88bd50ecf21"
+    },
+    "content.js": {
+      "size": 68028,
+      "sha256": "789d3ce96598650e16b96f3c6ecedecb3e82ada7ac201dfd8daefee87b5c1fdb"
+    },
+    "core.js": {
+      "size": 21049,
+      "sha256": "ad7d9d06782f5a023879b20d65a49f48f6fa5eb9b805573ac2b2b0b5295b3d95"
+    },
+    "manifest.json": {
+      "size": 1104,
+      "sha256": "f22b6e6d5a0412d222f55ad8d5450d80ec973bbe041a1ee80768a6f62ede26f7"
+    },
+    "popup.css": {
+      "size": 1195,
+      "sha256": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf"
+    },
+    "popup.html": {
+      "size": 3020,
+      "sha256": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b"
+    },
+    "popup.js": {
+      "size": 4862,
+      "sha256": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+    }
+  },
+  "zip": {
+    "schema": 1,
+    "version": "1.0.30",
+    "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Companion-1.0.30.zip",
+    "size": 59386,
+    "sha256": "3d93a20d73898d66dc7c5783db2a9a2964bc40201335294c2e5ea9f063ac7bc4",
+    "included_in_panel": "2026.10.27.5",
+    "wire_revision": "20261023-R55",
+    "content_revision": "20261027-R74"
+  }
+}

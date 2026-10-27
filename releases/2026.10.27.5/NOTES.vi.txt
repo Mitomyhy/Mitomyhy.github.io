@@ -1,0 +1,11 @@
+Panel 2026.10.27.5: bản đầy đủ gộp mọi sửa R72–R75 trên nền R71; giữ Generate CPU/GPU, sửa CPU input_slot, Save Task, template, runtime và model đã có.
+
+Nạp Base và nút quét trạng thái đơn là thao tác thủ công. Không thêm quét định kỳ, đọc Base khi Save hoặc đổi cấu trúc save folder. Companion 1.0.30 giữ ID/ghép nối, chỉ ghi metadata nguồn công khai khi bạn chọn đúng tab Base.
+
+Reader R75 thay lịch gom các lệnh SDK đọc đã cho phép để không phải chờ bộ hẹn giờ của tab nền. Kiểm thử scheduler là mô phỏng; chưa xác minh độ trễ R75 trên Chrome thực tế. Tab Base vẫn phải mở, đúng nguồn/view và đã ghép; không tự chuyển focus.
+
+ZIP sửa nhỏ 2026.10.27.5 chỉ dành cho máy đã có đúng sửa mã R74 và các điều kiện R71. Máy đang R71 hoặc cũ hơn dùng Launcher cập nhật Panel đầy đủ; không cài ZIP nhỏ như một bản đầy đủ.
+
+Đây là phát hành mã; không cài vào máy hiện tại, không đóng ứng dụng/tài liệu, không chạy Generate, tải CUDA hoặc quét đơn. Khi chủ động cài sau này, lưu công việc và tự đóng Photoshop/OrderStudio theo kiểm tra của installer.
+
+Launcher độc lập mới nhất vẫn là 2026.10.25.9; bản nhúng 25.3 trong feed Panel gốc giữ nguyên ranh giới xác minh. Companion 1.0.30 / content R74, Reader R75 và host wire R55 là các nhãn riêng có chủ đích.

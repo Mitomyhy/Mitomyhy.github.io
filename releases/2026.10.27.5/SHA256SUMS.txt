@@ -1,0 +1,8 @@
+4eded208579d0b2ea677c467a653247b6fc762071ecaca9b7fa9a17a1a472893  core.zip (assembled authenticated parts)
+6db8133226dc6e185fcd248a9419703df0c5a72ebe64b4b8f5d4126f1d1a9cd1  core-tail.bin
+16a9b43350fc1bd20305066a1df13cbe81f84ab397f45c04ba9ebd320ad23f9a  uoy-panel-full-2026.10.27.5-UNSIGNED.zip (local canonical verification artifact)
+3d0f28a875b3a44cb4f318896c0356d52af2d97561dd9fd47d91f1daba982264  payload-manifest.json (inside core.zip)
+551d2c4fbfcb293be19e5122fa3e2391684f4654e97dd5285f580f93b85efe8c  COMPONENTS.json
+418b2231cc606dff97c1a25e2064a97bf2129e8bc7326f8fe2cb0a607a65b463  MITOM-Base-Background-Read-2026.10.27.5.zip
+3d93a20d73898d66dc7c5783db2a9a2964bc40201335294c2e5ea9f063ac7bc4  MITOM-Base-Companion-1.0.30.zip
+abf84b526345833efd635031f5e0731ebae0030764f0ddef6f2bfb28c93e1ad3  Companion FILES.json
