@@ -1,0 +1,5 @@
+a2877acf710d8038d1bf4356f271648396d7396f972bcd298100a3ad1841d48d  core.zip (assembled authenticated parts)
+583d3d593dc1dbd482408150854eb92634f9146a42367b542f73dd8676541f57  core-tail.bin
+00e42d7c7881f7185a5b709ede91e94d2fb72f9f06db30e2541b559cd9fd5f37  payload-manifest.json (inside core.zip)
+214bdf3fd03b5414796d0e65b4fb2729bad9c19c249cb199cdb58f2a3488c78e  COMPONENTS.json
+121cba7128e47bb29afdb87cfcf45d74d84c477fd8040b2cf849873dc141ae43  MITOM-Base-Manual-Status-2026.10.27.1.zip

@@ -1,0 +1,410 @@
+{
+  "schema": 1,
+  "version": "2026.10.27.1",
+  "sourceBaselineCommit": "5a73f54805fda83dc03eeb8b0fdcab672ab67fda",
+  "coreSHA256": "a2877acf710d8038d1bf4356f271648396d7396f972bcd298100a3ad1841d48d",
+  "manifestSHA256": "00e42d7c7881f7185a5b709ede91e94d2fb72f9f06db30e2541b559cd9fd5f37",
+  "completeFileCount": 17962,
+  "components": [
+    {
+      "id": "home-2026.10.24.1",
+      "version": "2026.10.24.1",
+      "manifestSHA256": "4c289ab97c4d51081b5b9cc874c0784a41e0a4f0fef59e2b1056aa67c86fee11",
+      "expectedFileCount": 15,
+      "files": [
+        {
+          "path": "core/depth-engine/da2_backend.py",
+          "size": 15123,
+          "sha256": "309b356294722691687a6c81e51f85b0b58d95c8fee94f1970ec2c66388eae1e"
+        },
+        {
+          "path": "core/depth-engine/dense_workflow.py",
+          "size": 6666,
+          "sha256": "134a45da78cbbf9638454bd73222e4232bff35f41db7bdc3516ba4ae5252ef79"
+        },
+        {
+          "path": "core/depth-engine/engine.py",
+          "size": 77793,
+          "sha256": "6560582e3b0fd58da68ddf70348ec36956f83465211b19b53f81a72d3a4e2ec9"
+        },
+        {
+          "path": "core/depth-engine/preview_ai.py",
+          "size": 10109,
+          "sha256": "114d14863951da7d2bf19ba649c6509aa0226e0c6aa19ae537e9b157b7d43720"
+        },
+        {
+          "path": "core/depth-engine/setup_gpu.py",
+          "size": 5343,
+          "sha256": "acaa260362a39f10bca704893864dfcb8aa22ccd4fe568db29b18a3f7343372a"
+        },
+        {
+          "path": "panel/js/depth-map.js",
+          "size": 237461,
+          "sha256": "9da76ce9477018396ce59280a27ae5fb29ccb87e6631099d47aa6233deecb1da",
+          "supersededBy": "gpu-route-2026.10.26.1"
+        },
+        {
+          "path": "panel/js/depth-runtime-config.js",
+          "size": 2581,
+          "sha256": "2d1e1376f2cf9a0eddadab3444504cca31a274043f59e168c81f5389e313b1ed",
+          "supersededBy": "gpu-route-2026.10.26.1"
+        },
+        {
+          "path": "panel/js/depth-toolbar.js",
+          "size": 11218,
+          "sha256": "1184f3e46c2902aa289408181bbcd59d8e39d299d85e251633e81cad84492cd4"
+        },
+        {
+          "path": "panel/js/main.js",
+          "size": 548743,
+          "sha256": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+          "supersededBy": "base-silent-sync-2026.10.26.3"
+        },
+        {
+          "path": "panel/js/system-login-runtime.js",
+          "size": 3124,
+          "sha256": "f84ef3457f790af7dc840b1579d8174d4d4fd584cf48953034ebce0d64cccb56"
+        },
+        {
+          "path": "panel/js/web-tools-bridge.js",
+          "size": 25293,
+          "sha256": "46debde4136ccd2afccd7382446342734d506034fbc2c62c683a51ee79bcfe4d"
+        },
+        {
+          "path": "panel/js/web-tools-panel.js",
+          "size": 10236,
+          "sha256": "9802b85ed5c5f6fbcc9d9e34240815ecd99300b94cba46ade5f601705e3b852c"
+        },
+        {
+          "path": "panel/jsx/depth-toolbar.jsx",
+          "size": 42434,
+          "sha256": "b3d4388f03aeb420fdff76fdc5aeb8e87fad9f2315d703e704959d2be71a13ef"
+        },
+        {
+          "path": "panel/jsx/web-tools-export.jsx",
+          "size": 5195,
+          "sha256": "b13d646e9f1dc302e05a36ad26afc721a9c5f29b9893570a29bef98e06cbdd22"
+        },
+        {
+          "path": "panel/jsx/web-tools-import.jsx",
+          "size": 5653,
+          "sha256": "37489525c1682b861e64624065a915be8d758d37832b78874a30c319bda3ffc8"
+        }
+      ]
+    },
+    {
+      "id": "home-2026.10.24.2",
+      "version": "2026.10.24.2",
+      "manifestSHA256": "9de4d5eb5241723cc3df2ce1720d2a3d43010204880ffb9bf8ac51989ec9439e",
+      "expectedFileCount": 1,
+      "files": [
+        {
+          "path": "panel/jsx/depth-template-import.jsx",
+          "size": 35864,
+          "sha256": "54994fa4d328794c5a77ab41c3a5f0d3c456441c609fbf035a9982585117ccc2"
+        }
+      ]
+    },
+    {
+      "id": "companion-1.0.27",
+      "version": "1.0.27",
+      "expectedFileCount": 8,
+      "files": [
+        {
+          "path": "companion/README.txt",
+          "size": 24328,
+          "sha256": "a634c70a5d1e90e800d9bbb558eb417d799b98aa3d557006f97683a1da537e14"
+        },
+        {
+          "path": "companion/background.js",
+          "size": 51664,
+          "sha256": "5b312d2b8f4dbcaae48b4088cc07ba67d374b9553b2e4490aa97a61b3f30fd00"
+        },
+        {
+          "path": "companion/content.js",
+          "size": 65759,
+          "sha256": "2fc6b4e4d07bfe4c034b6b7b7aa2c70f51f633f7d628f862534573d2a0a1d57a"
+        },
+        {
+          "path": "companion/core.js",
+          "size": 20693,
+          "sha256": "dad35a2dab3455883f9483487a155751f6d335888996ed0a12f5ab238a3759e7"
+        },
+        {
+          "path": "companion/manifest.json",
+          "size": 1104,
+          "sha256": "862089f33dc5478648bc00de283d420813ef4a982333d073861351b5d04bc76e"
+        },
+        {
+          "path": "companion/popup.css",
+          "size": 1195,
+          "sha256": "645f56767f01a709c88e7d99c9ef4bfa0d987bd4bd35934207f7183a7ed092bf"
+        },
+        {
+          "path": "companion/popup.html",
+          "size": 3020,
+          "sha256": "3aaa6eba15fdea5ab814e06f142ee1f4faf4103a0b889410f0ebd9c7b2cf835b"
+        },
+        {
+          "path": "companion/popup.js",
+          "size": 4862,
+          "sha256": "b9ddf1b22a680656ac2202fe74e5fa4d24fe90f847cd18defb44a7f0fda00218"
+        }
+      ]
+    },
+    {
+      "id": "gpu-route-2026.10.26.1",
+      "version": "2026.10.26.1",
+      "expectedFileCount": 2,
+      "files": [
+        {
+          "path": "panel/js/depth-map.js",
+          "size": 239306,
+          "sha256": "b08954f02da3716c0afc0c9482066d7d806afe0d64e4812a95c0d0d8f091a1e9"
+        },
+        {
+          "path": "panel/js/depth-runtime-config.js",
+          "size": 5566,
+          "sha256": "7019b35ce6606f4accfb0782a3f2800da48295a170421a42e0d230cdba119f6f",
+          "supersededBy": "cpu-input-slot-2026.10.26.2"
+        }
+      ],
+      "purpose": "Select managed GPU setup and worker independently of preserved custom CPU configuration; atomic device routing and cancel-safe continuation.",
+      "supersedes": [
+        {
+          "component": "home-2026.10.24.1",
+          "path": "panel/js/depth-map.js",
+          "sha256": "9da76ce9477018396ce59280a27ae5fb29ccb87e6631099d47aa6233deecb1da"
+        },
+        {
+          "component": "home-2026.10.24.1",
+          "path": "panel/js/depth-runtime-config.js",
+          "sha256": "2d1e1376f2cf9a0eddadab3444504cca31a274043f59e168c81f5389e313b1ed"
+        }
+      ]
+    },
+    {
+      "id": "cpu-input-slot-2026.10.26.2",
+      "version": "2026.10.26.2",
+      "expectedFileCount": 1,
+      "files": [
+        {
+          "path": "panel/js/depth-runtime-config.js",
+          "size": 9090,
+          "sha256": "d529628609114aee39e0d602ba65a23b2fcca8bedcbb0de434fec0f4075007a4"
+        }
+      ],
+      "purpose": "Recognize exact legacy3.28/29/30 input-slot protocols and select the verified managed CPU pair in memory; retain GPU routing unchanged.",
+      "supersedes": [
+        {
+          "component": "gpu-route-2026.10.26.1",
+          "path": "panel/js/depth-runtime-config.js",
+          "sha256": "7019b35ce6606f4accfb0782a3f2800da48295a170421a42e0d230cdba119f6f"
+        }
+      ]
+    },
+    {
+      "id": "base-silent-sync-2026.10.26.3",
+      "version": "2026.10.26.3",
+      "expectedFileCount": 3,
+      "files": [
+        {
+          "path": "panel/js/main.js",
+          "size": 556978,
+          "sha256": "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+          "supersededBy": "base-manual-status-2026.10.27.1"
+        },
+        {
+          "path": "panel/js/lark-base-watch.js",
+          "size": 31862,
+          "sha256": "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+          "supersededBy": "base-manual-status-2026.10.27.1"
+        },
+        {
+          "path": "panel/js/lark-live-status.js",
+          "size": 40503,
+          "sha256": "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+          "supersededBy": "base-manual-status-2026.10.27.1"
+        }
+      ],
+      "purpose": "Five-minute non-overlapping Base refresh, quiet routine change handling and explicit selected-record Save verification; no upload/revision replay relaxation.",
+      "supersedes": [
+        {
+          "component": "home-2026.10.24.1",
+          "path": "panel/js/main.js",
+          "sha256": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9"
+        }
+      ]
+    },
+    {
+      "id": "base-manual-status-2026.10.27.1",
+      "version": "2026.10.27.1",
+      "expectedFileCount": 6,
+      "files": [
+        {
+          "path": "panel/js/main.js",
+          "size": 540471,
+          "sha256": "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+        },
+        {
+          "path": "panel/js/lark-base-watch.js",
+          "size": 29489,
+          "sha256": "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+        },
+        {
+          "path": "panel/js/lark-live-status.js",
+          "size": 44333,
+          "sha256": "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+        },
+        {
+          "path": "panel/js/lark-base-bridge.js",
+          "size": 104812,
+          "sha256": "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+        },
+        {
+          "path": "coexist/coexist-client.js",
+          "size": 16904,
+          "sha256": "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+        },
+        {
+          "path": "coexist/coexist-host.js",
+          "size": 32318,
+          "sha256": "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+        }
+      ],
+      "purpose": "Manual selected-order status scan only, with authenticated loaded-bridge hash activation handoff. No periodic scans, automatic reader warming or network refresh on Save; no production export/revision replay changes.",
+      "supersedes": [
+        {
+          "component": "base-silent-sync-2026.10.26.3",
+          "path": "panel/js/main.js",
+          "sha256": "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5"
+        },
+        {
+          "component": "base-silent-sync-2026.10.26.3",
+          "path": "panel/js/lark-base-watch.js",
+          "sha256": "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd"
+        },
+        {
+          "component": "base-silent-sync-2026.10.26.3",
+          "path": "panel/js/lark-live-status.js",
+          "sha256": "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f"
+        }
+      ],
+      "baselineReplacements": [
+        {
+          "path": "panel/js/lark-base-bridge.js",
+          "previousSHA256": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+          "source": "Sealed R70 core baseline, not a prior overlay component."
+        },
+        {
+          "path": "coexist/coexist-client.js",
+          "previousSHA256": "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+          "source": "Sealed R70 core baseline, not a prior overlay component."
+        },
+        {
+          "path": "coexist/coexist-host.js",
+          "previousSHA256": "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296",
+          "source": "Sealed R70 core baseline, not a prior overlay component."
+        }
+      ]
+    }
+  ],
+  "retained": {
+    "externalFileCount": 10793,
+    "runtimeAndModelBytesUnchanged": true,
+    "historicalWatcherSupersededBy": "base-manual-status-2026.10.27.1",
+    "r71WatcherSHA256": "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a",
+    "r71BridgeSHA256": "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7",
+    "r71CoexistClientSHA256": "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e",
+    "r71CoexistHostSHA256": "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+  },
+  "integration": {
+    "activation": "normal-panel-startup",
+    "files": [
+      {
+        "path": "panel/js/companion-update-handoff.js",
+        "sha256": "4bb009a92532b086aeed36c8ccff56835018e837083be235660d1463ae1e6d75"
+      },
+      {
+        "path": "core/companion-handoff/companion_handoff.py",
+        "sha256": "6671767bace45abff3ee915f5c1b34ef499f5dc2178edb97756f54d68e34f549"
+      },
+      {
+        "path": "core/companion-handoff/companion-handoff-manifest.json",
+        "sha256": "487684c5bb7cfea04b73dae17e59e413121747e1869cf7750ea5bab7c69280c1"
+      }
+    ],
+    "policy": "Known complete eight-file Companion code vectors only; unknown/custom roots remain unchanged and pending. Pairing, Chrome preferences and application state are not modified.",
+    "activationSteps": "After full Panel installation, reopen Order Panel normally; then Reload the Chrome Companion and refresh the Base tab once. Disk version alone does not establish activated Chrome code.",
+    "rollbackBoundary": "The handoff creates its own exact Companion transaction backup displayed in the panel. Full Panel rollback does not automatically downgrade already-updated legacy Chrome roots."
+  },
+  "verification": {
+    "archiveMembersHashed": 7170,
+    "installerCasesPassed": 10,
+    "appendExtractorTestsPassed": 12,
+    "sourceTestsPassed": 271,
+    "hotfixFixturesPassed": 35,
+    "retainedHistoricalVerification": {
+      "archiveMembersHashed": 7170,
+      "installerCasesPassed": 10,
+      "appendExtractorTestsPassed": 12,
+      "sourceTestsPassed": 184,
+      "hotfixFixturesPassed": 28,
+      "retainedHistoricalVerification": {
+        "archiveMembersHashed": 7170,
+        "installerCasesPassed": 10,
+        "appendExtractorTestsPassed": 12,
+        "sourceTestsPassed": 70,
+        "modelFreeInputSlotContractTestsPassed": 7,
+        "hotfixFixturesPassed": 28,
+        "retainedHistoricalVerification": {
+          "archiveMembersHashed": 7170,
+          "installerCasesPassed": 10,
+          "appendExtractorTestsPassed": 12,
+          "sourceTestsPassed": 47,
+          "hotfixFixturesPassed": 20,
+          "retainedHistoricalVerification": {
+            "archiveMembersHashed": 7170,
+            "installerCasesPassed": 10,
+            "appendExtractorTestsPassed": 12,
+            "sourceTestsPassed": 25,
+            "handoffTestsPassed": 27,
+            "realGPUInferenceVerified": false,
+            "liveChromeActivationVerified": false
+          },
+          "realGPUInferenceVerified": false,
+          "liveChromeActivationVerified": false,
+          "inferenceLimit": "No CUDA setup, driver change, model download or real GT1030 inference/VRAM-fit verification was performed.",
+          "integrationEvidence": "Initial combined run retained12/12 extraction pass and an installer fixture NameError; reviewed fixture-only correction then10/10 installer rerun. Artifact/payload hashes unchanged."
+        },
+        "realGPUInferenceVerified": false,
+        "liveChromeActivationVerified": false,
+        "inferenceLimit": "No CUDA setup, driver change, model download or real GT1030 inference/VRAM-fit verification was performed.",
+        "integrationEvidence": "R69 source, independent model-free input-slot contracts, repair fixtures, real candidate extraction and transactional installer gates; no payload execution or live install."
+      },
+      "realGPUInferenceVerified": false,
+      "liveChromeActivationVerified": false,
+      "livePerformanceProfileVerified": false,
+      "integrationEvidence": "Exact R70 source reviews and 184 source tests; 28 repair/gate fixtures; reviewed actual candidate ZIP extraction and transactional synthetic installer gates. No real Base/Chrome/Photoshop operation, live installation, upload or inference."
+    },
+    "realGPUInferenceVerified": false,
+    "liveChromeActivationVerified": false,
+    "livePerformanceProfileVerified": false,
+    "integrationEvidence": "Exact R71 source reviews and 271 source/protocol tests; 35 repair/gate fixtures; reviewed actual candidate ZIP extraction and transactional synthetic installer gates. No real Base/Chrome/Photoshop operation, live installation, upload or inference."
+  },
+  "priorComponentsSHA256": "09d23ba4639a4b1c7ce8723df54102d5de8d1bf6d470c4c86ec2f88f9d672306",
+  "componentResolution": "Ordered overlays: later components supersede earlier rows for the same path. supersededBy marks historical source bytes, not current payload bytes.",
+  "retainedHistoricalR69": {
+    "r63WatcherSHA256": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+    "r62BridgeSHA256": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+    "externalFileCount": 10793,
+    "runtimeAndModelBytesUnchanged": true
+  },
+  "retainedHistoricalR70": {
+    "r62BridgeSHA256": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+    "externalFileCount": 10793,
+    "runtimeAndModelBytesUnchanged": true,
+    "r70WatcherSHA256": "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+    "historicalWatcherSupersededBy": "base-silent-sync-2026.10.26.3"
+  }
+}

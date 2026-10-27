@@ -1,0 +1,207 @@
+{
+  "schema": 1,
+  "version": "2026.10.27.1",
+  "base_panel_versions": [
+    "2026.10.25.1",
+    "2026.10.26.1",
+    "2026.10.26.2",
+    "2026.10.26.3"
+  ],
+  "purpose": "Manual selected-order status scan; remove periodic and Save-triggered Base refresh, with authenticated loaded-host activation handoff. Not a CPU/GPU, CUDA runtime or model installer",
+  "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Base-Manual-Status-2026.10.27.1.zip",
+  "size": 232729,
+  "sha256": "121cba7128e47bb29afdb87cfcf45d74d84c477fd8040b2cf849873dc141ae43",
+  "files": [
+    {
+      "path": "panel/js/main.js",
+      "size": 540471,
+      "sha256": "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+    },
+    {
+      "path": "panel/js/lark-base-watch.js",
+      "size": 29489,
+      "sha256": "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+    },
+    {
+      "path": "panel/js/lark-live-status.js",
+      "size": 44333,
+      "sha256": "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+    },
+    {
+      "path": "panel/js/lark-base-bridge.js",
+      "size": 104812,
+      "sha256": "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+    },
+    {
+      "path": "coexist/coexist-client.js",
+      "size": 16904,
+      "sha256": "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+    },
+    {
+      "path": "coexist/coexist-host.js",
+      "size": 32318,
+      "sha256": "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+    }
+  ],
+  "supported_receipts": [
+    {
+      "version": "2026.10.25.1",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+        "panel/js/lark-base-bridge.js": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+        "coexist/coexist-client.js": "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+        "coexist/coexist-host.js": "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+          "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+          "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+        ],
+        "panel/js/lark-live-status.js": [
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+          "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+        ],
+        "panel/js/lark-base-bridge.js": [
+          "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+          "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+        ],
+        "coexist/coexist-client.js": [
+          "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+          "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+        ],
+        "coexist/coexist-host.js": [
+          "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296",
+          "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+        ]
+      }
+    },
+    {
+      "version": "2026.10.26.1",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+        "panel/js/lark-base-bridge.js": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+        "coexist/coexist-client.js": "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+        "coexist/coexist-host.js": "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+          "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+          "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+        ],
+        "panel/js/lark-live-status.js": [
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+          "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+        ],
+        "panel/js/lark-base-bridge.js": [
+          "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+          "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+        ],
+        "coexist/coexist-client.js": [
+          "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+          "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+        ],
+        "coexist/coexist-host.js": [
+          "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296",
+          "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+        ]
+      }
+    },
+    {
+      "version": "2026.10.26.2",
+      "owned_file_sha256": {
+        "panel/js/main.js": "f9c4e9b0b75a15a2f3c00051bd007d4101dc59114cab019fe6633c853cc823b9",
+        "panel/js/lark-base-watch.js": "4e317422e0ef86026431736ff7a092b0bd4baefcad6a8c1712fd54d550d3b3f6",
+        "panel/js/lark-live-status.js": "bdc7e5fc562b6456e574a98c811422f22cbf13be16791d24f442e513b561afb4",
+        "panel/js/lark-base-bridge.js": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+        "coexist/coexist-client.js": "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+        "coexist/coexist-host.js": "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+          "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+          "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+        ],
+        "panel/js/lark-live-status.js": [
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+          "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+        ],
+        "panel/js/lark-base-bridge.js": [
+          "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+          "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+        ],
+        "coexist/coexist-client.js": [
+          "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+          "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+        ],
+        "coexist/coexist-host.js": [
+          "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296",
+          "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+        ]
+      }
+    },
+    {
+      "version": "2026.10.26.3",
+      "owned_file_sha256": {
+        "panel/js/main.js": "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+        "panel/js/lark-base-watch.js": "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+        "panel/js/lark-live-status.js": "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+        "panel/js/lark-base-bridge.js": "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+        "coexist/coexist-client.js": "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+        "coexist/coexist-host.js": "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296"
+      },
+      "accepted_disk_sha256": {
+        "panel/js/main.js": [
+          "89592a0b46508cf292fe948a9b39e9076544b5fcd7d82c69b112c75883a8b3f5",
+          "a343d532edc52f857723b6d784c8295f3278ad0c0a0c55451e077b78122264a9"
+        ],
+        "panel/js/lark-base-watch.js": [
+          "a042643962d37b4db2d54f31578dbef13cf1422f3006769d5ffe855e60404bbd",
+          "a82505f1d46268b8d8ac39a7896ea3c85383cb208fde167b92a9aa1bb4ae3b4a"
+        ],
+        "panel/js/lark-live-status.js": [
+          "cd79f4904c40b4ec6934e49f9891b8c524160d561549312c87722d1390bf297f",
+          "04f31f6fc63c4e87a50103293f3da491783407d09ad350b1dac060c59e2aae9b"
+        ],
+        "panel/js/lark-base-bridge.js": [
+          "a871152461c3074250e926f65661d2fdf77a08ce83318e357635c21c874bf4d9",
+          "bae74c22ac29bbe1c3d0139af571712fd4cfede68d59159067cbe90058f058d7"
+        ],
+        "coexist/coexist-client.js": [
+          "7968190a2f849ef3678e48a7cd493945bdb19c36356c86e94910db33eafc5253",
+          "26a2053ad63dedafa57d9a2ce9c10383a599f08dfa881bf30103aef0d7af332e"
+        ],
+        "coexist/coexist-host.js": [
+          "86034515f5cda3367fb3e6dac629867e8812c105e7c4cec1da94bd5a16c5f296",
+          "2df221a867f6676b2261c5faa64ec85eed123859154eb99e080f40d35785a0cc"
+        ]
+      }
+    }
+  ],
+  "older_installations": "Old receipts require the complete exact R70 repaired Base disk vector and original coexist code, not unpatched historical Base disk bytes. Otherwise use the cumulative Launcher update; unknown/custom vectors are not adopted.",
+  "requires_manual_closed_apps": [
+    "Photoshop",
+    "OrderStudio"
+  ],
+  "full_install_receipt_preserved": true,
+  "configuration_and_runtime_preserved": true,
+  "starts_gpu_setup_or_inference": false,
+  "real_gpu_inference_verified": false,
+  "live_base_or_performance_verified": false,
+  "backup_recovery": "Use the current user Launcher Photoshop Panel > ... > Restore previous version for interrupted recovery."
+}

@@ -1,0 +1,15 @@
+Panel2026.10.27.1: bỏ hoàn toàn nhịp quét Base tự động5phút; chỉ bắt đầu quét trạng thái của đơn đang chọn khi bấm nút riêng. Không quét toàn bộ view định kỳ.
+
+Save Folder, Save Fix và các biến thể Save không tự yêu cầu đọc Base, không tự mở Phần mở rộng/Order bên Lark để xác minh trạng thái. Dùng dữ liệu đơn đã nạp trong panel; chủ động bấm quét khi cần kiểm tra lại.
+
+Quét trạng thái thủ công gắn đúng Record ID và nguồn Base, không thay danh sách đơn, nội dung cá nhân hóa, kế hoạch sản phẩm hoặc đường dẫn save folder đang làm. Kết quả cũ hoặc đọc lỗi không được áp vào đơn khác.
+
+Giữ nguyên các khối sản xuất export, cấu trúc Save Folder, tác vụ quantity/mockup/upload, biên nhận revision và bảo vệ upload chưa rõ; không tự thử lại upload không an toàn.
+
+Tắt reader auto-warm và background-view refresh do Save/poll của panel. Nạp từ Base do người dùng bấm vẫn hoạt động rõ ràng như trước. Chưa đo trực tiếp hiệu năng máy thực tế.
+
+Cầu nối mới xác thực đúng mã Base bridge đã nạp trong shared host trước khi kết nối. Nếu host cũ còn sống, client mới chờ host tự nghỉ rồi khởi động host mới; không tự tắt tiến trình, thay active/config hoặc bỏ qua xác thực.
+
+Bản Panel đầy đủ giữ nguyên sửa CPU input_slot26.2, Generate CPU/GPU26.1, Companion1.0.27, template, model và runtime. Gói sửa nhỏ chứa bốn module Base JS và hai module coexist: hỗ trợ full receipt26.3 hoặc receipt25.1/26.1/26.2 đã có toàn bộ bản sửa Base R70 và coexist gốc; máy cũ chưa sửa dùng Launcher update đầy đủ.
+
+Launcher mới nhất vẫn là2026.10.25.9 qua kênh Launcher độc lập. Lưu công việc và tự đóng Photoshop/OrderStudio trước khi Update hoặc chạy gói sửa nhỏ; không ứng dụng hay tài liệu nào được tự đóng. Không cần ghép Companion lại.
