@@ -24,7 +24,7 @@
   <script defer src="app.js?v=20261025-download4"></script>
   <script defer src="tools/vendor/scrabble-layout.js"></script>
   <script defer src="tools/photoshop-client.js?v=20261023-psd-gpu-r11"></script>
-  <script type="module" src="tools/workbench.js?v=20261023-psd-gpu-r11"></script>
+  <script type="module" src="tools/workbench.js?v=20261030-date-r79"></script>
   <script type="module" src="video/video.js?v=20261023-ai1"></script>
   <script type="module" src="video/ai-entry.js?v=20261023-ai1"></script>
 </head>
@@ -160,7 +160,9 @@ OLIVER</textarea></label>
           <div class="control-heading"><span>01 / THỜI GIAN & ĐỊA ĐIỂM</span><span>YOUR MOMENT</span></div>
           <label class="tools-field">Dán địa điểm<input id="sky-place" type="search" value="Leeds, UK" placeholder="Ví dụ: Leeds, UK / Đà Nẵng, Vietnam" autocomplete="off"></label>
           <div id="sky-places" class="tools-places" aria-live="polite"></div>
-          <div class="tools-field-pair"><label class="tools-field">Ngày · MM/DD/YYYY<input id="sky-date" type="text" value="10/22/2026" placeholder="MM/DD/YYYY" required></label><label class="tools-field">Giờ tại địa điểm<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
+          <div class="tools-field-pair"><label class="tools-field">Ngày / note khách → MM/DD/YYYY<input id="sky-date" type="text" value="10/22/2026" placeholder="10.24.2026 / 24 Oct 2026" aria-describedby="sky-date-hint" required></label><label class="tools-field">Giờ tại địa điểm<input id="sky-time" type="text" inputmode="numeric" value="20:00" placeholder="HH:mm" required></label></div>
+          <label class="tools-field">Ngày dễ nhầm (ví dụ 05/11)<select id="sky-date-order"><option value="AUTO">Tự nhận dạng · mặc định tháng/ngày</option><option value="DMY">Ưu tiên ngày/tháng · DD/MM</option><option value="MDY">Ưu tiên tháng/ngày · MM/DD</option></select></label>
+          <p id="sky-date-hint" class="tools-note" aria-live="polite">Nhận dấu / . -, YYYY-MM-DD, tên tháng hoặc note có một ngày. Tự đưa về MM/DD/YYYY; không đổi ngày theo múi giờ của máy.</p>
           <p id="sky-resolved" class="tools-note" aria-live="polite"></p>
           <div class="control-heading"><span>02 / HIỂN THỊ</span><span>STAR CATALOGUE</span></div>
           <div class="tools-field-pair"><label class="tools-field">Màu sao<input id="sky-stars" type="color" value="#ffffff"></label><label class="tools-field">Màu nền<input id="sky-bg" type="color" value="#000000"></label></div>
@@ -171,9 +173,11 @@ OLIVER</textarea></label>
         </section>
         <section data-controls="moon" hidden>
           <div class="control-heading"><span>01 / NHỮNG NGÀY ĐẶC BIỆT</span><span>DATE → MOON</span></div>
-          <label class="tools-field">Dán ngày MM/DD/YYYY — mỗi dòng một ngày<textarea id="moon-dates" rows="5" spellcheck="false" placeholder="MM/DD/YYYY">05/11/1998
+          <label class="tools-field">Dán ngày hoặc note khách — tự chuẩn hóa MM/DD/YYYY<textarea id="moon-dates" rows="5" spellcheck="false" aria-describedby="moon-date-hint" placeholder="Mom: 10.24.2026&#10;Dad: 24 October 2026">05/11/1998
 06/15/2000
 08/10/2024</textarea></label>
+          <label class="tools-field">Ngày dễ nhầm (ví dụ 05/11)<select id="moon-date-order"><option value="AUTO">Tự nhận dạng · mặc định tháng/ngày</option><option value="DMY">Ưu tiên ngày/tháng · DD/MM</option><option value="MDY">Ưu tiên tháng/ngày · MM/DD</option></select></label>
+          <p id="moon-date-hint" class="tools-note" aria-live="polite">Có thể dán cả note có tên khách, nhiều ngày cùng đoạn. Nhận dấu / . -, năm trước hoặc tên tháng. Ngày không tồn tại vẫn được báo để tránh tạo sai trăng.</p>
           <div class="control-heading"><span>02 / BỐ CỤC</span><span>PNG TRONG SUỐT</span></div>
           <div class="tools-field-pair"><label class="tools-field">Số cột<input id="moon-columns" type="number" min="1" max="12" value="5" required></label><label class="tools-field">Size mỗi moon<input id="moon-size" type="number" min="100" max="1200" value="400" step="50" required></label></div>
           <p class="tools-note">Ảnh gốc MoonPhases · giữ nguyên màu và chi tiết vùng sáng/tối. Không tô màu hoặc dựng lại bề mặt.</p>

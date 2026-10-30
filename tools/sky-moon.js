@@ -4,8 +4,8 @@
  * See assets/sky-moon/SOURCES.md for attribution and model limitations. */
 import {getMoonIllumination, getMoonPosition} from './assets/sky-moon/suncalc-2.1.1.js';
 import OfflineGeocoder from './assets/sky-moon/skymoon-offline-geocoder.js';
-import {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261022-sky-moon-r6';
-export {parseCivilDate, parseDateList, parseMoonDates, zonedDateTime} from './sky-moon-inputs.js?v=20261022-sky-moon-r6';
+import {parseCivilDate, parseDateList, zonedDateTime} from './sky-moon-inputs.js?v=20261030-date-r79';
+export {parseCivilDate, parseDate, parseDateList, parseMoonDates, createDateNormalizer, zonedDateTime} from './sky-moon-inputs.js?v=20261030-date-r79';
 
 const ASSETS = new URL('./assets/sky-moon/', import.meta.url);
 const RAD = Math.PI / 180, DAY = 86400000;
@@ -267,8 +267,7 @@ export function shadeMoonPixels(size, meta, surface, options={}) {
 
 export async function renderMoons(canvas, options = {}) {
   checkCancelled(options.signal);
-  if(options.dateOrder!==undefined&&options.dateOrder!=='MDY')throw Error('Moon Phase dùng MM/DD/YYYY; không đổi sang DD/MM/YYYY.');
-  const civilDates=parseDateList(options.dates??options.date??'','MDY'),dates=civilDates.map(date=>date.iso);
+  const civilDates=parseDateList(options.dates??options.date??'',options.dateOrder??'AUTO'),dates=civilDates.map(date=>date.iso);
   if(options.instants!==undefined&&(!Array.isArray(options.instants)||options.instants.length!==dates.length||options.instants.some(value=>!Number.isFinite(new Date(value).getTime()))))throw Error('Danh sách thời điểm không khớp các ngày Moon Phase.');
   const columns = integer(options.columns ?? 3, 1, 12, 'Số cột'), size = integer(options.size ?? 400, 100, 1200, 'Size mỗi moon');
   const time = options.time ?? '12:00', offset = options.utcOffset ?? 0, lat = options.lat ?? 51.4809181, lon = options.lon ?? -.0207105;
