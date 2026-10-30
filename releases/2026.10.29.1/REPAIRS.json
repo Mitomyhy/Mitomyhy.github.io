@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "version": "2026.10.29.1",
+  "activation": {
+    "fullLauncherUpdatesManagedCode": true,
+    "externalConfiguredUploaderIsPreserved": true,
+    "existingCustomOrLegacyUploaderNeedsOneTimeR77ZIP": true,
+    "afterFullUpdateMixedStateSupported": true,
+    "afterFullUpdateAction": "Run the supplied Update Order R77.cmd (-CompleteKnownMixed); exact known before/after only, unknown bytes refused",
+    "recommendedOrder": [
+      "Save work and close Photoshop/OrderStudio",
+      "Run the R77 ZIP once for an existing custom/legacy uploader",
+      "Use Launcher Check for updates and update full Panel 2026.10.29.1"
+    ],
+    "fullUpdateNeedsSeparateR78ZIP": false
+  },
+  "files": [
+    {
+      "name": "MITOM-Order-Fix-Night-Light-R77.zip",
+      "sha256": "fdaf7dea0e163235c7ae091e5e6d6f1479ed868981f39453acc49f1c0e71cfe4",
+      "size": 12410,
+      "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Order-Fix-Night-Light-R77.zip",
+      "requires": "Every target matches exact known R77 before OR after hash; close Photoshop/OrderStudio first",
+      "appliesTo": "Existing custom/legacy external uploadToolDir needs this one-time external helper update; fresh managed installs do not",
+      "recommendedOrder": "Run R77 ZIP preferably before full Launcher Panel 2026.10.29.1; known mixed states after Launcher are accepted by supplied Update command, unknown code is refused",
+      "freshManagedInstallRequires": false
+    },
+    {
+      "name": "MITOM-Save-Task-Pipeline-R78.zip",
+      "sha256": "8b70076e9832fa4d0171196ea9ad9cd3c2702b96ffd0fe3f7a42f959da810566",
+      "size": 38900,
+      "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Save-Task-Pipeline-R78.zip",
+      "requires": "R76 flow preimage only; other machines use full Launcher update"
+    }
+  ]
+}

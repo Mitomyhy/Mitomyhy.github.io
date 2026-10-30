@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "version": "2026.10.29.1",
+  "scope": "Four changed public runtime source pins; no separate source archive is published",
+  "files": [
+    {
+      "path": "core/upload-tool/upload_he_thong.py",
+      "sha256": "59085d7376382ed2ab08702b464bd26a2f19aba8acd0d1a828c9d34970a40e87",
+      "size": 126811
+    },
+    {
+      "path": "panel/js/main.js",
+      "size": 544124,
+      "sha256": "3ff8723b323cd1ee1d9d2290d44559ffefbef43a6b445bb3c62ef816964a1ccb"
+    },
+    {
+      "path": "panel/js/save-task-flow.js",
+      "size": 105012,
+      "sha256": "58a1539fbd98f4a1528707e230b719fc4228e011be036768c4845d5c50523bdf"
+    },
+    {
+      "path": "panel/js/save-task-remote.py",
+      "size": 64019,
+      "sha256": "8ea1971b1b13646a570030cd9bc79dc32107fe3e7c388cb67b626c76b657ff4b"
+    }
+  ]
+}

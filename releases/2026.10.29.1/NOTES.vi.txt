@@ -1,0 +1,15 @@
+Panel 2026.10.29.1 — tích hợp R76 + R77 + R78 trên bản công khai 2026.10.27.5.
+
+Order Custom: Save Fix giữ -fix, -fix1, -fix2. Night light 4-inch Warm Light lưu Ball rồi Base; 3.2/2.4 vẫn một fullprint.
+
+QUAN TRỌNG — máy đã có Panel/uploader cũ hoặc uploadToolDir tùy chỉnh: lưu việc và đóng Photoshop/OrderStudio, khuyến nghị chạy ZIP R77 một lần trước khi cập nhật Panel bằng Launcher. Launcher giữ đường dẫn uploader ngoài và không tự sửa code tại đó; chỉ cập nhật uploader managed bên trong Launcher. R77 ZIP vá đúng mã đã biết, giữ cấu hình riêng; mã lạ được giữ nguyên và từ chối.
+
+Nếu đã cập nhật full Launcher trước: ZIP R77 tương thích vẫn hoàn tất bộ mã before/after đã biết bằng Update Order R77.cmd (-CompleteKnownMixed). Tệp đã đúng được giữ nguyên, chỉ sao lưu/vá tệp cũ khớp hash; mã lạ hoặc cấu hình thay đổi được giữ nguyên và từ chối.
+
+Cài mới dùng uploader managed: chỉ cần Launcher. Cập nhật Panel đầy đủ cung cấp R76/R77/R78; không cần cài riêng ZIP R78/R76. ZIP R78 nhỏ vẫn chỉ dành cho máy đã có đúng nền R76.
+
+Save Task: xuất local tuần tự để giữ đúng PSD; upload chạy hàng đợi nền, không khóa nút suốt thời gian upload. Giữ panel mở. Lỗi giữ biên nhận, chỉ thử lại theo yêu cầu; không tự phát lại sau khởi động.
+
+Giữ nguyên Companion 1.0.30, 3D CPU/GPU, runtime/model và kênh Launcher độc lập. Không khôi phục lịch quét Base hay quét khi Save.
+
+Giữ model đã xác minh; gói core vẫn cần tải/ghép và staging. Không phải delta installer, không cam kết tốc độ mạng hoặc native Photoshop chưa kiểm thử.
