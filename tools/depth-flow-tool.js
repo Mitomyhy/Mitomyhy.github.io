@@ -1,5 +1,5 @@
 import { checkSize, bytesDataURL, encodeGray16PNG } from './depth-pixels.js?v=20261022-flow-r5';
-import { createCPUPipeline } from './cpu/client.mjs?v=20261023-psd-gpu-r11';
+import { createCPUPipeline } from './cpu/client.mjs?v=20261030-memory-r80';
 import { createLocalDepthEdits } from './depth-local-edit.js?v=20261022-flow-r5';
 import { classifyDepthInput } from './depth-input.js?v=20261023-psd-gpu-r11';
 

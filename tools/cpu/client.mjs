@@ -1,6 +1,6 @@
 import {check,size} from './contracts.mjs';
 import {executionDevice} from './execution-device.mjs';
-export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new URL('./pipeline-worker.mjs?v=20261023-device-r11',import.meta.url),timeoutMs=20*60*1000,downloadIdleMs=90*1000}={}){
+export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new URL('./pipeline-worker.mjs?v=20261030-memory-r80',import.meta.url),timeoutMs=20*60*1000,downloadIdleMs=90*1000}={}){
   check(typeof manifestURL==='string','Cần URL manifest CPU đã phát hành.');let active=null,cached=null,serial=0,disposed=false;
   function cancel(reason='Bạn đã hủy; mọi tính toán của lượt này đã dừng.'){
     serial++;const job=active,cache=cached;active=cached=null;
@@ -14,7 +14,7 @@ export function createCPUPipeline({manifestURL,onProgress=()=>{},workerURL=new U
       const arm=(delay,message)=>{clearTimeout(job.timer);job.timer=setTimeout(()=>cancel(message),delay);};
       arm(timeoutMs,'Generate timed out. Your previous result has been preserved.');
       worker.onmessage=({data})=>{if(active!==job||data?.id!==id)return;
-        if(data.type==='result'){finish(data.cacheReady===true);resolve(data.result);}else if(data.type==='error'){finish(false);reject(Object.assign(new Error(data.message),{code:data.code||'CPU_FLOW_ERROR'}));}
+        if(data.type==='result'){finish(data.cacheReady===true);resolve(data.result);}else if(data.type==='error'){finish(false);reject(Object.assign(new Error(data.message),{code:data.code||'CPU_FLOW_ERROR',phase:data.phase,abort:data.abort===true}));}
         else {
           if(data.type==='download')arm(downloadIdleMs,'Đã dừng vì tải model không tiến triển trong90giây. Các part đã kiểm tra được giữ để tải tiếp.');
           else if(data.type==='phase')arm(data.phase.endsWith('-download-verify')?downloadIdleMs:timeoutMs,'Đã dừng vì bước hiện tại quá lâu. Không thay file cũ hoặc dùng model khác.');

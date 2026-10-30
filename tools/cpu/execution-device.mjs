@@ -34,6 +34,8 @@ export function configureONNXRuntime(ort,{device='cpu',threads=1,gpu}={}){
 }
 export function inferenceSessionOptions(device){
   executionDevice(device);
-  return {executionProviders:[device==='gpu'?'webgpu':'wasm'],graphOptimizationLevel:'basic',enableCpuMemArena:false,enableMemPattern:false,
-    ...(device==='gpu'?{extra:{session:{disable_cpu_ep_fallback:'1'}}}:{})};
+  return {executionProviders:[device==='gpu'?'webgpu':'wasm'],graphOptimizationLevel:'basic',executionMode:'sequential',enableCpuMemArena:false,enableMemPattern:false,
+    // Avoid a second packed copy of the 1.3GB FP32 weights during CPU session
+    // creation. This changes memory layout only, never weights or precision.
+    extra:{session:device==='gpu'?{disable_cpu_ep_fallback:'1'}:{disable_prepacking:'1'}}};
 }
