@@ -70,7 +70,8 @@ class OnlineReleaseTests(unittest.TestCase):
     def make_app(self, app_id, version):
         folder = self.root / app_id / version
         folder.mkdir(parents=True)
-        entry = "MiFont.exe" if app_id == "mifont" else "VectorMigic.exe"
+        entry = ("MiFont.exe" if app_id == "mifont" else
+                 "python/python.exe" if app_id == "product-video" else "VectorMigic.exe")
         manifest = {"schema": 1, "app_id": app_id, "version": version, "entry": entry, "files": []}
         content = publisher.json_bytes(manifest)
         archive = folder / (app_id + "-" + version + ".zip")
@@ -126,6 +127,89 @@ class OnlineReleaseTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "receipt"):
                 self.prepare()
             self.assertFalse((self.root / "stage").exists())
+
+    def test_optional_video_stages_its_pinned_archive_and_retains_existing_apps(self):
+        config = (self.baseline / 'site-config.js').read_text('utf-8')
+        self.assertEqual(config.count('  }]'), 1)
+        config = config.replace('  }]', '''  }, {
+    id: 'product-video',
+    githubUrl: 'https://example.invalid/video',
+    version: '0.0.0',
+    detail: { en: 'Preserve product video description' }
+  }]''')
+        (self.baseline / 'site-config.js').write_text(config, encoding='utf-8')
+        video = self.make_app('product-video', '1.0.0')
+        result = self.prepare(video_release=video)
+        self.assertEqual(result['app_versions'], {'mifont': '1.0.1', 'vector-migic': '1.0.1', 'product-video': '1.0.0'})
+        stage = self.root / 'stage'
+        catalogue = publisher.read_json(stage / 'payloads/apps.json')
+        self.assertEqual(set(catalogue['apps']), {'mifont', 'vector-migic', 'product-video'})
+        self.assertEqual(catalogue['history']['product-video'], [])
+        relative = catalogue['apps']['product-video']['archive']['url'].split('github.io/')[1]
+        self.assertTrue((stage / 'site' / relative).is_file())
+        staged_config = (stage / 'site/site-config.js').read_text('utf-8')
+        self.assertEqual(publisher._card_version(staged_config, 'product-video'), '1.0.0')
+        self.assertIn('Preserve product video description', staged_config)
+        self.assertFalse((stage / 'site/releases/stable.json').exists())
+
+    def test_history_adds_video_without_erasing_prior_apps_or_allowing_a_later_drop(self):
+        apps = {app_id: publisher.read_json(path) for app_id, path in self.descriptors.items()}
+        video = publisher.read_json(self.make_app('product-video', '1.0.0'))
+        previous = {'apps': copy.deepcopy(apps), 'history': {key: [] for key in apps}}
+        merged = publisher._history({**apps, 'product-video': video}, previous, [])
+        self.assertEqual(set(merged), {'mifont', 'vector-migic', 'product-video'})
+        self.assertEqual(merged['product-video'], [])
+        previous['apps']['product-video'] = video
+        previous['history']['product-video'] = []
+        with self.assertRaisesRegex(ValueError, 'cannot be dropped'):
+            publisher._history(apps, previous, [])
+
+    def multipart_video(self):
+        config = (self.baseline / 'site-config.js').read_text('utf-8')
+        config = config.replace('  }]', '''  }, {
+    id: 'product-video',
+    githubUrl: 'https://example.invalid/video',
+    version: '1.0.0',
+    detail: { en: 'Retain this' }
+  }]''')
+        (self.baseline / 'site-config.js').write_text(config, encoding='utf-8')
+        path = self.make_app('product-video', '1.0.0')
+        descriptor = publisher.read_json(path)
+        archive = path.parent / Path(descriptor['archive']['url']).name
+        content = archive.read_bytes()
+        split = len(content) // 2
+        parts = []
+        for index, data in enumerate((content[:split], content[split:]), 1):
+            part = archive.with_name(archive.name + f'.part{index:03d}')
+            part.write_bytes(data)
+            parts.append({'url': descriptor['archive']['url'] + f'.part{index:03d}',
+                          'size': len(data), 'sha256': publisher.sha(part)})
+        descriptor['archive']['parts'] = parts
+        publisher.write_json(path, descriptor)
+        return path, descriptor
+
+    def test_multipart_video_publication_stages_only_verified_bounded_parts(self):
+        path, descriptor = self.multipart_video()
+        # A freshly added UI card already displays 1.0.0, but does not prove
+        # that any of its bytes were published by the authenticated catalogue.
+        self.assertEqual(publisher._card_version((self.baseline / 'site-config.js').read_text('utf-8'), 'product-video'), '1.0.0')
+        self.prepare(video_release=path)
+        site = self.root / 'stage/site'
+        self.assertFalse((site / descriptor['archive']['url'].split('github.io/')[1]).exists())
+        for part in descriptor['archive']['parts']:
+            staged = site / part['url'].split('github.io/')[1]
+            self.assertEqual(staged.stat().st_size, part['size'])
+            self.assertEqual(publisher.sha(staged), part['sha256'])
+        published = publisher.read_json(site / 'releases/product-video/1.0.0/product-video-release.json')
+        self.assertEqual(published, descriptor)
+
+    def test_multipart_video_missing_or_changed_part_prevents_any_staging(self):
+        path, descriptor = self.multipart_video()
+        part = path.parent / Path(descriptor['archive']['parts'][1]['url']).name
+        part.write_bytes(b'changed')
+        with self.assertRaisesRegex(ValueError, 'part size/SHA-256'):
+            self.prepare(video_release=path)
+        self.assertFalse((self.root / 'stage').exists())
 
     def test_wrong_archive_bytes_are_rejected_before_staging(self):
         raw = publisher.read_json(self.descriptors["mifont"])

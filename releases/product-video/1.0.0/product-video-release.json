@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "app_id": "product-video",
+  "version": "1.0.0",
+  "min_launcher_version": "2026.10.31.1",
+  "entry": "python/python.exe",
+  "manifest_sha256": "2072f0721108cc027eddd5390eb1b813ee2f04de66d766c0e8119a01cb8b528a",
+  "archive": {
+    "url": "https://mitomyhy.github.io/releases/product-video/1.0.0/MITOM-Product-Video-1.0.0.zip",
+    "size": 165129019,
+    "sha256": "01e11de30c6ce8cc79c9a4d449bf150c141e228afb5e48e4b49d969a1e08ac36",
+    "parts": [
+      {
+        "url": "https://mitomyhy.github.io/releases/product-video/1.0.0/MITOM-Product-Video-1.0.0.zip.part001",
+        "size": 41943040,
+        "sha256": "425e3903ce1c508232bda0f28a5c3504701071d2179f747285908dd684ef0cc2"
+      },
+      {
+        "url": "https://mitomyhy.github.io/releases/product-video/1.0.0/MITOM-Product-Video-1.0.0.zip.part002",
+        "size": 41943040,
+        "sha256": "bf619b907d0e905cd468e343dbb4c76042a83522309665f8c97a5865089d677f"
+      },
+      {
+        "url": "https://mitomyhy.github.io/releases/product-video/1.0.0/MITOM-Product-Video-1.0.0.zip.part003",
+        "size": 41943040,
+        "sha256": "77bc202e7d69593149c810e68f14d8a4fb201c2661a03de7e3731b99b22749db"
+      },
+      {
+        "url": "https://mitomyhy.github.io/releases/product-video/1.0.0/MITOM-Product-Video-1.0.0.zip.part004",
+        "size": 39299899,
+        "sha256": "04c4849b46ac128be13e9571f96b4834c9ebd8ecfa3ce864e27b153751d11bbc"
+      }
+    ]
+  }
+}

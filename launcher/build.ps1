@@ -1,12 +1,13 @@
 param(
     [string]$Python = "",
     [string]$OutputDirectory = "",
-    [string]$Version = "2026.10.25.9",
+    [string]$Version = "2026.10.31.1",
     [ValidateSet("Online", "Bundled")]
     [string]$VectorPayload = "Online",
     [string]$CertificateThumbprint = $env:MITOM_SIGN_CERT_SHA1,
     [string]$TimestampUrl = $env:MITOM_SIGN_TIMESTAMP_URL,
-    [switch]$RequireSigned
+    [switch]$RequireSigned,
+    [switch]$BuildOnly
 )
 $ErrorActionPreference = "Stop"
 $sourceRoot = $PSScriptRoot
@@ -35,6 +36,9 @@ $arguments = @(
     "--add-data", ((Join-Path $sourceRoot "release-public-key.json") + ";."),
     "--add-data", ((Join-Path $sourceRoot "launcher-update-public-key.json") + ";.")
 )
+if (Test-Path -LiteralPath (Join-Path $sourceRoot "product-video-release.json")) {
+    $arguments += @("--add-data", ((Join-Path $sourceRoot "product-video-release.json") + ";."))
+}
 if ($VectorPayload -eq "Bundled") {
     $arguments += @("--add-data", ((Join-Path $sourceRoot "apps") + ";apps"))
 }
@@ -52,6 +56,16 @@ if ($CertificateThumbprint) {
     if ($LASTEXITCODE -ne 0) { throw "Authenticode verification failed." }
 } elseif ($RequireSigned) {
     throw "A trusted code-signing certificate is required for this release. No signed artifact was produced."
+}
+if ($BuildOnly) {
+    # Permit security review of fresh bytes before any packaged code executes.
+    # This does not suppress or alter Windows security scanning.
+    $signature = Get-AuthenticodeSignature -LiteralPath $executable
+    $digest = (Get-FileHash -LiteralPath $executable -Algorithm SHA256).Hash.ToLowerInvariant()
+    Set-Content -LiteralPath (Join-Path $OutputDirectory "SHA256SUMS.txt") -Value ($digest + "  " + [IO.Path]::GetFileName($executable)) -Encoding ascii
+    Write-Output ("Built only; not executed: " + $executable)
+    Write-Output ("Authenticode: " + $signature.Status)
+    return
 }
 $smokePath = Join-Path $OutputDirectory "runtime-smoke.json"
 $smoke = Start-Process -FilePath $executable -ArgumentList @("--self-test", "--result-json", ('"' + $smokePath + '"')) -WindowStyle Hidden -PassThru -Wait

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="mitom-session-token" content="">
+  <meta name="referrer" content="no-referrer">
+  <title>MITOM Product Video</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#main" aria-label="MITOM"><span class="brand-mark" aria-hidden="true">M</span><span>MITOM<span class="brand-caption">PRODUCT VIDEO</span></span></a>
+    <div class="header-actions"><select id="language" aria-label="Language"><option value="vi">Tiếng Việt</option><option value="en">English</option></select><button id="connectionButton" class="connection-button" type="button"><span id="connectionDot" class="connection-dot"></span><span id="connectionLabel">Kết nối ứng dụng</span></button></div>
+  </header>
+  <main id="main" class="workspace">
+    <aside class="controls">
+      <div class="intro"><span class="eyebrow" data-t="eyebrow">VIDEO LISTING ETSY</span><h1 data-t="title">Để sản phẩm chuyển động.</h1><p data-t="lead">Thêm ảnh, mô tả cảnh bạn muốn và tạo video trên máy này.</p></div>
+      <form id="videoForm">
+        <fieldset id="inputFields">
+          <div class="field-heading"><label for="imageInput" data-t="product">Ảnh sản phẩm</label><button id="removeImage" class="text-button" type="button" hidden data-t="remove">Bỏ ảnh</button></div>
+          <label id="dropzone" class="dropzone" for="imageInput"><input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp"><img id="imagePreview" alt="" hidden><span id="uploadPlaceholder" class="upload-placeholder"><span class="upload-plus" aria-hidden="true">+</span><strong data-t="choose">Chọn ảnh sản phẩm</strong><span data-t="drop">Hoặc kéo thả / dán ảnh vào đây</span><span class="tiny" data-t="fileTypes">PNG · JPG · WebP — tối đa 15 MB</span></span></label>
+          <p id="imageName" class="file-name" hidden></p>
+          <label class="field-label prompt-label" for="prompt" data-t="prompt">Bạn muốn video như thế nào?</label>
+          <textarea id="prompt" maxlength="4000" required rows="5" data-placeholder="promptPlaceholder" placeholder="Ví dụ: Ornament đung đưa nhẹ, xoay trái rồi phải. Nền phòng khách Giáng sinh ấm áp, ánh đèn vàng và tuyết ngoài cửa sổ. Giữ rõ tên và hình in."></textarea>
+          <div class="prompt-meta"><span data-t="promptHint">Mô tả chuyển động, khung cảnh và ánh sáng.</span><span id="characterCount">0 / 4000</span></div>
+          <label class="field-label ratio-label" for="aspect" data-t="aspect">Tỷ lệ khung hình</label>
+          <div class="ratio-options" role="group" aria-label="Aspect ratio"><button type="button" id="landscape" data-aspect="16:9" aria-pressed="true"><span class="ratio-icon landscape" aria-hidden="true"></span><span>16:9<span class="ratio-caption" data-t="landscape">Ngang</span></span></button><button type="button" id="portrait" data-aspect="9:16" aria-pressed="false"><span class="ratio-icon portrait" aria-hidden="true"></span><span>9:16<span class="ratio-caption" data-t="portrait">Dọc</span></span></button></div>
+          <input id="aspect" type="hidden" value="16:9">
+          <details class="advanced"><summary data-t="advanced">Tùy chỉnh thêm</summary><div class="advanced-grid"><label><span data-t="duration">Thời lượng</span><select id="duration"><option value="5">5 s</option><option value="8">8 s</option><option value="10" selected>10 s</option><option value="15">15 s</option></select></label><label><span data-t="resolution">Độ phân giải</span><select id="resolution"><option value="720">720p</option><option value="1080" selected>1080p</option></select></label></div><label id="deviceField" class="advanced-device" hidden><span data-t="device">Thiết bị tạo video</span><select id="device"><option value="cpu">CPU</option></select></label><label class="background-field"><span data-t="background">Ảnh nền riêng (tùy chọn)</span><input id="backgroundInput" type="file" accept="image/png,image/jpeg,image/webp"></label><div id="backgroundSelection" class="background-selection" hidden><span id="backgroundName"></span><button id="removeBackground" class="text-button" type="button" data-t="remove">Bỏ ảnh</button></div><p class="subtle" data-t="backgroundHint">Nếu có ảnh nền của riêng bạn, thêm tại đây để dùng làm khung cảnh.</p></details>
+        </fieldset>
+        <button id="generate" class="button primary generate" type="submit" disabled><span data-t="generate">Tạo video sản phẩm</span><span aria-hidden="true">↗</span></button>
+        <button id="cancel" class="button secondary cancel" type="button" hidden data-t="cancel">Hủy tạo video</button>
+      </form>
+      <p class="privacy"><span class="privacy-dot" aria-hidden="true"></span><span data-t="privacy">Ảnh và video được xử lý trên máy này.</span></p>
+      <div id="notice" class="notice" role="status" aria-live="polite"><span id="noticeText">Mở MITOM Product Video trên máy này để bắt đầu.</span><button id="noticeAction" class="text-button" type="button" data-t="connect">Kết nối</button></div>
+    </aside>
+    <section class="output" aria-labelledby="outputTitle">
+      <div class="output-heading"><div><span class="eyebrow" data-t="outputEyebrow">XEM TRƯỚC</span><h2 id="outputTitle" data-t="outputTitle">Thước phim của bạn.</h2></div><div class="output-spec"><span id="aspectBadge">16:9</span><span>MP4</span><span data-t="silent">Không âm thanh</span></div></div>
+      <div id="previewStage" class="preview-stage is-landscape"><div id="emptyOutput" class="empty-output"><div class="empty-symbol" aria-hidden="true"><span></span><svg viewBox="0 0 72 72"><path d="M19 15h34v42H19zM28 15v42m16-42v42M19 27h9m-9 17h9m16-17h9m-9 17h9"/><path d="m32 28 12 8-12 8Z"/></svg></div><h3 data-t="emptyTitle">Một sản phẩm. Một câu chuyện.</h3><p data-t="emptyBody">Nền phù hợp, chuyển động nhẹ và sản phẩm ở trung tâm.</p></div><video id="video" controls playsinline preload="metadata" hidden></video></div>
+      <div id="progressPanel" class="progress-panel" hidden aria-live="polite"><div class="progress-heading"><span id="phaseLabel"></span><span id="stepLabel" class="subtle"></span></div><progress id="progress" max="100"></progress><p id="jobDetail" class="subtle"></p></div>
+      <div class="output-footer"><span id="outputStatus" data-t="noVideo">Video sẽ xuất hiện tại đây.</span><div><button id="retryVideo" class="text-button" type="button" hidden data-t="retryDownload">Tải lại video</button><a id="download" class="button primary" download="MITOM-Product-Video.mp4" hidden><span data-t="download">Tải MP4</span><span aria-hidden="true">↓</span></a></div></div>
+    </section>
+  </main>
+  <dialog id="connectionDialog" aria-labelledby="connectionTitle"><div class="dialog-heading"><h2 id="connectionTitle" data-t="connectionTitle">Kết nối MITOM Product Video</h2><button id="closeConnection" class="icon-button" type="button" aria-label="Close">×</button></div><p data-t="connectionDescription">Mở MITOM Product Video từ Launcher trên máy này, sau đó nhập mã kết nối của ứng dụng.</p><a id="launchLocalApp" class="button primary" href="mitom://video" data-t="launchLocal">Mở Product Video qua Launcher</a><a id="openLocalApp" class="button secondary" href="http://127.0.0.1:4177/" target="_blank" rel="noopener noreferrer" data-t="openLocal">Mở ứng dụng đang chạy trên máy</a><button id="copyCode" type="button" class="button secondary" hidden data-t="copyCode">Sao chép mã kết nối</button><form id="connectionForm"><label><span data-t="engineAddress">Địa chỉ ứng dụng</span><input id="endpoint" type="url" value="http://127.0.0.1:4177" required spellcheck="false" autocomplete="off"></label><label><span data-t="connectionCode">Mã kết nối</span><input id="pairCode" type="password" maxlength="200" autocomplete="off" spellcheck="false" required></label><p id="connectionError" class="dialog-error" role="alert" hidden></p><button id="connectSubmit" class="button primary" type="submit" data-t="connect">Kết nối</button></form><p class="subtle" data-t="connectionPrivacy">Mã chỉ dùng trong phiên này, không được đưa vào đường dẫn hay lưu lên web.</p></dialog>
+</body>
+</html>

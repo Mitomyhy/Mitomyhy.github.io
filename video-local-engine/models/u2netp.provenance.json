@@ -1,0 +1,7 @@
+{
+  "source": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx",
+  "reference": "https://github.com/danielgatis/rembg/blob/main/rembg/sessions/u2netp.py",
+  "size": 4574861,
+  "md5": "8e83ca70e441ab06c318d82300c84806",
+  "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8"
+}

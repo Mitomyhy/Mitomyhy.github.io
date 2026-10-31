@@ -46,7 +46,7 @@ from legacy_loader import populate as _populate
 
 _populate(globals(), "launcher")
 
-APP_VERSION = "2026.10.25.9"
+APP_VERSION = "2026.10.31.1"
 APP_TITLE = "MITOM Launcher"
 # This is a launcher repair. The verified Photoshop panel release is unchanged.
 CORE_VERSION = "2026.10.21.2"
@@ -292,24 +292,33 @@ def persist_launcher():
 def register_url_protocol(executable):
     """Register the website's launcher link for the current Windows user."""
     executable = Path(executable).resolve(strict=True)
-    key_path = r"Software\Classes\uoy"
-    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
-        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "URL:MITOM Launcher")
-        winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
-    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path + r"\DefaultIcon") as key:
-        winreg.SetValueEx(key, "", 0, winreg.REG_SZ, '"' + str(executable) + '",0')
-    with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path + r"\shell\open\command") as key:
-        winreg.SetValueEx(key, "", 0, winreg.REG_SZ,
-                          '"' + str(executable) + '" --open-uri "%1"')
+    for scheme in ("uoy", "mitom"):
+        key_path = "Software\\Classes\\" + scheme
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path) as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, "URL:MITOM Launcher")
+            winreg.SetValueEx(key, "URL Protocol", 0, winreg.REG_SZ, "")
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path + r"\DefaultIcon") as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ, '"' + str(executable) + '",0')
+        with winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path + r"\shell\open\command") as key:
+            winreg.SetValueEx(key, "", 0, winreg.REG_SZ,
+                              '"' + str(executable) + '" --open-uri "%1"')
 
 
 def validate_open_uri(value):
-    """A website link can open the catalogue, never trigger an installation."""
+    """A fixed URI opens the catalogue or installed Video; never install/code."""
     parsed = urllib.parse.urlsplit(value)
+    if (parsed.scheme.lower() == "mitom" and parsed.netloc.lower() == "video"
+            and parsed.path in {"", "/"} and not parsed.query and not parsed.fragment):
+        return True
     if (parsed.scheme.lower() != "uoy" or parsed.netloc.lower() not in {"", "launch", "launcher"}
             or parsed.path not in {"", "/", "/launch"} or parsed.query or parsed.fragment):
         raise LauncherError("Liên kết mở launcher không hợp lệ.")
     return True
+
+
+def open_uri_action(value):
+    validate_open_uri(value)
+    return "video" if urllib.parse.urlsplit(value).scheme.lower() == "mitom" else "catalogue"
 
 
 def download_space_preflight(release, cache, base_root=None, include_install=True):

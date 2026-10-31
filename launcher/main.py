@@ -17,6 +17,7 @@ import backend
 import installer
 import vector_app
 import mi_font_app
+import video_app
 import self_update
 import launcher_channel
 import app_catalogue
@@ -89,6 +90,7 @@ class MITOMAdapter(backend.LauncherUI):
 
     def __init__(self, *args, **kwargs):
         self._activation_request = kwargs.pop("activation_request", None)
+        self._open_video_requested = bool(kwargs.pop("open_video_requested", False))
         self._launcher_activation = None
         self._launcher_release = None
         self._automatic_updates_attempted = set()
@@ -112,6 +114,8 @@ class MITOMAdapter(backend.LauncherUI):
             self.root.after_idle(self._prepare_activation_child)
         else:
             self._update_discovery.start()
+            if self._open_video_requested:
+                self.root.after_idle(self._open_requested_video)
 
     def _resume_unfinished_panel_setup(self):
         """An owned unfinished setup resumes only after fresh signed metadata."""
@@ -136,6 +140,8 @@ class MITOMAdapter(backend.LauncherUI):
         self._vector_release_error = ""
         self._mifont_release = None
         self._mifont_release_error = ""
+        self._video_release = None
+        self._video_release_error = ""
         try:
             self._apply_app_catalogue(app_catalogue.load_cached_catalogue(backend))
         except (OSError, ValueError, RuntimeError) as exc:
@@ -153,6 +159,10 @@ class MITOMAdapter(backend.LauncherUI):
             self._mifont_release = mi_font_app.load_release()
         except (OSError, ValueError, mi_font_app.MiFontAppError) as exc:
             self._mifont_release_error = str(exc)
+        try:
+            self._video_release = video_app.load_release()
+        except (OSError, ValueError, video_app.VideoAppError) as exc:
+            self._video_release_error = str(exc)
         self.ui = MITOMLauncherUI(self.root, {
             "install": self._install,
             "verify": self._verify,
@@ -172,6 +182,9 @@ class MITOMAdapter(backend.LauncherUI):
             "install_mifont": self._install_mifont,
             "open_mifont": self._open_mifont,
             "mifont_website": lambda: webbrowser.open(backend.APPS_URL + "#mifont"),
+            "install_video": self._install_video,
+            "open_video": self._open_video,
+            "video_website": lambda: webbrowser.open(backend.APPS_URL + "video-product/"),
             "save_language": self._save_language,
         }, {
             "launcher_version": backend.APP_VERSION,
@@ -183,6 +196,7 @@ class MITOMAdapter(backend.LauncherUI):
             "language": language,
             **vector_app.installed_state(backend.launcher_data_root(), self._vector_release),
             **mi_font_app.installed_state(backend.launcher_data_root(), self._mifont_release),
+            **video_app.installed_state(backend.launcher_data_root(), getattr(self, "_video_release", None)),
         })
         self.progress = self.ui.progress
         self.log = self.ui.log_text
@@ -193,6 +207,8 @@ class MITOMAdapter(backend.LauncherUI):
             self._append("Vector Migic: " + self._vector_release_error)
         if self._mifont_release_error:
             self._append("MiFont: " + self._mifont_release_error)
+        if self._video_release_error:
+            self._append("MITOM Product Video: " + self._video_release_error)
         self._refresh_state()
 
     def _refresh_state(self):
@@ -223,6 +239,7 @@ class MITOMAdapter(backend.LauncherUI):
             "panel_update_waiting": getattr(self, "_waiting_panel_release", None) is not None,
             **vector_app.installed_state(backend.launcher_data_root(), self._vector_release),
             **mi_font_app.installed_state(backend.launcher_data_root(), self._mifont_release),
+            **video_app.installed_state(backend.launcher_data_root(), getattr(self, "_video_release", None)),
         }
         self.ui.set_state(snapshot)
         return snapshot
@@ -233,7 +250,7 @@ class MITOMAdapter(backend.LauncherUI):
     def _request_install(self, action):
         if self.busy:
             return
-        if action not in {"panel", "vector", "mifont"}:
+        if action not in {"panel", "vector", "mifont", "video"}:
             raise ValueError("Unsupported install action.")
         self._pending_install_action = action
         self._automatic_install_queue = []
@@ -251,8 +268,7 @@ class MITOMAdapter(backend.LauncherUI):
         if action is None:
             return False
         self._pending_install_action = None
-        release = result.get("panel") if action == "panel" else (
-            self._mifont_release if action == "mifont" else self._vector_release)
+        release = result.get("panel") if action == "panel" else self._sidecar_release(action)
         minimum = (release or {}).get("min_launcher_version")
         if minimum and backend.version_tuple(minimum) > backend.version_tuple(backend.APP_VERSION):
             self.status_var.set("This release requires Launcher " + minimum + ". Retry the automatic launcher update.")
@@ -265,6 +281,8 @@ class MITOMAdapter(backend.LauncherUI):
             self._start_panel_install(release)
         elif action == "vector":
             self._install_vector_current()
+        elif action == "video":
+            self._install_video_current()
         else:
             self._install_mifont_current()
         return True
@@ -298,7 +316,8 @@ class MITOMAdapter(backend.LauncherUI):
         jobs = []
         if result.get("apps") is not None:
             for action, prefix, release in (("mifont", "mifont", self._mifont_release),
-                                             ("vector", "vector", self._vector_release)):
+                                             ("vector", "vector", self._vector_release),
+                                             ("video", "video", getattr(self, "_video_release", None))):
                 if snapshot.get(prefix + "_installed") and snapshot.get(prefix + "_update_available"):
                     jobs.append((action, release["version"], release))
         if result.get("panel") is not None and snapshot.get("installed") and snapshot.get("update_available"):
@@ -340,7 +359,7 @@ class MITOMAdapter(backend.LauncherUI):
                     if action == "panel":
                         value = install_verified_panel(release, progress=progress)
                     else:
-                        module = mi_font_app if action == "mifont" else vector_app
+                        module = {"mifont": mi_font_app, "vector": vector_app, "video": video_app}[action]
                         value = module.install_app(backend.launcher_data_root(), release, progress=progress)
                     return {"ok": True, "result": value}
                 except Exception as exc:
@@ -414,6 +433,60 @@ class MITOMAdapter(backend.LauncherUI):
             backend.launcher_data_root(), self._mifont_release),
             lambda _process: self.status_var.set("MiFont opened on this computer."))
 
+    def _sidecar_release(self, action):
+        attribute = {"mifont": "_mifont_release", "vector": "_vector_release", "video": "_video_release"}.get(action)
+        if attribute is None:
+            raise ValueError("Unsupported sidecar action.")
+        return getattr(self, attribute, None)
+
+    def _install_video(self):
+        return self._request_install("video")
+
+    def _install_video_current(self):
+        def work():
+            result = video_app.install_app(backend.launcher_data_root(), self._video_release,
+                progress=lambda value, maximum: self.ui.set_progress(value, maximum))
+            try:
+                result["launcher_path"] = backend.persist_launcher()
+            except Exception as exc:
+                result["protocol_warning"] = str(exc)
+            return result
+        def complete(result):
+            self.status_var.set("MITOM Product Video " + result["version"] + " installed. Ready to open.")
+            self._append("MITOM Product Video verified and installed: " + result["path"])
+            if result.get("backup"):
+                self._append("Previous Product Video runtime preserved: " + result["backup"])
+            if result.get("photoshop_extension"):
+                self._append("Photoshop extension installed: " + result["photoshop_extension"]["path"] +
+                             ". Restart Photoshop, then open Window > Extensions > MITOM Product Video.")
+            if result.get("protocol_warning"):
+                self._append("Product Video is installed; Launcher link needs attention: " + result["protocol_warning"])
+        self._run("Installing MITOM Product Video…", work, complete)
+
+    def _open_video(self):
+        self._run("Opening MITOM Product Video…", lambda: video_app.open_app(
+            backend.launcher_data_root(), self._video_release),
+            lambda _process: self.status_var.set("MITOM Product Video started on this computer."))
+
+    def _open_requested_video(self):
+        """The fixed URI opens verified bytes; a missing app stays a user choice."""
+        if not getattr(self, "_open_video_requested", False):
+            return
+        self.ui._filter = "all"
+        self.ui.search.set("product video")
+        self.ui._render_catalogue()
+        if not getattr(self, "_video_release", None):
+            self.status_var.set("Checking the signed Product Video catalogue…")
+            return
+        if self.busy:
+            return
+        snapshot = self._refresh_state()
+        self._open_video_requested = False
+        if snapshot.get("video_current_verified"):
+            self._open_video()
+        else:
+            self.status_var.set("Select Install / Update Product Video to continue.")
+
     def _save_language(self, language):
         if language not in {"en", "vi"}:
             raise ValueError("Unsupported launcher language.")
@@ -444,6 +517,8 @@ class MITOMAdapter(backend.LauncherUI):
         super()._finish()
         self.ui.set_busy(False)
         self._refresh_state()
+        if getattr(self, "_open_video_requested", False):
+            self.root.after_idle(self._open_requested_video)
 
     def _check_updates(self):
         if self.busy:
@@ -460,7 +535,7 @@ class MITOMAdapter(backend.LauncherUI):
             return
         apps = catalogue.get("apps", {})
         history = catalogue.get("history", {})
-        for app_id, module in (("mifont", mi_font_app), ("vector-migic", vector_app)):
+        for app_id, module in (("mifont", mi_font_app), ("vector-migic", vector_app), ("product-video", video_app)):
             if apps.get(app_id) is not None:
                 module.check_catalogue(apps[app_id], history.get(app_id, []))
         if apps.get("mifont") is not None:
@@ -469,6 +544,9 @@ class MITOMAdapter(backend.LauncherUI):
         if apps.get("vector-migic") is not None:
             vector_app.use_catalogue(apps["vector-migic"], history.get("vector-migic", []))
             self._vector_release = vector_app.load_release()
+        if apps.get("product-video") is not None:
+            video_app.use_catalogue(apps["product-video"], history.get("product-video", []))
+            self._video_release = video_app.load_release()
 
     def _apply_catalogue_updates(self, result):
         self._pending_catalogue_result = result
@@ -477,13 +555,14 @@ class MITOMAdapter(backend.LauncherUI):
         if result.get("launcher") is not None:
             self._launcher_release = result["launcher"]
         self._apply_app_catalogue(result.get("apps"))
+        if getattr(self, "_open_video_requested", False):
+            self.root.after_idle(self._open_requested_video)
         for error in result.get("errors", []):
             self._append(error)
         snapshot = self._refresh_state()
         update = self_update.select_newest_update(backend, self._launcher_release, self.latest)
         action = getattr(self, "_pending_install_action", None)
-        requested = result.get("panel") if action == "panel" else (
-            self._mifont_release if action == "mifont" else self._vector_release if action == "vector" else None)
+        requested = result.get("panel") if action == "panel" else self._sidecar_release(action) if action is not None else None
         minimum = (requested or {}).get("min_launcher_version")
         requires_bootstrap = bool(minimum) and backend.version_tuple(minimum) > backend.version_tuple(backend.APP_VERSION)
         if action is not None and not requires_bootstrap and self._continue_install(result):
@@ -500,6 +579,8 @@ class MITOMAdapter(backend.LauncherUI):
             self.status_var.set("Vector Migic " + snapshot.get("vector_latest_version", "") + " is available.")
         elif snapshot.get("mifont_update_available"):
             self.status_var.set("MiFont " + snapshot.get("mifont_latest_version", "") + " is available.")
+        elif snapshot.get("video_update_available"):
+            self.status_var.set("MITOM Product Video " + snapshot.get("video_latest_version", "") + " is available.")
         elif snapshot.get("update_available"):
             self.status_var.set("Photoshop Panel " + snapshot.get("latest_version", "") + " is available.")
         else:
@@ -692,8 +773,12 @@ def main():
     if "--open-uri" in sys.argv[1:]:
         if len(sys.argv) != 3 or sys.argv[1] != "--open-uri":
             raise backend.LauncherError("Liên kết launcher không được kèm lệnh cài đặt.")
-        backend.validate_open_uri(sys.argv[2])
+        action = backend.open_uri_action(sys.argv[2])
         sys.argv[:] = sys.argv[:1]
+        if action == "video":
+            application = MITOMAdapter(open_video_requested=True)
+            application.root.mainloop()
+            return 0
     return backend.main()
 
 

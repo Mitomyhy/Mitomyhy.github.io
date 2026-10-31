@@ -238,7 +238,7 @@ def _identity(request):
 
 def _resume_action(value):
     # A continuation is an app identifier, never a command, path, URL or feed.
-    if value is not None and (not isinstance(value, str) or value not in {"panel", "vector", "mifont"}):
+    if value is not None and (not isinstance(value, str) or value not in {"panel", "vector", "mifont", "video"}):
         raise SelfUpdateError("Unsupported launcher update continuation.")
     return value
 

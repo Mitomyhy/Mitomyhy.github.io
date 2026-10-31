@@ -40,7 +40,7 @@ ORANGE = "#d56b14"
 
 def catalogue_entries(state):
     """Keep installation, counts, filtering and sorting tied to real app state."""
-    return [
+    entries = [
         {"id": "panel", "name": "Photoshop Panel", "installed": bool(state.get("installed")),
          "update": bool(state.get("installed") and state.get("update_available")),
          "version": state.get("installed_version") or state.get("latest_version", ""),
@@ -54,6 +54,13 @@ def catalogue_entries(state):
          "version": state.get("mifont_version") or state.get("mifont_latest_version", ""),
          "search": "mifont font typography image glyph alphabet characters ttf otf"},
     ]
+    if state.get("video_available") or state.get("video_installed"):
+        entries.append({"id": "video", "name": "MITOM Product Video",
+            "installed": bool(state.get("video_installed")),
+            "update": bool(state.get("video_installed") and state.get("video_update_available")),
+            "version": state.get("video_version") or state.get("video_latest_version", ""),
+            "search": "mitom product video etsy listing remotion local prompt mp4 16:9 9:16"})
+    return entries
 
 
 def catalogue_selection(state, filter_key="all", query="", sort="Suite order"):
@@ -74,6 +81,9 @@ def catalogue_selection(state, filter_key="all", query="", sort="Suite order"):
 
 
 _VI = {
+    "INSTALL PRODUCT VIDEO": "CÀI PRODUCT VIDEO", "OPEN PRODUCT VIDEO": "MỞ PRODUCT VIDEO",
+    "UPDATE PRODUCT VIDEO": "CẬP NHẬT PRODUCT VIDEO", "REPAIR PRODUCT VIDEO": "SỬA PRODUCT VIDEO",
+    "Product listing videos. On your computer.": "Video listing sản phẩm. Chạy trên máy của bạn.",
     "ALL": "TẤT CẢ", "INSTALLED": "ĐÃ CÀI", "UPDATES": "CẬP NHẬT", "NOT INSTALLED": "CHƯA CÀI",
     "AVAILABLE TO INSTALL": "CÓ THỂ CÀI ĐẶT", "INSTALLED · UP TO DATE": "ĐÃ CÀI · MỚI NHẤT",
     "UPDATE AVAILABLE": "CÓ BẢN CẬP NHẬT", "NOT INCLUDED": "CHƯA CÓ GÓI CÀI",
@@ -263,12 +273,12 @@ class MITOMLauncherUI:
             (r"Downloading verified launcher (\d[\d.]*)…", "Đang tải Launcher {0} đã xác thực…"),
             (r"Panel (\d[\d.]*) is ready\. Waiting for Photoshop / Order Studio to close before updating\.",
              "Panel {0} đã sẵn sàng. Đang đợi bạn đóng Photoshop / Order Studio để cập nhật."),
-            (r"Updating (mifont|vector|panel) (\d[\d.]*) automatically…", "Đang tự cập nhật {0} {1}…"),
-            (r"(mifont|vector|panel) (\d[\d.]*) updated automatically\.", "Đã tự cập nhật {0} {1}."),
-            (r"Automatic (mifont|vector|panel) update could not finish\. Use Update to retry; the previous version is retained\.",
+            (r"Updating (mifont|vector|panel|video) (\d[\d.]*) automatically…", "Đang tự cập nhật {0} {1}…"),
+            (r"(mifont|vector|panel|video) (\d[\d.]*) updated automatically\.", "Đã tự cập nhật {0} {1}."),
+            (r"Automatic (mifont|vector|panel|video) update could not finish\. Use Update to retry; the previous version is retained\.",
              "Chưa tự cập nhật được {0}. Bấm Cập nhật để thử lại; bản trước vẫn được giữ nguyên."),
         )
-        names = {"mifont": "MiFont", "vector": "Vector Migic", "panel": "Panel"}
+        names = {"mifont": "MiFont", "vector": "Vector Migic", "panel": "Panel", "video": "Product Video"}
         for pattern, translation in patterns:
             match = re.fullmatch(pattern, text)
             if match:
@@ -496,6 +506,7 @@ class MITOMLauncherUI:
         self.vector_table_status.pack(side="right")
 
         self._build_mifont_card()
+        self._build_video_card()
 
         self.empty = tk.Frame(self.catalogue, bg=BG, highlightbackground=LINE, highlightthickness=1, padx=28, pady=38)
         self.empty_title = self._label(self.empty, "No apps in this view", "heading")
@@ -571,6 +582,41 @@ class MITOMLauncherUI:
         self.mifont_table_action.pack(side="right", padx=(18,0))
         self.mifont_table_status = self._label(self.mifont_row, "", "small", fg=BLUE)
         self.mifont_table_status.pack(side="right")
+
+    def _build_video_card(self):
+        self.video_card = tk.Frame(self.catalogue, bg=BG, highlightthickness=1, highlightbackground=LINE)
+        header = tk.Frame(self.video_card, bg=BG, height=48)
+        header.pack(fill="x")
+        header.pack_propagate(False)
+        self._label(header, "04", "small", bg=BLUE, fg="white", padx=7, pady=5).pack(side="left", padx=17)
+        self._action_button(header, "GITHUB ↗", "github", compact=True).pack(side="right")
+        self._action_button(header, "WEBSITE ↗", "video_website", compact=True).pack(side="right")
+        self._line(self.video_card).pack(fill="x")
+        content = tk.Frame(self.video_card, bg=BG, padx=20, pady=21)
+        content.pack(fill="x")
+        identity = tk.Frame(content, bg=BG)
+        identity.pack(fill="x")
+        icon = self._load_image("video.png", (72,72))
+        if icon: tk.Label(identity, image=icon, bg=BG).pack(side="left", anchor="n", padx=(0,13))
+        title = tk.Frame(identity, bg=BG)
+        title.pack(side="left", fill="x", expand=True)
+        self._label(title, "MITOM Product Video", "app").pack(fill="x")
+        self._label(title, "Product listing videos. On your computer.", "body_small", fg=MUTED).pack(fill="x", pady=(3,2))
+        self.video_badge = self._label(content, "AVAILABLE TO INSTALL", "small", fg=BLUE,
+            padx=5, pady=5, highlightthickness=1, highlightbackground=LINE)
+        self.video_badge.pack(anchor="w", pady=(22,12))
+        self.video_version = self._label(content, "", "body_small", fg=MUTED)
+        self.video_version.pack(fill="x")
+        self._label(content, "16:9 / 9:16 · PROMPT · MP4", "small", fg=MUTED).pack(fill="x", pady=(18,21))
+        self.video_primary = self._button(content, "INSTALL PRODUCT VIDEO", self._video_action, primary=True)
+        self.video_primary.pack(fill="x")
+        self.video_row = tk.Frame(self.table, bg=BG, padx=17, pady=22)
+        if icon: tk.Label(self.video_row, image=icon, bg=BG).pack(side="left", padx=(0,15))
+        self._label(self.video_row, "MITOM Product Video", "heading").pack(side="left")
+        self.video_table_action = self._button(self.video_row, "INSTALL PRODUCT VIDEO", self._video_action, primary=True, compact=True)
+        self.video_table_action.pack(side="right", padx=(18,0))
+        self.video_table_status = self._label(self.video_row, "", "small", fg=BLUE)
+        self.video_table_status.pack(side="right")
 
     def _load_image(self, filename, size):
         path = ASSETS / filename
@@ -651,6 +697,12 @@ class MITOMLauncherUI:
     def _mifont_action(self):
         self._invoke(self._mifont_key())
 
+    def _video_key(self):
+        return "open_video" if self.state.get("video_current_verified") else "install_video"
+
+    def _video_action(self):
+        self._invoke(self._video_key())
+
     def _banner_action(self):
         self._invoke(self._banner_key)
 
@@ -679,12 +731,14 @@ class MITOMLauncherUI:
         self.card.grid_remove()
         self.vector_card.grid_remove()
         self.mifont_card.grid_remove()
+        self.video_card.grid_remove()
         self.future.grid_remove()
         self.table.grid_remove()
         self.empty.grid_remove()
         self.panel_row.pack_forget()
         self.vector_row.pack_forget()
         self.mifont_row.pack_forget()
+        self.video_row.pack_forget()
         count = len(entries)
         self.app_count.configure(text=f"{count} {'ỨNG DỤNG' if self.state.get('language') == 'vi' else 'APP' if count == 1 else 'APPS'}")
         if not entries:
@@ -693,10 +747,10 @@ class MITOMLauncherUI:
         elif self._layout == "table":
             self.table.grid(row=0, column=0, columnspan=2, sticky="new")
             for item in entries:
-                {"panel":self.panel_row,"vector":self.vector_row,"mifont":self.mifont_row}[item["id"]].pack(fill="x")
+                {"panel":self.panel_row,"vector":self.vector_row,"mifont":self.mifont_row,"video":self.video_row}[item["id"]].pack(fill="x")
         else:
             for index, item in enumerate(entries):
-                {"panel":self.card,"vector":self.vector_card,"mifont":self.mifont_card}[item["id"]].grid(
+                {"panel":self.card,"vector":self.vector_card,"mifont":self.mifont_card,"video":self.video_card}[item["id"]].grid(
                     row=index//2, column=index%2, sticky="new", pady=(0,18),
                     padx=(0,18) if index%2==0 and index+1<count else 0)
         self.root.after_idle(self._size_catalogue)
@@ -785,6 +839,24 @@ class MITOMLauncherUI:
             button.configure(text=self._t(mifont_title))
             self._set_button_availability(button,self._mifont_key())
             if not mifont_available: button.configure(state="disabled")
+        video_installed = bool(self.state.get("video_installed"))
+        video_available = bool(self.state.get("video_available"))
+        video_update = bool(self.state.get("video_update_available"))
+        video_repair = bool(self.state.get("video_repair_required"))
+        video_status = ("UPDATE AVAILABLE" if video_update else "REPAIR REQUIRED" if video_repair else
+                         "INSTALLED · UP TO DATE" if video_installed else "AVAILABLE TO INSTALL" if video_available else "NOT INCLUDED")
+        video_version = self.state.get("video_version") or self.state.get("video_latest_version") or "—"
+        if video_update: video_version += " → " + self.state.get("video_latest_version", "")
+        video_title = ("UPDATE PRODUCT VIDEO" if video_update else "REPAIR PRODUCT VIDEO" if video_repair else
+                        "OPEN PRODUCT VIDEO" if self.state.get("video_current_verified") else "INSTALL PRODUCT VIDEO")
+        video_color = GREEN if self.state.get("video_current_verified") else BLUE
+        self.video_badge.configure(text=self._t(video_status), fg=video_color)
+        self.video_version.configure(text=("Phiên bản " if self.state.get("language")=="vi" else "Version ")+video_version)
+        self.video_table_status.configure(text=f"{self._t(video_status)}\n{video_version}", fg=video_color)
+        for button in (self.video_primary,self.video_table_action):
+            button.configure(text=self._t(video_title))
+            self._set_button_availability(button,self._video_key())
+            if not video_available: button.configure(state="disabled")
         self.status_text.configure(text=self._t(self._busy_text if self._busy else self.state.get("status", "Ready")))
         self.checked_label.configure(text=f"{self.state.get('checked_at', 'Not checked yet')} · MITOM RELEASES".upper())
         launcher_version = self.state.get("launcher_version") or "DEV"

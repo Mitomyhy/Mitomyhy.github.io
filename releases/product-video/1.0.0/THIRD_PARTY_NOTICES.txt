@@ -1,0 +1,13 @@
+MITOM Product Video 1.0.0
+
+Python: python/LICENSE.txt
+Node.js: node/LICENSE
+Python dependency licenses remain in python/Lib/site-packages.
+Remotion: renderer/REMOTION-LICENSE.md. Its Free License eligibility applies to each user.
+Renderer dependency licenses remain with each node_modules package.
+Remotion FFmpeg GPLv2+ license and source location: licenses/FFmpeg-GPL-2.0.txt and licenses/FFmpeg-source.txt.
+llama.cpp and its dependencies: ai-runtime/licenses.
+Qwen model weights download separately; none are included in this app ZIP.
+u2netp Apache 2.0 license: licenses/U2NET-Apache-2.0.txt; source/pins: models/u2netp.provenance.json.
+Chrome or Edge is required and remains separately installed.
+No user images, fonts, projects, login or session data are included.

@@ -21,11 +21,14 @@ import urllib.request
 import launcher_channel
 import mi_font_app
 import vector_app
+import video_app
 
 CATALOGUE_URL = "https://mitomyhy.github.io/releases/apps-stable.json"
 LIMIT = 262144
 TIMEOUT = 12
-MODULES = {"mifont": mi_font_app, "vector-migic": vector_app}
+MODULES = {"mifont": mi_font_app, "vector-migic": vector_app, "product-video": video_app}
+REQUIRED_APPS = frozenset({"mifont", "vector-migic"})
+ENTRIES = {"mifont": "MiFont.exe", "vector-migic": "VectorMigic.exe", "product-video": "python/python.exe"}
 
 
 def verify_catalogue(backend, envelope):
@@ -55,14 +58,17 @@ def verify_catalogue(backend, envelope):
                 or set(raw) != {"schema", "purpose", "version", "apps", "history"}):
             raise ValueError("catalogue identity")
         backend.version_tuple(raw["version"])
-        if set(raw["apps"]) != set(MODULES) or set(raw["history"]) != set(MODULES):
+        app_ids = set(raw["apps"])
+        if (not REQUIRED_APPS.issubset(app_ids) or not app_ids.issubset(MODULES)
+                or set(raw["history"]) != app_ids):
             raise ValueError("unsupported app")
         result = {"version": raw["version"], "apps": {}, "history": {}}
-        for app_id, module in MODULES.items():
+        for app_id in sorted(app_ids):
+            module = MODULES[app_id]
             current = module.validate_release(raw["apps"][app_id])
             if not re.fullmatch(r"\d+\.\d+\.\d+", current["version"]):
                 raise ValueError("app version")
-            if current["entry"] != ("MiFont.exe" if app_id == "mifont" else "VectorMigic.exe"):
+            if current["entry"] != ENTRIES[app_id]:
                 raise ValueError("executable identity")
             if not current["archive"].get("url"):
                 raise ValueError("missing online artifact")
@@ -83,7 +89,7 @@ def verify_catalogue(backend, envelope):
             result["history"][app_id] = accepted
         return result
     except (KeyError, ValueError, TypeError, OverflowError, AttributeError,
-            mi_font_app.MiFontAppError, vector_app.VectorAppError) as exc:
+            mi_font_app.MiFontAppError, vector_app.VectorAppError, video_app.VideoAppError) as exc:
         raise backend.LauncherError("Không xác thực được danh mục ứng dụng; giữ bản đã kiểm tra trước đó.") from exc
 
 
@@ -141,7 +147,9 @@ def probe_app_catalogue(backend, cancelled=None):
         old, new = backend.version_tuple(cached["version"]), backend.version_tuple(result["version"])
         if new < old or (new == old and result != cached):
             raise backend.LauncherError("App catalogue rollback or conflicting publication rejected.")
-        for app_id in MODULES:
+        for app_id in cached["apps"]:
+            if app_id not in result["apps"]:
+                raise backend.LauncherError("An authenticated application disappeared from the catalogue.")
             old_app, new_app = cached["apps"][app_id], result["apps"][app_id]
             old_version = backend.version_tuple(old_app["version"])
             new_version = backend.version_tuple(new_app["version"])
@@ -149,7 +157,8 @@ def probe_app_catalogue(backend, cancelled=None):
                 raise backend.LauncherError("App release rollback or conflicting identity rejected.")
     # Check all identities before persisting the new signed cache. The UI then
     # applies the same validated set together, so a bad app cannot poison it.
-    for app_id, module in MODULES.items():
+    for app_id in result["apps"]:
+        module = MODULES[app_id]
         module.check_catalogue(result["apps"][app_id], result["history"][app_id])
     path = _cache_path(backend)
     path.parent.mkdir(parents=True, exist_ok=True)

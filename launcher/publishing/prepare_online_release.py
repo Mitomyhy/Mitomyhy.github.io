@@ -33,10 +33,12 @@ import backend
 import launcher_channel
 import mi_font_app
 import vector_app
+import video_app
 
 MODULES = {"mifont": mi_font_app, "vector-migic": vector_app}
-DESCRIPTOR_NAMES = {"mifont": "mifont-release.json", "vector-migic": "vector-release.json"}
-MANIFEST_NAMES = {"mifont": "mifont-app.json", "vector-migic": "vector-app.json"}
+ALL_MODULES = {**MODULES, "product-video": video_app}
+DESCRIPTOR_NAMES = {"mifont": "mifont-release.json", "vector-migic": "vector-release.json", "product-video": "product-video-release.json"}
+MANIFEST_NAMES = {"mifont": "mifont-app.json", "vector-migic": "vector-app.json", "product-video": "product-video-app.json"}
 BASE_FILES = ("releases/stable.json", "releases/launcher-stable.json",
               "releases/latest-download.json", "site-config.js", "index.html")
 
@@ -132,25 +134,49 @@ def _archive_for(descriptor, path, explicit=None):
         manifest = launcher_channel._json_document(content)
         if any(manifest.get(key) != descriptor[key] for key in ("schema", "app_id", "version", "entry")):
             raise ValueError("App runtime identity differs from descriptor.")
+    _archive_publication_files(descriptor, existing)
     return existing
 
 
+def _archive_publication_files(descriptor, archive_path):
+    """Only bounded, hash-pinned app parts enter a multipart publication."""
+    archive = descriptor["archive"]
+    rows = archive.get("parts") or [{key: archive[key] for key in ("url", "size", "sha256")}]
+    result = []
+    for row in rows:
+        url = urllib.parse.urlsplit(row["url"])
+        expected = "/releases/" + descriptor["app_id"] + "/" + descriptor["version"] + "/"
+        if url.hostname != "mitomyhy.github.io" or not url.path.startswith(expected):
+            # Existing, unchanged single-file apps can retain historical URLs.
+            # New releases are checked again at the publication boundary below.
+            if archive.get("parts"):
+                raise ValueError("App parts must use their canonical Pages release location.")
+        source = Path(archive_path).parent / Path(url.path).name if archive.get("parts") else Path(archive_path)
+        if not source.is_file() or source.stat().st_size != row["size"] or sha(source) != row["sha256"]:
+            raise ValueError("App archive part size/SHA-256 differs from descriptor.")
+        result.append((source, row))
+    return result
+
+
 def _history(apps, previous, descriptor_paths):
-    candidates = {app_id: [] for app_id in MODULES}
+    candidates = {app_id: [] for app_id in apps}
     if previous:
-        for app_id in MODULES:
-            candidates[app_id] += [previous["apps"][app_id], *previous["history"][app_id]]
+        if not set(previous["apps"]).issubset(apps):
+            raise ValueError("A published application cannot be dropped from the catalogue.")
+        for app_id in apps:
+            if app_id in previous["apps"]:
+                candidates[app_id] += [previous["apps"][app_id], *previous["history"][app_id]]
     for path in descriptor_paths:
         raw = read_json(path)
         app_id = raw.get("app_id")
-        if app_id not in MODULES:
+        if app_id not in apps:
             raise ValueError("Unsupported previous app descriptor.")
-        candidates[app_id].append(MODULES[app_id].validate_release(raw))
+        candidates[app_id].append(ALL_MODULES[app_id].validate_release(raw))
     result = {}
     for app_id, current in apps.items():
         entries = {current["version"]: current}
         for raw in candidates[app_id]:
-            raw = MODULES[app_id].validate_release(raw)
+            raw = ALL_MODULES[app_id].validate_release(raw)
             old = entries.get(raw["version"])
             if old is not None:
                 # Bundled locations are local packaging hints, not identity.
@@ -199,7 +225,7 @@ def _check_launcher_artifact(artifact, *authenticated_releases):
 
 def prepare(*, baseline_dir, artifact_path, version, mifont_release, vector_release,
             self_test_receipt, output, previous_descriptors=(), app_archives=None, sign=False,
-            catalogue_version=None):
+            catalogue_version=None, video_release=None):
     """Validate immutable inputs, then create a new reviewable stage directory."""
     _version(version)
     catalogue_version = catalogue_version or version
@@ -235,8 +261,11 @@ def prepare(*, baseline_dir, artifact_path, version, mifont_release, vector_rele
         if key in receipt and receipt[key] != expected:
             raise ValueError("Frozen self-test receipt differs from Launcher artifact: " + key)
     apps, archives = {}, {}
-    for app_id, path in (("mifont", Path(mifont_release)), ("vector-migic", Path(vector_release))):
-        apps[app_id] = MODULES[app_id].validate_release(read_json(path))
+    descriptors = [("mifont", Path(mifont_release)), ("vector-migic", Path(vector_release))]
+    if video_release is not None:
+        descriptors.append(("product-video", Path(video_release)))
+    for app_id, path in descriptors:
+        apps[app_id] = ALL_MODULES[app_id].validate_release(read_json(path))
         if not apps[app_id]["archive"].get("url"):
             raise ValueError("Online catalogue requires app archive URLs.")
         archives[app_id] = _archive_for(apps[app_id], path, (app_archives or {}).get(app_id))
@@ -269,15 +298,21 @@ def prepare(*, baseline_dir, artifact_path, version, mifont_release, vector_rele
     for app_id, release in apps.items():
         # Unchanged app bytes already exist publicly; new versions travel in the
         # same stage and commit as the catalogue that makes them discoverable.
-        if _card_version(snapshots["site-config.js"].decode("utf-8-sig"), app_id) == release["version"]:
-            continue
-        url = urllib.parse.urlsplit(release["archive"]["url"])
-        if url.hostname != "mitomyhy.github.io" or not url.path.startswith("/releases/" + app_id + "/"):
-            raise ValueError("Stage new app archives at the canonical Pages release location.")
-        relative = url.path.lstrip("/")
-        (site / relative).parent.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(archives[app_id], site / relative)
-        write_json((site / relative).parent / DESCRIPTOR_NAMES[app_id], release)
+        previous_app = (previous or {}).get("apps", {}).get(app_id)
+        if previous_app:
+            old_identity, identity = copy.deepcopy(previous_app), copy.deepcopy(release)
+            old_identity["archive"].pop("bundled", None)
+            identity["archive"].pop("bundled", None)
+            if old_identity == identity:
+                continue
+        for archive_file, archive_row in _archive_publication_files(release, archives[app_id]):
+            url = urllib.parse.urlsplit(archive_row["url"])
+            if url.hostname != "mitomyhy.github.io" or not url.path.startswith("/releases/" + app_id + "/"):
+                raise ValueError("Stage new app archives at the canonical Pages release location.")
+            relative = url.path.lstrip("/")
+            (site / relative).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(archive_file, site / relative)
+            write_json((site / relative).parent / DESCRIPTOR_NAMES[app_id], release)
     if sign:
         _sign(launcher_unsigned, site / "releases/launcher-stable.json")
         _sign(apps_unsigned, site / "releases/apps-stable.json")
@@ -328,6 +363,7 @@ def main(argv=None):
     for name in ("baseline-dir", "artifact", "version", "mifont-release", "vector-release", "self-test-receipt", "output"):
         parser.add_argument("--" + name, required=True)
     parser.add_argument("--catalogue-version", help="Independent app catalogue revision (YYYY.MM.DD.N); defaults to --version. Increase it for app-only releases while reusing exact published Launcher bytes.")
+    parser.add_argument("--video-release", help="Optional verified Product Video descriptor; requires a Product Video card in the reviewed website baseline.")
     parser.add_argument("--previous-descriptor", action="append", default=[])
     parser.add_argument("--app-archive", action="append", default=[], metavar="APP_ID=PATH")
     parser.add_argument("--sign", action="store_true", help="Use existing protected publisher key; never initialize it.")
@@ -335,19 +371,19 @@ def main(argv=None):
     archives = {}
     for item in args.app_archive:
         app_id, separator, path = item.partition("=")
-        if not separator or app_id not in MODULES or app_id in archives or not path:
-            parser.error("Each --app-archive must uniquely name mifont or vector-migic.")
+        if not separator or app_id not in ALL_MODULES or app_id in archives or not path:
+            parser.error("Each --app-archive must uniquely name mifont, vector-migic or product-video.")
         archives[app_id] = path
     try:
         report = prepare(baseline_dir=args.baseline_dir, artifact_path=args.artifact, version=args.version,
                          mifont_release=args.mifont_release, vector_release=args.vector_release,
                          self_test_receipt=args.self_test_receipt, output=args.output,
                          previous_descriptors=args.previous_descriptor, app_archives=archives, sign=args.sign,
-                         catalogue_version=args.catalogue_version)
+                         catalogue_version=args.catalogue_version, video_release=args.video_release)
         print(json.dumps(report, ensure_ascii=True))
         return 0
     except (OSError, ValueError, RuntimeError, backend.LauncherError,
-            mi_font_app.MiFontAppError, vector_app.VectorAppError) as exc:
+            mi_font_app.MiFontAppError, vector_app.VectorAppError, video_app.VideoAppError) as exc:
         print("Publication preparation stopped: " + str(exc), file=sys.stderr)
         return 1
 
