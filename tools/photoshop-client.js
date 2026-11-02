@@ -84,6 +84,10 @@
         throw failure('TEMPLATE_METADATA', 'Thông tin template từ Photoshop không hợp lệ.');
       return { id: value.id, name: value.name, bytes: value.bytes, sha256: value.sha256, sourceDocumentId: sourceID, autoGenerate: true };
     }
+    function artworkDescriptor(value) {
+      if(!value||value.kind!=='artwork'||!/^[a-f0-9]{32}$/.test(value.id)||!Number.isSafeInteger(value.bytes)||value.bytes<12||value.bytes>MAX_BYTES||!/^[a-f0-9]{64}$/.test(value.sha256)||['image/png','image/jpeg'].indexOf(value.mime)<0||['acrylic','ceramic_circle','ceramic_heart'].indexOf(value.templateKey)<0||['cpu','gpu'].indexOf(value.device)<0||value.autoGenerate!==true||!Number.isInteger(value.width)||!Number.isInteger(value.height)||Math.min(value.width,value.height)<2||Math.max(value.width,value.height)>8192||value.width*value.height>16000000||typeof value.name!=='string'||value.name.length<1||value.name.length>200||/[\x00-\x1f\x7f/\\]/.test(value.name)||(value.mime==='image/png'?!/\.png$/i.test(value.name):!/\.jpg$/i.test(value.name)))throw failure('ARTWORK_METADATA','Thông tin artwork GPT/Codex không hợp lệ.');
+      return {id:value.id,kind:'artwork',name:value.name,bytes:value.bytes,sha256:value.sha256,mime:value.mime,width:value.width,height:value.height,templateKey:value.templateKey,device:value.device,autoGenerate:true};
+    }
     async function finishPair(value, epoch) {
       var result = await call('/v1/health', { headers: { Authorization: 'Bearer ' + value } }, 5000);
       if (epoch !== pairing) throw failure('PAIR_CANCELLED', 'Lượt kết nối đã được hủy; chưa ghép nối lại.');
@@ -145,6 +149,28 @@
         if (result.ok !== true) throw failure('TEMPLATE_ACK', 'Chưa xác nhận được template đã nhận.');
         return result;
       },
+      nextArtwork: async function() {
+        paired();if(!supports('artwork-3d-export-v1'))return null;var epoch=pairing;
+        try{var result=await call('/v1/artworks/next',{headers:templateHeaders()},5000);if(epoch!==pairing)throw failure('PAIR_CANCELLED','Lượt nhận artwork đã hủy.');if(result.ok!==true)throw failure('ARTWORK_METADATA','Không đọc được artwork.');return result.artwork===null?null:artworkDescriptor(result.artwork);}
+        catch(e){if(e.status===404||e.status===405||e.status===501){capabilities=capabilities.filter(function(v){return v!=='artwork-3d-export-v1';});return null;}throw e;}
+      },
+      readArtwork: async function(value) {
+        paired();if(!supports('artwork-3d-export-v1'))throw failure('ARTWORK_UNSUPPORTED','Cập nhật Panel để nhận artwork GPT/Codex.');value=artworkDescriptor(value);var epoch=pairing;
+        var bytes=await call('/v1/artworks/'+value.id,{headers:templateHeaders()},120000,value.bytes);
+        if(epoch!==pairing)throw failure('PAIR_CANCELLED','Lượt nhận artwork đã hủy.');
+        if(!random||!random.subtle||typeof random.subtle.digest!=='function')throw failure('HASH_UNAVAILABLE','Không xác minh được artwork.');
+        var digest=new Uint8Array(await random.subtle.digest('SHA-256',bytes)),hash=Array.prototype.map.call(digest,function(b){return('0'+b.toString(16)).slice(-2);}).join('');
+        if(hash!==value.sha256)throw failure('ARTWORK_INTEGRITY','Artwork không khớp SHA-256; chưa nhận ảnh.');
+        if(epoch!==pairing)throw failure('PAIR_CANCELLED','Lượt nhận artwork đã hủy.');
+        var png=bytes.length>=33&&bytes[0]===137&&bytes[1]===80&&bytes[2]===78&&bytes[3]===71;
+        var jpeg=bytes.length>=12&&bytes[0]===255&&bytes[1]===216&&bytes[bytes.length-2]===255&&bytes[bytes.length-1]===217;
+        if(value.mime==='image/png'?!png:!jpeg)throw failure('ARTWORK_FORMAT','Chữ ký artwork không đúng định dạng.');
+        var file=typeof File==='function'?new File([bytes],value.name,{type:value.mime}):new Blob([bytes],{type:value.mime});if(!file.name)Object.defineProperty(file,'name',{value:value.name});return file;
+      },
+      ackArtwork: async function(id) {
+        paired();if(!/^[a-f0-9]{32}$/.test(id))throw failure('ARTWORK_METADATA','Mã artwork không hợp lệ.');
+        var result=await call('/v1/artworks/'+id+'/ack',{method:'POST',headers:templateHeaders()},5000);if(result.ok!==true)throw failure('ARTWORK_ACK','Chưa xác nhận được artwork đã nhận.');return result;
+      },
       sendPSD: async function (blob, label) {
         paired(); if (!supports('psd-import-v1')) throw failure('PSD_UNSUPPORTED', 'Cập nhật panel để thêm PSD từ web vào Photoshop.');
         if (busy) throw failure('BUSY', 'Đang gửi kết quả vào Photoshop.');
@@ -180,7 +206,7 @@
         finally { busy = false; }
       },
       forget: function () { pairing++; token = ''; connected = false; capabilities = []; notice('Đã ngắt kết nối web; Photoshop và file gốc giữ nguyên.', 'offline'); },
-      status: function () { return { connected: connected, busy: busy, capabilities: capabilities.slice(), supportsPSD: supports('psd-import-v1'), supportsTemplates: supports('psd-template-export-v1') }; }
+      status: function () { return { connected: connected, busy: busy, capabilities: capabilities.slice(), supportsPSD: supports('psd-import-v1'), supportsTemplates: supports('psd-template-export-v1'), supportsArtworks:supports('artwork-3d-export-v1') }; }
     };
   }
   return { create: create, endpoint: ENDPOINT, version: 1 };

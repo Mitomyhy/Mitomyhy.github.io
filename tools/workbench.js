@@ -1,4 +1,5 @@
 import { createDepthTool } from './depth-flow-tool.js?v=20261030-memory-r80';
+import { runArtwork3DHandoff } from './artwork-3d-handoff.mjs?v=20261102-gpt-3d-r82';
 import { classifyDepthInput } from './depth-input.js?v=20261023-psd-gpu-r11';
 import { searchPlace, createDateNormalizer } from './sky-moon.js?v=20261030-date-r79';
 import { renderSourceMoons } from './moon-source-renderer.js?v=20261023-moon-original-r7';
@@ -20,7 +21,7 @@ const definitions = {
 };
 let active='depth', busy=false, cpuGeneration=false, depth=null, layouts=[], selected=0, generation=0, worker=null, appearancePending=Promise.resolve();
 let depthView='template',brushMode=null,brushDrawing=false,depthPaintFrame=0;
-let depthFlow='upload',templateTransferBusy=false,templatePollTimer=null,templateQueueError=false,failedTemplate=null;
+let depthFlow='upload',templateTransferBusy=false,templatePollTimer=null,templateQueueError=false,failedTemplate=null,failedTransferKind='template',artworkHandoffAbort=null;
 const ready={depth:false,scrabble:false,sky:false,moon:false};
 const skyZoom=createWorkspaceZoom($('sky-canvas').parentElement,$('sky-canvas'),{isEnabled:()=>active==='sky'&&ready.sky&&!busy,onChange(view){$('sky-zoom-reset').textContent=`${Math.round(view.scale*100)}% · Đặt lại`;}});
 $('sky-zoom-reset').addEventListener('click',()=>skyZoom.reset());
@@ -73,7 +74,7 @@ $('depth-device').addEventListener('change',()=>depthDevice($('depth-device').va
 async function generateDepth(auto3D=false,device=depthDevice()){const engine=ensureDepth();if(!engine.state().hasImage)throw Error('Chọn PSD đã có IN hoặc thêm artwork trước.');const settings=cpuOptions();depthView='artwork';$('depth-progress').hidden=false;$('depth-progress').removeAttribute('value');status(device==='gpu'?'Đang chuẩn bị GPU / WebGPU…':'Đang chuẩn bị CPU…');await engine.generate(settings,'maps',device);ready.depth=true;await engine.exportPSD(settings);depthView='template';if(auto3D){await engine.show3D();depthView='3d';}visibleResult();status(`Hoàn tất · AI ${device==='gpu'?'GPU / WebGPU':'CPU'} · PSD có IN / DEPTH / CUT.`);}
 $('depth-generate').addEventListener('click',()=>{depthDevice('cpu');run(()=>generateDepth(false,'cpu'),true);});
 $('depth-generate-gpu').addEventListener('click',()=>{depthDevice('gpu');run(()=>generateDepth(false,'gpu'),true);});
-$('depth-cancel').addEventListener('click',()=>{depth?.cancel();ready.depth=!!depth?.state().hasDepth;depthView=ready.depth?'map':'artwork';visibleResult();$('depth-progress').hidden=true;$('depth-progress-label').textContent='Đã hủy · nguồn và kết quả trước vẫn giữ nguyên.';});
+$('depth-cancel').addEventListener('click',()=>{artworkHandoffAbort?.abort();depth?.cancel();ready.depth=!!depth?.state().hasDepth;depthView=ready.depth?'map':'artwork';visibleResult();$('depth-progress').hidden=true;$('depth-progress-label').textContent='Đã hủy · nguồn và kết quả trước vẫn giữ nguyên.';});
 async function depthPSDBlob(){return new Blob([await ensureDepth().exportPSD(cpuOptions())],{type:'image/vnd.adobe.photoshop'});}
 $('depth-download-psd').addEventListener('click',()=>run(async()=>{await downloadBlob(await depthPSDBlob(),'MITOM-IN-DEPTH-CUT.psd');visibleResult();}));
 $('depth-product').addEventListener('change',()=>run(async()=>{ready.depth=false;depthView='template';await ensureDepth().setProductType($('depth-product').value);visibleResult();}));
@@ -183,24 +184,34 @@ $('ps-form').addEventListener('submit',async event=>{event.preventDefault();cons
 $('ps-forget').addEventListener('click',()=>{photoshop?.forget();$('ps-connect').classList.remove('is-connected');$('ps-connect').querySelector('span').textContent='Kết nối Photoshop';$('ps-message').textContent='Đã ngắt kết nối và xóa mã khỏi bộ nhớ trang.';});
 $('tool-add').addEventListener('click',()=>{if(!photoshop?.status().connected){showPairing();return;}const tool=active;run(async()=>{const psd=tool==='depth'&&depthView!=='3d',blob=psd?await depthPSDBlob():await resultBlob(tool);status('Đang gửi kết quả tới Photoshop…');const result=psd?await photoshop.sendPSD(blob,'MITOM IN / DEPTH / CUT'):await photoshop.send(blob,definitions[tool].title);status(result.mode==='layer'?'Đã thêm kết quả thành layer trong Photoshop.':'Đã mở PSD / kết quả trong tài liệu Photoshop mới.');});});
 async function pollPhotoshopTemplates(){
-  if(templateQueueError||templateTransferBusy||busy||active!=='depth'||!photoshop?.status().connected||!photoshop.status().supportsTemplates)return;
-  templateTransferBusy=true;let item=null,acknowledged=false;
-  function pauseTransfer(){templateQueueError=true;failedTemplate=item;$('depth-transfer-actions').hidden=false;$('depth-transfer-dismiss').disabled=!item;}
+  if(templateQueueError||templateTransferBusy||busy||active!=='depth'||!photoshop?.status().connected||(!photoshop.status().supportsTemplates&&!photoshop.status().supportsArtworks))return;
+  templateTransferBusy=true;let item=null,acknowledged=false,kind='template';
+  function pauseTransfer(){templateQueueError=true;failedTemplate=item;failedTransferKind=kind;$('depth-transfer-actions').hidden=false;$('depth-transfer-dismiss').disabled=!item;}
   try{
-    item=await photoshop.nextTemplate();if(!item||busy)return;
-    const file=await photoshop.readTemplate(item);if(busy)return;
-    await run(async()=>{await acceptDepthFile(file);await photoshop.ackTemplate(item.id);acknowledged=true;status('Đã nhận template Photoshop · tự động Generate 3D…');await generateDepth(item.autoGenerate===true);},true);
+    if(photoshop.status().supportsArtworks){item=await photoshop.nextArtwork();if(item)kind='artwork';}
+    if(!item&&photoshop.status().supportsTemplates)item=await photoshop.nextTemplate();if(!item||busy)return;
+    const file=kind==='artwork'?await photoshop.readArtwork(item):await photoshop.readTemplate(item);if(busy)return;
+    await run(async()=>{
+      if(kind==='artwork'){
+        artworkHandoffAbort=new AbortController();
+        try{await runArtwork3DHandoff(item,file,{
+          openTemplate:async key=>{ready.depth=false;depthView='template';$('depth-product').value=key;await ensureDepth().openTemplate(key);},
+          acceptFile:acceptDepthFile,ack:id=>photoshop.ackArtwork(id),accepted:()=>{acknowledged=true;},
+          generate:async(auto3D,device)=>{depthDevice(device);status('Đã nhận artwork GPT/Codex · tự động Generate 3D…');await generateDepth(auto3D,device);}
+        },artworkHandoffAbort.signal);}finally{artworkHandoffAbort=null;}
+      }else{await acceptDepthFile(file);await photoshop.ackTemplate(item.id);acknowledged=true;status('Đã nhận template Photoshop · tự động Generate 3D…');await generateDepth(item.autoGenerate===true);}
+    },true);
     if(!acknowledged)pauseTransfer();
   }catch(error){pauseTransfer();status(error.message,true);}finally{templateTransferBusy=false;}
 }
 $('depth-transfer-retry').addEventListener('click',()=>{templateQueueError=false;failedTemplate=null;$('depth-transfer-actions').hidden=true;void pollPhotoshopTemplates();});
-$('depth-transfer-dismiss').addEventListener('click',()=>run(async()=>{if(failedTemplate)await photoshop.ackTemplate(failedTemplate.id);templateQueueError=false;failedTemplate=null;$('depth-transfer-actions').hidden=true;status('Đã bỏ bản sao trong hàng chờ. PSD gốc trong Photoshop được giữ nguyên.');}));
+$('depth-transfer-dismiss').addEventListener('click',()=>run(async()=>{if(failedTemplate){if(failedTransferKind==='artwork')await photoshop.ackArtwork(failedTemplate.id);else await photoshop.ackTemplate(failedTemplate.id);}templateQueueError=false;failedTemplate=null;$('depth-transfer-actions').hidden=true;status('Đã bỏ bản sao trong hàng chờ. Artwork / PSD gốc được giữ nguyên.');}));
 async function activateTemplateHandoff(){
   const code=initialHandoff;initialHandoff=null;if(!code)return;
   try{await photoshop.acceptHandoff(code);syncPhotoshop();await pollPhotoshopTemplates();}catch(error){status(error.message,true);}
 }
 templatePollTimer=setInterval(()=>void pollPhotoshopTemplates(),2000);
-window.addEventListener('pagehide',event=>{if(!event.persisted){clearInterval(templatePollTimer);worker?.terminate();depth?.dispose();photoshop?.forget();skyPlace.dispose();skyZoom.dispose();moonAbort?.abort();}});
+window.addEventListener('pagehide',event=>{if(!event.persisted){artworkHandoffAbort?.abort();clearInterval(templatePollTimer);worker?.terminate();depth?.dispose();photoshop?.forget();skyPlace.dispose();skyZoom.dispose();moonAbort?.abort();}});
 route();
 chooseDepthFlow('upload');
 void activateTemplateHandoff();
