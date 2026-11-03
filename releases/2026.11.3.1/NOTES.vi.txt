@@ -1,0 +1,17 @@
+Panel 2026.11.3.1 · R83: gộp mọi bản vá runtime R80/R81/R82 đã hoàn tất vào nền R76/R77/R78 công khai 2026.10.29.1. Không thêm thuật toán/mô hình mới.
+
+Lưu công việc và tự đóng Photoshop, OrderStudio cùng GPT/Codex MITOM (UOYChatGPTWorkspace) trước Update. Codex desktop đang trò chuyện không phải đóng. Bộ cài không tự dừng ứng dụng.
+
+R80: giữ nguyên memory guard đã kiểm thử, chặn khi Windows còn dưới 2 GiB commit. Đây không phải bảo đảm UHD đủ bộ nhớ. CPU/GPU, engine, model và cấu hình máy giữ nguyên.
+
+R81: Night Light 4-inch Warm/7 Color + Printway lưu Ball rồi Base; Printtbelle/Printbelle một fullprint. 2.4/3.2 bình thường. Sau Update, tải lại Base một lần rồi Nạp để nhận Suppliers. Không lịch quét tự động hoặc quét khi Save.
+
+R82: GPT/Codex MITOM có Generate 3D; chọn ảnh, template và CPU/GPU để chuyển artwork tới web, chạy flow 3D hiện tại. Không cần đưa artwork qua Photoshop trước; không upload máy chủ AI, không tự tách nền.
+
+Save Task upload nền R78 và Save Fix fix/fix1/fix2 R77 được giữ nguyên. Máy đã cập nhật đầy đủ 2026.11.3.1 không cần cài riêng ZIP R80/R81/R82; các ZIP cũ chỉ là tùy chọn cho đúng nền cũ.
+
+QUAN TRỌNG: uploadToolDir ngoài/custom vẫn được giữ nguyên. Máy có uploader cũ ngoài Launcher có thể vẫn cần ZIP R77 một lần để cập nhật đúng helper đã biết; không tự sửa mã lạ hoặc đổi đường dẫn/cấu hình. Cài mới uploader managed không cần bước này.
+
+Launcher 2026.10.31.1 giữ nguyên EXE/URL/hash và kênh tự cập nhật độc lập. Panel feed nhúng đúng metadata Launcher hiện hành thay metadata fallback cũ; không đổi key xác minh.
+
+Giữ prefix10phần đã xác minh để Launcher có thể tái dùng cache hợp lệ; vẫn cần tải/ghép core và staging, không phải delta installer. Không đổi tài khoản, chat, PSD, Companion1.0.30 hoặc bundle runtime/model.

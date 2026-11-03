@@ -3,13 +3,13 @@
   "url": "https://mitomyhy.github.io/releases/mitom-launcher/2026.10.31.1/MITOM-Launcher-Setup-2026.10.31.1.exe",
   "size": 20056286,
   "sha256": "ec4dd41dcf1c4a34497b82f2baf8e32e2ea34a9e54e2d8ac175458367e51845f",
-  "panel_version": "2026.10.29.1",
-  "core_size": 198117062,
+  "panel_version": "2026.11.3.1",
+  "core_size": 198259300,
   "model_size": 1423034338,
   "runtime_size": 378215822,
-  "installed_size": 3624845935,
+  "installed_size": 3624876473,
   "components": [
-    "Panel + Companion 1.0.30 + Save Task R78 + Order R77 managed (uploader ngoài cần ZIP R77)",
+    "Panel + Companion 1.0.30 + R76/R77/R78/R80/R81/R82 đầy đủ (uploader ngoài/custom cũ có thể cần R77 một lần)",
     "3D CPU / NVIDIA CUDA (CPU compatibility + managed GPU routing fix26.2; optional runtime)",
     "Canva + Photoroom companions",
     "GPT/Codex runtime"

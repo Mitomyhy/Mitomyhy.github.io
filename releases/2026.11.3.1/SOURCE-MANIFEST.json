@@ -1,0 +1,92 @@
+{
+  "schema": 1,
+  "version": "2026.11.3.1",
+  "scope": "Fourteen runtime file pins in the authenticated full Panel package; no separate source archive.",
+  "sourceBaseline": "2026.10.29.1",
+  "files": [
+    {
+      "path": "panel/chatgpt-workspace/UOYChatGPTWorkspace.exe",
+      "sha256": "64c34f7c5fd70ac66bdaac0f26a92c1ac1e796a82742de8b3c6aa1b9212964e0",
+      "size": 261120,
+      "revision": "R82"
+    },
+    {
+      "path": "panel/chatgpt-workspace/ui/index.html",
+      "sha256": "22d264cc13f0fb93ccc4360df1ed1d4f328c257b15fee7f5b304e0177b382c1c",
+      "size": 5188,
+      "revision": "R82"
+    },
+    {
+      "path": "panel/chatgpt-workspace/ui/workspace.js",
+      "sha256": "e65b317e2b580e10f2cc13100d4753518d68dd589bff2fd61d47fa6ef805c2cc",
+      "size": 33562,
+      "revision": "R82"
+    },
+    {
+      "path": "panel/js/chatgpt-workspace.js",
+      "sha256": "27d8a3f6ecfaf0423168eaf77e8e1cafca9ff19df5110a035e678377b5bd46d2",
+      "size": 46495,
+      "revision": "R82"
+    },
+    {
+      "path": "panel/js/depth-map.js",
+      "size": 244330,
+      "sha256": "e8689660edc3d98b4ae64b6a854b1cd9f29bbf4d6f6ccbdd8724cf63fa68c0f4",
+      "revision": "R80"
+    },
+    {
+      "path": "panel/js/depth-memory-probe.py",
+      "size": 4748,
+      "sha256": "7693ba2056bd4c9b3fa1773bc0edbd3298c243049ad900c1264debb4e294a924",
+      "revision": "R80"
+    },
+    {
+      "path": "panel/js/lark-base-bridge.js",
+      "size": 110718,
+      "sha256": "585c3d34cc35110d9806a05087163e21817acd1772e0ce74c24033db9fc1f503",
+      "revision": "R81"
+    },
+    {
+      "path": "panel/js/lark-base-ui.js",
+      "sha256": "e0ad91ae65ece0add381d7a6d8f0d05ed4f1ce838f6f89439b6df978e06016a7",
+      "size": 34485,
+      "revision": "R81"
+    },
+    {
+      "path": "panel/js/lark-import-adapter.js",
+      "sha256": "3a6b8decd7edc7754c1cf1882a780dae772bf6ad29272d8a11ee8ae109a2c961",
+      "size": 4958,
+      "revision": "R81"
+    },
+    {
+      "path": "panel/js/main.js",
+      "size": 546205,
+      "sha256": "18461766f9cd7491d812f9af5b707c9ba383d712cbd34264428bec8515f55f1f",
+      "revision": "R81"
+    },
+    {
+      "path": "panel/js/web-tools-bridge.js",
+      "size": 30265,
+      "sha256": "4313759e14b234107b50b3eaba48179fcb4d5cfa811f18c5d9affa253fc77493",
+      "revision": "R82"
+    },
+    {
+      "path": "panel/js/web-tools-panel.js",
+      "size": 11592,
+      "sha256": "7de784e39187c0d7d992f288e395df34f9df3698b3b7b2b40ae66d24b90c1546",
+      "revision": "R82"
+    },
+    {
+      "path": "panel/lark-base-extension/extension.js",
+      "size": 1045221,
+      "sha256": "34f8647c1c1604505ba814a6501109147ca7892bd729ee837c8a7ed5c7d8c2b5",
+      "revision": "R81"
+    },
+    {
+      "path": "panel/lark-base-extension/index.html",
+      "size": 3659,
+      "sha256": "c9d1992e88e888a3a02cfaab1eba4202663274e3e762d189e282bc2296d3bc01",
+      "revision": "R81"
+    }
+  ]
+}

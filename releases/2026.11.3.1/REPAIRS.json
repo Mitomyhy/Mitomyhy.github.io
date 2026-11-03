@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "version": "2026.11.3.1",
+  "activation": {
+    "fullLauncherUpdatesManagedCode": true,
+    "separateR80Required": false,
+    "separateR81Required": false,
+    "separateR82Required": false,
+    "externalConfiguredUploaderIsPreserved": true,
+    "existingCustomOrLegacyUploaderMayNeedR77Once": true,
+    "closeBeforeUpdate": [
+      "Photoshop",
+      "OrderStudio",
+      "UOYChatGPTWorkspace"
+    ],
+    "reloadBaseOnceAndImportSuppliers": true,
+    "companionRePairRequired": false
+  },
+  "files": [
+    {
+      "name": "MITOM-Order-Fix-Night-Light-R77.zip",
+      "url": "https://mitomyhy.github.io/tools/downloads/MITOM-Order-Fix-Night-Light-R77.zip",
+      "size": 12410,
+      "sha256": "fdaf7dea0e163235c7ae091e5e6d6f1479ed868981f39453acc49f1c0e71cfe4",
+      "appliesTo": "Existing custom/legacy external uploader only; known exact before/after code; configurations preserved",
+      "freshManagedInstallRequires": false
+    }
+  ]
+}
