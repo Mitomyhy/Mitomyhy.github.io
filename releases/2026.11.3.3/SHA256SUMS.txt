@@ -1,0 +1,4 @@
+d421ee61a26bfd12e1362eaefdff7301dcc8710d494c188d88ed94011c875209  core.zip (authenticated assembled parts)
+e318d522192bcc616f95cb78756da775810e1f12e7a2e4e9271a14b0748f3af6  core-tail.bin
+866f0a3422510c2e646e4dfeb807c17d862c02666c17d22f7f6bb9abd35ec78d  payload-manifest.json
+21c8a2f0bb7c5e82015d06edd1e051931f50a10e66276f0a7e1c7a46229e447d  COMPONENTS.json

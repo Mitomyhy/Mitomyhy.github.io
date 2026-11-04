@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "version": "2026.11.3.3",
+  "sourceBaseline": "2026.11.3.1",
+  "scope": "Six exact runtime file pins (four retained R84, two R85); authenticated cumulative core, no optional source archive.",
+  "files": [
+    {
+      "path": "panel/CSXS/manifest.xml",
+      "sha256": "87a603e6cbb9fe6886ec7160d88a1dff90d6ac301d96c5a15b95cb740e836bc9",
+      "size": 2859,
+      "revision": "R84"
+    },
+    {
+      "path": "panel/js/depth-map.js",
+      "size": 246574,
+      "sha256": "cf2452d43bffd2ba8d8871b2ba5047340dd6e0415a961ff484754bf4b2d04eef",
+      "revision": "R84"
+    },
+    {
+      "path": "panel/js/depth-toolbar.js",
+      "size": 12369,
+      "sha256": "588813710ccff49b2fad71e2870eba83f27bd0dcfd3681e001c99ea358d18b03",
+      "revision": "R84"
+    },
+    {
+      "path": "panel/js/depth-graphics-probe.js",
+      "size": 7897,
+      "sha256": "812193d7331a714f5ffdf7775c4964d53579fc3511b157fb59614611e11fd3cf",
+      "revision": "R84"
+    },
+    {
+      "path": "panel/js/save-task-flow.js",
+      "size": 128654,
+      "sha256": "50de2cccbd3def581984b5cc303eb4473ea816a760e2bbff887f0bc686b2f855",
+      "revision": "R85"
+    },
+    {
+      "path": "panel/js/save-task-remote.py",
+      "size": 68251,
+      "sha256": "0b8665d872e4e0c5182cb5e4421d61a33d3284b74c8fc1533e92ba251847b3e7",
+      "revision": "R85"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+Panel 2026.11.3.3 · R85 sửa Save Task: đóng băng file theo từng lần bấm, kiểm tra PNG và gắn xác nhận upload với đúng tác vụ. Giữ nguyên bốn file sửa khởi tạo Xem 3D R84 trên nền cộng dồn 2026.11.3.1. Không sửa mô hình AI, chất lượng, camera hay kích thước PNG.
+
+Đợi lượt upload thực sự đang chạy kết thúc trước khi cập nhật; lượt đã báo lỗi/cần tiếp tục không cần đợi hoàn tất. Không xóa file local hoặc biên nhận. Sau khi mở lại, chọn SKU cũ và Tiếp tục upload đang chờ; nút Save dành cho lần lưu mới. Kiểm thử ngoại tuyến không thay thế kiểm thử upload với server thật; bản vá không tự retry upload khách hàng.
+
+Lưu công việc, tự đóng Photoshop, OrderStudio cùng GPT/Codex MITOM trước Update. Sau cập nhật phải mở lại Photoshop hoàn toàn để CEP nạp tham số đồ họa; không chỉ đóng/mở panel. Không cần đóng Codex desktop đang trò chuyện.
+
+Xem 3D kiểm tra khả năng WebGL bằng worker riêng có thời hạn trước khi đọc/dựng template khi Worker và OffscreenCanvas được hỗ trợ; lỗi, CSP hoặc hết hạn ở đường kiểm tra này phải trả lại điều khiển và báo rõ. Khi thật sự thiếu Worker/OffscreenCanvas ở CEP cũ, giữ đường tương thích trước đây; đường tương thích đó không được bảo vệ bởi thời hạn kiểm tra 8 giây. Không tắt sandbox, watchdog hay GPU blocklist để ép chạy.
+
+Cấu hình ANGLE Direct3D11 tiêu chuẩn áp dụng cho gói Windows. Kiểm thử logic và đóng gói không thay thế kiểm thử đồ họa trên máy đích: chưa xác nhận Xem 3D/render thực tế trong phiên CEP đang mở; phải thoát/mở lại Photoshop rồi kiểm tra. Không cam kết backend này khắc phục mọi lỗi driver hoặc CEP.
+
+Giữ đủ R80 memory guard, R81 Night Light theo Supplier, R82 GPT/Codex → web3D và R77/R78 Save Fix/Save Task. Không cần các ZIP R80/R81/R82 riêng sau gói đầy đủ.
+
+Giữ tài khoản, chat, PSD, CPU/GPU AI, worker/model/runtime, Companion1.0.30 và cấu hình từng máy. uploadToolDir custom vẫn giữ nguyên; helper cũ ngoài Launcher có thể cần R77 một lần như ghi chú trước.
+
+Launcher 2026.10.31.1 và kênh tự cập nhật của nó giữ nguyên. Tái dùng cache10phần chỉ khi đã xác minh; vẫn cần ghép core và staging, không phải delta installer.

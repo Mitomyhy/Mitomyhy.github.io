@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "version": "2026.11.3.3",
+  "activation": {
+    "fullLauncherUpdatesManagedCode": true,
+    "restartPhotoshopRequired": true,
+    "separateR80Required": false,
+    "separateR81Required": false,
+    "separateR82Required": false,
+    "externalConfiguredUploaderIsPreserved": true,
+    "existingCustomOrLegacyUploaderMayNeedR77Once": true,
+    "closeBeforeUpdate": [
+      "Photoshop",
+      "OrderStudio",
+      "UOYChatGPTWorkspace"
+    ],
+    "companionRePairRequired": false
+  }
+}
